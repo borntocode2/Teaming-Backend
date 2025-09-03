@@ -1,0 +1,31 @@
+package goodspace.teaming.global.entity.user
+
+import jakarta.persistence.*
+import jakarta.persistence.EnumType.*
+import jakarta.persistence.GenerationType.*
+import org.hibernate.annotations.SQLDelete
+import org.hibernate.annotations.SQLRestriction
+
+@Entity
+@Table(name = "`user`")
+@Inheritance(strategy = InheritanceType.JOINED)
+@SQLDelete(sql = "UPDATE `user` SET deleted = true, deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted = false")
+class User(
+    @Column(nullable = false, unique = true)
+    var email: String,
+
+    @Column(nullable = false)
+    var name: String,
+
+    @Lob
+    var profilePhoto: ByteArray? = null,
+
+    @Enumerated(STRING)
+    @Column(nullable = false)
+    var type: UserType
+) : BaseEntity() {
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    val id: Long? = null
+}
