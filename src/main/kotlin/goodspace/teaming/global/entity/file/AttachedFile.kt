@@ -1,7 +1,7 @@
 package goodspace.teaming.global.entity.file
 
 import goodspace.teaming.global.entity.room.Message
-import goodspace.teaming.global.entity.user.BaseEntity
+import goodspace.teaming.global.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
