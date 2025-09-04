@@ -27,7 +27,9 @@ class SecurityConfig(
             .formLogin { it.disable() }
             .logout { it.disable() }
             .authorizeHttpRequests { auth ->
-                auth.anyRequest().authenticated()
+                auth.requestMatchers("/swagger-ui/**").permitAll() // swagger
+                    .requestMatchers("/v3/api-docs/**").permitAll() // SpringDoc
+                    .anyRequest().authenticated()
             }
             .cors { it.configurationSource(configurationSource()) }
             .addFilterBefore(JwtFilter(tokenProvider), UsernamePasswordAuthenticationFilter::class.java)
