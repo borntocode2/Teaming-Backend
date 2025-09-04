@@ -1,5 +1,6 @@
 package goodspace.teaming.global.entity.user
 
+import goodspace.teaming.global.security.RefreshToken
 import jakarta.persistence.*
 import jakarta.persistence.EnumType.*
 import jakarta.persistence.GenerationType.*
@@ -28,4 +29,13 @@ class User(
     @Id
     @GeneratedValue(strategy = IDENTITY)
     val id: Long? = null
+
+    @OneToOne(cascade = [CascadeType.ALL], orphanRemoval = true)
+    private val refreshToken: RefreshToken = RefreshToken()
+
+    var token = refreshToken.tokenValue
+        set(value) {
+            field = value
+            refreshToken.tokenValue = value
+        }
 }
