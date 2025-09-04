@@ -1,5 +1,6 @@
 package goodspace.teaming.global.entity.user
 
+import goodspace.teaming.global.entity.BaseEntity
 import goodspace.teaming.global.security.RefreshToken
 import jakarta.persistence.*
 import jakarta.persistence.EnumType.*

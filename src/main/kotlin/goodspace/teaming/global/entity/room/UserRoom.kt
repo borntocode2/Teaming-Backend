@@ -1,6 +1,6 @@
 package goodspace.teaming.global.entity.room
 
-import goodspace.teaming.global.entity.user.BaseEntity
+import goodspace.teaming.global.entity.BaseEntity
 import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import jakarta.persistence.EnumType.*

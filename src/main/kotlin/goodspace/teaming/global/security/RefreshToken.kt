@@ -1,6 +1,6 @@
 package goodspace.teaming.global.security
 
-import goodspace.teaming.global.entity.user.BaseEntity
+import goodspace.teaming.global.entity.BaseEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction

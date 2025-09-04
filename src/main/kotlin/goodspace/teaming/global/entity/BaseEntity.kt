@@ -1,4 +1,4 @@
-package goodspace.teaming.global.entity.user
+package goodspace.teaming.global.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.EntityListeners
