@@ -1,4 +1,4 @@
-package goodspace.teaming.global.swagger
+package goodspace.teaming.global.config
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
