@@ -29,6 +29,7 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/swagger-ui/**").permitAll() // swagger
                     .requestMatchers("/v3/api-docs/**").permitAll() // SpringDoc
+                    .requestMatchers("/email/**").permitAll()
                     .anyRequest().authenticated()
             }
             .cors { it.configurationSource(configurationSource()) }
