@@ -49,6 +49,19 @@ dependencies {
     // Swagger
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.12")
     implementation("org.apache.commons:commons-lang3:3.18.0")
+
+    // mail
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+
+    // GreenMail
+    testImplementation("com.icegreen:greenmail:2.1.5")
+
+    // retry
+    implementation("org.springframework.retry:spring-retry")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+
+    // 모킹 테스트
+    testImplementation("io.mockk:mockk:1.14.5")
 }
 
 kotlin {
