@@ -13,15 +13,16 @@ import org.hibernate.annotations.SQLRestriction
 @Inheritance(strategy = InheritanceType.JOINED)
 @SQLDelete(sql = "UPDATE `user` SET deleted = true, deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted = false")
-class User(
+abstract class User(
     @Column(nullable = false, unique = true)
     var email: String,
 
     @Column(nullable = false)
     var name: String,
 
-    @Lob
-    var profilePhoto: ByteArray? = null,
+    var avatarKey: String? = null,
+
+    var avatarVersion: Int? = null,
 
     @Enumerated(STRING)
     @Column(nullable = false)

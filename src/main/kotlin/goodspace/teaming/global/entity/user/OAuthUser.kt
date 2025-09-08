@@ -16,11 +16,13 @@ class OAuthUser(
 
     email: String,
     name: String,
-    profilePhoto: ByteArray? = null,
+    avatarKey: String? = null,
+    avatarVersion: Int? = null,
     type: UserType
 ) : User(
     email = email,
     name = name,
-    profilePhoto = profilePhoto,
+    avatarKey = avatarKey,
+    avatarVersion = avatarVersion,
     type = type
 )

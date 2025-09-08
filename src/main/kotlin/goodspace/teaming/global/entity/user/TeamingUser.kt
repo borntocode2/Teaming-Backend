@@ -16,11 +16,12 @@ class TeamingUser(
 
     email: String,
     name: String,
-    profilePhoto: ByteArray? = null,
-    type: UserType
+    avatarKey: String? = null,
+    avatarVersion: Int? = null,
 ) : User(
     email = email,
     name = name,
-    profilePhoto = profilePhoto,
-    type = type
+    avatarKey = avatarKey,
+    avatarVersion = avatarVersion,
+    type = UserType.TEAMING
 )

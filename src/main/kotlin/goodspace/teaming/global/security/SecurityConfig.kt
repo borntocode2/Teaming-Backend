@@ -30,6 +30,7 @@ class SecurityConfig(
                 auth.requestMatchers("/swagger-ui/**").permitAll() // swagger
                     .requestMatchers("/v3/api-docs/**").permitAll() // SpringDoc
                     .requestMatchers("/email/**").permitAll()
+                    .requestMatchers("/ws/**").permitAll() // 웹소캣 핸드셰이크
                     .anyRequest().authenticated()
             }
             .cors { it.configurationSource(configurationSource()) }
