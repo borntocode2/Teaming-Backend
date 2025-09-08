@@ -62,6 +62,9 @@ dependencies {
 
     // 모킹 테스트
     testImplementation("io.mockk:mockk:1.14.5")
+
+    // 웹소켓
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
 }
 
 kotlin {

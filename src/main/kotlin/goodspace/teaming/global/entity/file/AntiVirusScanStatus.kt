@@ -1,5 +1,5 @@
 package goodspace.teaming.global.entity.file
 
 enum class AntiVirusScanStatus {
-    PENDING, CLEAN, INFECTED
+    PENDING, PASSED, FAILED, INFECTED
 }
