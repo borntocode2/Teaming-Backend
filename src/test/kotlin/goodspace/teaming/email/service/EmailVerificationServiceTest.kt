@@ -4,8 +4,7 @@ import goodspace.teaming.email.dto.CodeSendRequestDto
 import goodspace.teaming.email.dto.EmailVerifyRequestDto
 import goodspace.teaming.email.event.EmailSendRequestEvent
 import goodspace.teaming.global.entity.email.EmailVerification
-import goodspace.teaming.global.entity.user.User
-import goodspace.teaming.global.entity.user.UserType
+import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -18,13 +17,13 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.event.ApplicationEvents
 import org.springframework.test.context.event.RecordApplicationEvents
 import org.springframework.transaction.annotation.Transactional
-import java.lang.IllegalStateException
 import java.time.LocalDateTime
 
 private const val NOT_EXIST_EMAIL = "notExist@email.com"
 private const val DEFAULT_EMAIL = "default@email.com"
 private const val DEFAULT_CODE = "defaultCode"
 private const val DEFAULT_NAME = "DEFAULT NAME"
+private const val DEFAULT_PASSWORD = "defaultPassword"
 
 @SpringBootTest
 @RecordApplicationEvents
@@ -58,10 +57,10 @@ class EmailVerificationServiceTest(
             // arrange
             val existEmail = "EXIST@email.com"
             userRepository.save(
-                User(
+                TeamingUser(
                     email = existEmail,
-                    name = DEFAULT_NAME,
-                    type = UserType.TEAMING
+                    password = DEFAULT_PASSWORD,
+                    name = DEFAULT_NAME
                 )
             )
 
