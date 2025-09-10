@@ -9,9 +9,11 @@ import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.simp.stomp.StompCommand
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor
 import org.springframework.messaging.support.ChannelInterceptor
+import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 private const val ROOM_SUBSCRIBE_PREFIX = "/topic/rooms/"
+private const val ROOM_SEND_PREFIX = "/app/rooms/"
 
 @Component
 class JwtStompChannelInterceptor(
@@ -41,7 +43,20 @@ class JwtStompChannelInterceptor(
             }
         }
 
-        return message
+        if (accessor.command == StompCommand.SEND) {
+            val destination = accessor.destination.orEmpty()
+            if (destination.startsWith(ROOM_SEND_PREFIX) && destination.endsWith("/send")) {
+                val roomId = destination.removePrefix(ROOM_SEND_PREFIX).substringBefore('/').toLongOrNull()
+                    ?: throw IllegalArgumentException("잘못된 발행 경로: $destination")
+
+                val userId = accessor.user?.getUserId()
+                    ?: throw IllegalStateException("인증 정보 없음")
+
+                roomAccessAuthorizer.assertMemberOf(roomId, userId)
+            }
+        }
+
+        return MessageBuilder.createMessage(message.payload, accessor.messageHeaders)
     }
 
     private fun getTokenFromNativeHeader(
