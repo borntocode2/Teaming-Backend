@@ -19,10 +19,10 @@ private const val PREFIX = "rooms"
 @Controller
 @MessageMapping(PREFIX)
 @Tag(
-    name = "채팅 API",
+    name = "채팅 API (웹소캣)",
     description = "AsyncAPI 문서 링크 첨부 예정"
 )
-class ChatController(
+class ChatWsController(
     private val chatService: ChatService,
     private val messaging: SimpMessagingTemplate
 ) {
