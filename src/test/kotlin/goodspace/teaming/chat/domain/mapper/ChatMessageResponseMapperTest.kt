@@ -1,8 +1,8 @@
 package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.chat.dto.ChatMessageResponseDto
-import goodspace.teaming.chat.dto.MessageAttachmentDto
-import goodspace.teaming.chat.dto.SenderSummaryDto
+import goodspace.teaming.chat.dto.MessageAttachmentResponseDto
+import goodspace.teaming.chat.dto.SenderSummaryResponseDto
 import goodspace.teaming.fixture.FileFixture
 import goodspace.teaming.fixture.RoomFixture
 import goodspace.teaming.fixture.TeamingUserFixture
@@ -37,7 +37,7 @@ class ChatMessageResponseMapperTest {
 
     @BeforeEach
     fun setupMocks() {
-        every { senderSummaryMapper.map(any(), any()) } returns SenderSummaryDto(
+        every { senderSummaryMapper.map(any(), any()) } returns SenderSummaryResponseDto(
             id = DEFAULT_USER_ID,
             name = "Sender Name",
             avatarUrl = "https://cdn/avatar.png"
@@ -201,10 +201,10 @@ class ChatMessageResponseMapperTest {
         previewUrl: String,
         thumbnailUrl: String,
         downloadUrl: String,
-    ): MessageAttachmentDto {
+    ): MessageAttachmentResponseDto {
         val file = fixture.getInstanceWith(room, user)
 
-        return MessageAttachmentDto(
+        return MessageAttachmentResponseDto(
             fileId = fileId,
             sortOrder = sortOrder,
             name = file.name,
