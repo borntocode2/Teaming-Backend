@@ -1,6 +1,5 @@
 package goodspace.teaming.chat.controller
 
-import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.ChatSendRequestDto
 import goodspace.teaming.chat.service.ChatService
 import goodspace.teaming.global.security.getUserId
@@ -10,7 +9,6 @@ import org.springframework.messaging.handler.annotation.MessageExceptionHandler
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.simp.SimpMessagingTemplate
-import org.springframework.messaging.simp.annotation.SubscribeMapping
 import org.springframework.stereotype.Controller
 import java.security.Principal
 
@@ -37,16 +35,6 @@ class ChatWsController(
         val savedMessage = chatService.saveMessage(senderId, roomId, requestDto)
 
         messaging.convertAndSend("/topic/$PREFIX/$roomId", savedMessage)
-    }
-
-    @SubscribeMapping("/{roomId}/initial")
-    fun initialHistory(
-        @DestinationVariable roomId: Long,
-        principal: Principal
-    ): List<ChatMessageResponseDto> {
-        val userId = principal.getUserId()
-
-        return chatService.findRecentMessages(userId, roomId)
     }
 
     /**
