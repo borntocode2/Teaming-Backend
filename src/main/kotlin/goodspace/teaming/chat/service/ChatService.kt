@@ -1,5 +1,6 @@
 package goodspace.teaming.chat.service
 
+import goodspace.teaming.chat.dto.ChatMessagePageResponseDto
 import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.ChatSendRequestDto
 
@@ -10,9 +11,10 @@ interface ChatService {
         requestDto: ChatSendRequestDto
     ): ChatMessageResponseDto
 
-    fun findRecentMessages(
+    fun findMessages(
         userId: Long,
         roomId: Long,
-        amount: Int = 50
-    ): List<ChatMessageResponseDto>
+        amount: Int = 50,
+        beforeMessageId: Long? = null
+    ): ChatMessagePageResponseDto
 }

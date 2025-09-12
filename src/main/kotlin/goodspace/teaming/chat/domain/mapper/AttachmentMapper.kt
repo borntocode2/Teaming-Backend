@@ -1,6 +1,6 @@
 package goodspace.teaming.chat.domain.mapper
 
-import goodspace.teaming.chat.dto.MessageAttachmentDto
+import goodspace.teaming.chat.dto.MessageAttachmentResponseDto
 import goodspace.teaming.global.entity.file.AntiVirusScanStatus
 import goodspace.teaming.global.entity.file.Attachment
 import goodspace.teaming.global.entity.file.FileType
@@ -15,7 +15,7 @@ class AttachmentMapper(
     @Value("\${mapper.attachment.thumbnail-size:256}")
     private val thumbnailSize: Int = 256
 ) {
-    fun map(attachment: Attachment): MessageAttachmentDto {
+    fun map(attachment: Attachment): MessageAttachmentResponseDto {
         val file = attachment.file
         val avPassed = file.antiVirusScanStatus == AntiVirusScanStatus.PASSED
         val transcodeOk = when (file.type) {
@@ -23,7 +23,7 @@ class AttachmentMapper(
             else -> true
         }
 
-        return MessageAttachmentDto(
+        return MessageAttachmentResponseDto(
             fileId = requireNotNull(file.id),
             sortOrder = attachment.sortOrder,
             name = file.name,

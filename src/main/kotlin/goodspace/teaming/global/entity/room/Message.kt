@@ -17,10 +17,6 @@ import org.hibernate.annotations.SQLRestriction
             name = "uk_chat_msg_room_sender_client",
             columnNames = ["room_id", "sender_id", "client_message_id"]
         )
-    ],
-    indexes = [
-        Index(name = "idx_chat_msg_room_created_at", columnList = "room_id, created_at"),
-        Index(name = "idx_chat_msg_sender_created_at", columnList = "sender_id, created_at")
     ]
 )
 @SQLDelete(sql = "UPDATE message SET deleted = true, deleted_at = NOW() WHERE id = ?")

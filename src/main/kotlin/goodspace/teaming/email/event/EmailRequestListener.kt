@@ -1,7 +1,6 @@
-package goodspace.teaming.email.infra
+package goodspace.teaming.email.event
 
 import goodspace.teaming.email.domain.MailSender
-import goodspace.teaming.email.event.EmailSendRequestEvent
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Component

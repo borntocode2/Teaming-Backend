@@ -4,7 +4,7 @@ import goodspace.teaming.global.entity.file.AntiVirusScanStatus
 import goodspace.teaming.global.entity.file.FileType
 import goodspace.teaming.global.entity.file.TranscodeStatus
 
-data class MessageAttachmentDto(
+data class MessageAttachmentResponseDto(
     val fileId: Long,
     val sortOrder: Int,
     val name: String,

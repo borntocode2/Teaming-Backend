@@ -1,8 +1,10 @@
 package goodspace.teaming.chat.service
 
 import goodspace.teaming.chat.domain.mapper.ChatMessageResponseMapper
+import goodspace.teaming.chat.dto.ChatMessagePageResponseDto
 import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.ChatSendRequestDto
+import goodspace.teaming.chat.event.ChatMessageCreatedEvent
 import goodspace.teaming.global.entity.file.AntiVirusScanStatus
 import goodspace.teaming.global.entity.file.Attachment
 import goodspace.teaming.global.entity.file.File
@@ -15,8 +17,11 @@ import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.MessageRepository
 import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Slice
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -29,6 +34,7 @@ class ChatServiceImpl(
     private val messageRepository: MessageRepository,
     private val fileRepository: FileRepository,
     private val chatMessageResponseMapper: ChatMessageResponseMapper,
+    private val eventPublisher: ApplicationEventPublisher,
     @Value("\${chat.recent-message.lower-bound:1}")
     private val recentMessageLowerBound: Int,
     @Value("\${chat.recent-message.upper-bound:200}")
@@ -43,22 +49,41 @@ class ChatServiceImpl(
 
         val message = getExistsOrCreate(user, room, requestDto)
 
-        return chatMessageResponseMapper.map(message)
+        val responseDto = chatMessageResponseMapper.map(message)
+        eventPublisher.publishEvent(ChatMessageCreatedEvent(roomId, userId, responseDto))
+
+        return responseDto
     }
 
     @Transactional(readOnly = true)
-    override fun findRecentMessages(userId: Long, roomId: Long, amount: Int): List<ChatMessageResponseDto> {
+    override fun findMessages(
+        userId: Long,
+        roomId: Long,
+        amount: Int,
+        beforeMessageId: Long?
+    ): ChatMessagePageResponseDto {
         val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
 
         val size = amount.coerceIn(recentMessageLowerBound, recentMessageUpperBound)
+        val pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "id"))
 
-        return messageRepository.findByRoomOrderByCreatedAtDesc(userRoom.room, PageRequest.of(0, size))
-            .map { chatMessageResponseMapper.map(it) }
+        val messageSlice = if (beforeMessageId == null) {
+            messageRepository.findByRoomOrderByIdDesc(userRoom.room, pageable)
+        } else {
+            messageRepository.findByRoomAndIdLessThanOrderByIdDesc(userRoom.room, beforeMessageId, pageable)
+        }
+
+        return ChatMessagePageResponseDto(
+            items = messageSlice.content.map { chatMessageResponseMapper.map(it) },
+            hasNext = messageSlice.hasNext(),
+            nextCursor = messageSlice.nextCursor()
+        )
     }
 
     private fun getExistsOrCreate(user: User, room: Room, requestDto: ChatSendRequestDto): Message {
-        val existMessage = messageRepository.findByClientMessageIdAndRoomAndSender(requestDto.clientMessageId, room, user)
+        val existMessage =
+            messageRepository.findByClientMessageIdAndRoomAndSender(requestDto.clientMessageId, room, user)
         if (existMessage != null) {
             return existMessage
         }
@@ -116,5 +141,9 @@ class ChatServiceImpl(
                 message.attachments.add(Attachment(message = message, file = file, sortOrder = idx))
             }
         }
+    }
+
+    private fun Slice<Message>.nextCursor(): Long? {
+        return this.content.lastOrNull()?.id
     }
 }
