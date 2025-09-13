@@ -10,6 +10,6 @@ data class ChatMessageResponseDto(
     val type: MessageType,
     val content: String?,
     val createdAt: LocalDateTime,
-    val sender: SenderSummaryDto,
-    val attachments: List<MessageAttachmentDto> = emptyList()
+    val sender: SenderSummaryResponseDto,
+    val attachments: List<MessageAttachmentResponseDto> = emptyList()
 )

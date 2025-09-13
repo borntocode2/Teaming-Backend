@@ -3,6 +3,7 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.domain.mapper.ChatMessageResponseMapper
 import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.ChatSendRequestDto
+import goodspace.teaming.chat.event.ChatMessageCreatedEvent
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.FileRepository
@@ -16,7 +17,12 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
+import org.springframework.test.context.event.RecordApplicationEvents
 import java.lang.IllegalArgumentException
 import kotlin.math.min
 
@@ -26,17 +32,20 @@ private const val WRONG_ID = 9999L
 private const val RECENT_MESSAGE_LOWER_BOUND = 10
 private const val RECENT_MESSAGE_UPPER_BOUND = 50
 
+@RecordApplicationEvents
 class ChatServiceTest {
     private val userRoomRepository = mockk<UserRoomRepository>()
     private val messageRepository = mockk<MessageRepository>()
     private val fileRepository = mockk<FileRepository>()
     private val chatMessageResponseMapper = mockk<ChatMessageResponseMapper>()
+    private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
     private val chatService: ChatService = ChatServiceImpl(
         userRoomRepository = userRoomRepository,
         messageRepository = messageRepository,
         fileRepository = fileRepository,
         chatMessageResponseMapper = chatMessageResponseMapper,
+        eventPublisher = eventPublisher,
         recentMessageLowerBound = RECENT_MESSAGE_LOWER_BOUND,
         recentMessageUpperBound = RECENT_MESSAGE_UPPER_BOUND
     )
@@ -50,7 +59,7 @@ class ChatServiceTest {
 
     @BeforeEach
     fun mocking() {
-        clearMocks(userRoomRepository, messageRepository, fileRepository, chatMessageResponseMapper)
+        clearMocks(userRoomRepository, messageRepository, fileRepository, chatMessageResponseMapper, eventPublisher)
 
         every { userRoomRepository.findByRoomIdAndUserId(any(), any()) } returns null
         every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
@@ -60,11 +69,25 @@ class ChatServiceTest {
         every { messageRepository.findByClientMessageIdAndRoomAndSender(any(), any(), any()) } returns null
         every { messageRepository.save(any<Message>()) } answers { firstArg() }
 
-        // 최근 메시지 조회: 페이지 사이즈와 existingMessagesCount에 따라 List<Message> 생성
-        every { messageRepository.findByRoomOrderByCreatedAtDesc(any(), any<PageRequest>()) } answers {
-            val pageRequest = secondArg<PageRequest>()
-            val size = min(pageRequest.pageSize, existingMessagesCount)
-            List(size) { mockk<Message>(relaxed = true) }
+        // 공용: pageable과 existingMessagesCount를 기반으로 Slice 생성
+        fun <T> sliceOf(pageable: Pageable, availableCount: Int, factory: () -> T): Slice<T> {
+            val requested = pageable.pageSize
+            val contentSize = min(requested, availableCount)
+            val content = List(contentSize) { factory() }
+            val hasNext = availableCount > contentSize
+            return SliceImpl(content, pageable, hasNext)
+        }
+
+        // 최신 메시지 페이지 (id desc)
+        every { messageRepository.findByRoomOrderByIdDesc(any(), any<PageRequest>()) } answers {
+            val pageable = secondArg<PageRequest>()
+            sliceOf(pageable, existingMessagesCount) { mockk<Message>(relaxed = true) }
+        }
+
+        // 특정 id 미만 페이징 (필요 시 대비)
+        every { messageRepository.findByRoomAndIdLessThanOrderByIdDesc(any(), any(), any<PageRequest>()) } answers {
+            val pageable = thirdArg<PageRequest>()
+            sliceOf(pageable, existingMessagesCount) { mockk<Message>(relaxed = true) }
         }
 
         every { chatMessageResponseMapper.map(any<Message>()) } returns mockk<ChatMessageResponseDto>(relaxed = true)
@@ -96,22 +119,34 @@ class ChatServiceTest {
             assertThatThrownBy { chatService.saveMessage(USER_ID, WRONG_ID, request) }
                 .isInstanceOf(IllegalArgumentException::class.java)
         }
+
+        @Test
+        fun `메시지 저장 이벤트가 발생한다`() {
+            // given
+            val request = getChatSendRequestDto()
+
+            // when
+            chatService.saveMessage(USER_ID, ROOM_ID, request)
+
+            // then
+            verify(exactly = 1) { eventPublisher.publishEvent(ofType<ChatMessageCreatedEvent>()) }
+        }
     }
 
     @Nested
-    @DisplayName("findRecentMessages")
-    inner class FindRecentMessages {
+    @DisplayName("findMessages")
+    inner class FindMessages {
         @ParameterizedTest
         @ValueSource(ints = [20, 30, 40])
         fun `amount만큼 최신 메시지를 조회한다`(requestAmount: Int) {
             // given
-            existingMessagesCount = calculateEnoughMessagesCountBy(requestAmount)
+            existingMessagesCount = 10_000
 
             // when
-            val result = chatService.findRecentMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
-            assertThat(result.size).isEqualTo(requestAmount)
+            assertThat(result.items.size).isEqualTo(requestAmount)
         }
 
         @Test
@@ -121,10 +156,11 @@ class ChatServiceTest {
             val requestAmount = 40
 
             // when
-            val result = chatService.findRecentMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
-            assertThat(result.size).isEqualTo(existingMessagesCount)
+            assertThat(result.items.size).isEqualTo(existingMessagesCount)
+            assertThat(result.hasNext).isFalse()
         }
 
         @ParameterizedTest
@@ -134,23 +170,25 @@ class ChatServiceTest {
             existingMessagesCount = 10_000
 
             // when
-            val result = chatService.findRecentMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
-            assertThat(result.size).isEqualTo(RECENT_MESSAGE_UPPER_BOUND)
+            assertThat(result.items.size).isEqualTo(RECENT_MESSAGE_UPPER_BOUND)
+            assertThat(result.hasNext).isTrue()
         }
 
         @ParameterizedTest
         @ValueSource(ints = [-100, -1, 0, 1])
         fun `너무 적은 양의 메시지를 요청하면, 하한선만큼 제공한다`(requestAmount: Int) {
             // given
-            existingMessagesCount = calculateEnoughMessagesCountBy(requestAmount)
+            existingMessagesCount = 10_000
 
             // when
-            val result = chatService.findRecentMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
-            assertThat(result.size).isEqualTo(RECENT_MESSAGE_LOWER_BOUND)
+            assertThat(result.items.size).isEqualTo(RECENT_MESSAGE_LOWER_BOUND)
+            assertThat(result.hasNext).isTrue()
         }
     }
 
@@ -169,9 +207,5 @@ class ChatServiceTest {
             clientMessageId = "client-2",
             attachmentFileIdsInOrder = emptyList()
         )
-    }
-
-    private fun calculateEnoughMessagesCountBy(requestAmount: Int): Int {
-        return requestAmount.coerceAtLeast(1) * 10
     }
 }

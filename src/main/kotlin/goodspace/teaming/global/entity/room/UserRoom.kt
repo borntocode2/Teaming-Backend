@@ -24,7 +24,7 @@ class UserRoom(
     @Column(nullable = false)
     val roomRole: RoomRole,
 
-    val lastReadMessageId: Long? = null,
+    var lastReadMessageId: Long? = null,
 
     @Column(nullable = false)
     val paid: Boolean = false

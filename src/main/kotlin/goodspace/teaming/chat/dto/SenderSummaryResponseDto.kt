@@ -1,6 +1,6 @@
 package goodspace.teaming.chat.dto
 
-data class SenderSummaryDto(
+data class SenderSummaryResponseDto(
     val id: Long?,
     val name: String,
     val avatarUrl: String? = null
