@@ -3,7 +3,9 @@ package goodspace.teaming.chat.domain.mapper
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.MessageRepository
+import org.springframework.stereotype.Component
 
+@Component
 class RoomInfoMapper(
     private val messageRepository: MessageRepository,
     private val lastMessagePreviewMapper: LastMessagePreviewMapper
