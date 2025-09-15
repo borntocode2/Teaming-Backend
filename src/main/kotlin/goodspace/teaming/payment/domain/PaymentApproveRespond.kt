@@ -1,0 +1,57 @@
+package goodspace.teaming.payment.domain
+
+import goodspace.teaming.global.entity.BaseEntity
+import jakarta.persistence.*
+import java.time.LocalDateTime
+
+class PaymentApproveRespond (
+    val resultCode: String,
+    val resultMsg: String,
+    val tid: String,
+    val cancelledTid: String? = null,
+    val orderId: String,
+
+    val ediDate: LocalDateTime? = null,
+    val signature: String,
+    val status: String,
+    val paidAt: LocalDateTime? = null,
+    val failedAt: LocalDateTime? = null,
+    val cancelledAt: LocalDateTime? = null,
+    val payMethod: String,
+    val amount: Int,
+    val balanceAmt: Int,
+    val goodsName: String,
+    val mallReserved: String? = null,
+    val useEscrow: Boolean,
+    val currency: String,
+    val channel: String,
+    val approveNo: String,
+    val buyerName: String? = null,
+    val buyerTel: String? = null,
+    val buyerEmail: String? = null,
+    val receiptUrl: String,
+    val mallUserId: String? = null,
+    val issuedCashReceipt: Boolean
+
+) : BaseEntity() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+
+    // 카드 정보
+    @Embedded
+    var card: CardInfo? = null
+}
+
+@Embeddable
+class CardInfo(
+    val cardCode: String,
+    val cardName: String,
+    val cardNum: String,
+    val cardQuota: Int,
+    val isInterestFree: Boolean,
+    val cardType: String,
+    val canPartCancel: Boolean,
+    val acquCardCode: String,
+    val acquCardName: String
+)

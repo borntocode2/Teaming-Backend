@@ -10,4 +10,11 @@ class PaymentVerifyRespondDto (
     val mallReserved: String,
     val authToken: String,
     val signature: String
-)
+){
+    fun PaymentVerifyRespondDto.toApproveRequestDto(): PaymentApproveRequestDto{
+        return PaymentApproveRequestDto(
+            tid = this.tid,
+            amount = this.amount
+        )
+    }
+}
