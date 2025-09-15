@@ -13,7 +13,6 @@ class PaymentVerifyRespondDto (
 ){
     fun PaymentVerifyRespondDto.toApproveRequestDto(): PaymentApproveRequestDto{
         return PaymentApproveRequestDto(
-            tid = this.tid,
             amount = this.amount
         )
     }

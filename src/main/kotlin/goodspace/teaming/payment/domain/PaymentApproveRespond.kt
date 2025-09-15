@@ -4,11 +4,19 @@ import goodspace.teaming.global.entity.BaseEntity
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
-class PaymentApproveRespond (
+@Entity
+@Table(name = "payment_approve_respond")
+class PaymentApproveRespond(
+
     val resultCode: String,
     val resultMsg: String,
+
+    @Column(unique = true)
     val tid: String,
+
     val cancelledTid: String? = null,
+
+    @Column(unique = true)
     val orderId: String,
 
     val ediDate: LocalDateTime? = null,
