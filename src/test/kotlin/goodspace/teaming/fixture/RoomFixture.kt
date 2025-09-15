@@ -29,11 +29,12 @@ enum class RoomFixture(
         "elite invite"
     );
 
-    fun getInstance(): Room {
+    fun getInstance(memberCount: Int = 5): Room {
         return Room(
             title = title,
             type = type,
-            inviteCode = inviteCode
+            inviteCode = inviteCode,
+            memberCount = memberCount
         )
     }
 }

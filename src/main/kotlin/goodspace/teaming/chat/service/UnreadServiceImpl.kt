@@ -2,11 +2,17 @@ package goodspace.teaming.chat.service
 
 import goodspace.teaming.chat.domain.mapper.RoomUnreadCountMapper
 import goodspace.teaming.chat.dto.RoomUnreadCountResponseDto
+import goodspace.teaming.chat.event.ReadBoundaryUpdateEvent
+import goodspace.teaming.global.entity.room.PaymentStatus
+import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.MessageRepository
 import goodspace.teaming.global.repository.UserRoomRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.lang.IllegalArgumentException
+
+private const val NOT_PAID = "결제되지 않아 티밍룸에 엑세스할 수 없습니다."
 
 private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
 
@@ -14,7 +20,8 @@ private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
 class UnreadServiceImpl(
     private val userRoomRepository: UserRoomRepository,
     private val messageRepository: MessageRepository,
-    private val roomUnreadCountMapper: RoomUnreadCountMapper
+    private val roomUnreadCountMapper: RoomUnreadCountMapper,
+    private val eventPublisher: ApplicationEventPublisher
 ) : UnreadService {
     @Transactional(readOnly = true)
     override fun getUnreadCounts(userId: Long): List<RoomUnreadCountResponseDto> {
@@ -31,6 +38,8 @@ class UnreadServiceImpl(
         val userRoom = (userRoomRepository.findByRoomIdAndUserId(roomId, userId)
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND))
 
+        assertPaymentStatus(userRoom)
+
         val latestMessageId = messageRepository.findLatestMessageId(userRoom.room)
             // 메시지가 하나도 없는 방이라면 DTO를 즉시 반환한다
             ?: return roomUnreadCountMapper.map(userRoom)
@@ -39,13 +48,29 @@ class UnreadServiceImpl(
         val clampedLastReadMessageId = clampRequestedLastReadId(lastReadMessageId, latestMessageId)
         val newLastReadId = nextMonotonicLastReadId(currentReadId, clampedLastReadMessageId)
 
+        val shouldRaise = shouldRaise(newLastReadId, currentReadId)
         if (shouldRaise(newLastReadId, currentReadId)) {
             userRoomRepository.raiseLastReadMessageId(userId, roomId, newLastReadId!!)
         }
 
         val updatedUserRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)!!
 
-        return roomUnreadCountMapper.map(updatedUserRoom)
+        val responseDto = roomUnreadCountMapper.map(updatedUserRoom)
+
+        if (shouldRaise) {
+            eventPublisher.publishEvent(ReadBoundaryUpdateEvent(
+                roomId = roomId,
+                userId = userId,
+                lastReadMessageId = newLastReadId,
+                unreadCount = responseDto.unreadCount
+            ))
+        }
+
+        return responseDto
+    }
+
+    private fun assertPaymentStatus(userRoom: UserRoom) {
+        require(userRoom.paymentStatus != PaymentStatus.NOT_PAID) { NOT_PAID }
     }
 
     /**

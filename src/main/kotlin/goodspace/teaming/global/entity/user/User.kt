@@ -1,9 +1,12 @@
 package goodspace.teaming.global.entity.user
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.security.RefreshToken
 import jakarta.persistence.*
+import jakarta.persistence.CascadeType.*
 import jakarta.persistence.EnumType.*
+import jakarta.persistence.FetchType.*
 import jakarta.persistence.GenerationType.*
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
@@ -32,12 +35,19 @@ abstract class User(
     @GeneratedValue(strategy = IDENTITY)
     val id: Long? = null
 
-    @OneToOne(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToOne(fetch = LAZY, cascade = [ALL], orphanRemoval = true)
     private val refreshToken: RefreshToken = RefreshToken()
+
+    @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
+    val userRooms = mutableListOf<UserRoom>()
 
     var token = refreshToken.tokenValue
         set(value) {
             field = value
             refreshToken.tokenValue = value
         }
+
+    fun addUserRoom(userRoom: UserRoom) {
+        userRooms.add(userRoom)
+    }
 }
