@@ -1,6 +1,8 @@
 package goodspace.teaming.global.repository
 
+import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.room.UserRoom
+import goodspace.teaming.global.entity.user.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -10,6 +12,8 @@ interface UserRoomRepository : JpaRepository<UserRoom, Long> {
     fun findByRoomIdAndUserId(roomId: Long, userId: Long): UserRoom?
 
     fun existsByRoomIdAndUserId(roomId: Long, userId: Long): Boolean
+
+    fun existsByRoomAndUser(room: Room, user: User): Boolean
 
     fun findByUserId(userId: Long): List<UserRoom>
 

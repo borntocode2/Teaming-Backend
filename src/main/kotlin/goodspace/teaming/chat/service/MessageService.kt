@@ -4,7 +4,7 @@ import goodspace.teaming.chat.dto.ChatMessagePageResponseDto
 import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.ChatSendRequestDto
 
-interface ChatService {
+interface MessageService {
     fun saveMessage(
         userId: Long,
         roomId: Long,

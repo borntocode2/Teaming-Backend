@@ -9,9 +9,7 @@ import goodspace.teaming.global.entity.file.AntiVirusScanStatus
 import goodspace.teaming.global.entity.file.Attachment
 import goodspace.teaming.global.entity.file.File
 import goodspace.teaming.global.entity.file.FileType
-import goodspace.teaming.global.entity.room.Message
-import goodspace.teaming.global.entity.room.MessageType
-import goodspace.teaming.global.entity.room.Room
+import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.MessageRepository
@@ -26,10 +24,11 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
+private const val NOT_PAID = "결제되지 않아 티밍룸에 엑세스할 수 없습니다."
 private const val NOT_EXIST_FILE = "존재하지 않는 파일이 포함되어 있습니다."
 
 @Service
-class ChatServiceImpl(
+class MessageServiceImpl(
     private val userRoomRepository: UserRoomRepository,
     private val messageRepository: MessageRepository,
     private val fileRepository: FileRepository,
@@ -39,11 +38,14 @@ class ChatServiceImpl(
     private val recentMessageLowerBound: Int,
     @Value("\${chat.recent-message.upper-bound:200}")
     private val recentMessageUpperBound: Int,
-) : ChatService {
+) : MessageService {
     @Transactional
     override fun saveMessage(userId: Long, roomId: Long, requestDto: ChatSendRequestDto): ChatMessageResponseDto {
         val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+
+        assertPaymentStatus(userRoom)
+
         val user = userRoom.user
         val room = userRoom.room
 
@@ -64,6 +66,8 @@ class ChatServiceImpl(
     ): ChatMessagePageResponseDto {
         val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+
+        assertPaymentStatus(userRoom)
 
         val size = amount.coerceIn(recentMessageLowerBound, recentMessageUpperBound)
         val pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "id"))
@@ -145,5 +149,9 @@ class ChatServiceImpl(
 
     private fun Slice<Message>.nextCursor(): Long? {
         return this.content.lastOrNull()?.id
+    }
+
+    private fun assertPaymentStatus(userRoom: UserRoom) {
+        require(userRoom.paymentStatus != PaymentStatus.NOT_PAID) { NOT_PAID }
     }
 }
