@@ -1,35 +1,119 @@
 package goodspace.teaming.chat.controller
 
-import goodspace.teaming.chat.dto.ChatMessagePageResponseDto
-import goodspace.teaming.chat.dto.MarkReadRequestDto
-import goodspace.teaming.chat.dto.RoomUnreadCountResponseDto
-import goodspace.teaming.chat.service.ChatService
+import goodspace.teaming.chat.dto.*
+import goodspace.teaming.chat.service.MessageService
+import goodspace.teaming.chat.service.RoomService
 import goodspace.teaming.chat.service.UnreadService
 import goodspace.teaming.global.security.getUserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.security.Principal
+
+private val NO_CONTENT = ResponseEntity.noContent().build<Void>()
 
 @RestController
 @RequestMapping("/rooms")
 @Tag(
     name = "채팅 API (HTTP)",
-    description = "HTTP 프로토콜을 사용하는 채팅 API들입니다."
+    description = "HTTP 프로토콜을 사용하는 채팅 API입니다."
 )
 class ChatRestController(
     private val unreadService: UnreadService,
-    private val chatService: ChatService
+    private val messageService: MessageService,
+    private val roomService: RoomService
 ) {
+    @PostMapping
+    @Operation(
+        summary = "방 생성",
+        description = "티밍룸을 생성합니다."
+    )
+    fun createRoom(
+        principal: Principal,
+        @RequestBody requestDto: RoomCreateRequestDto
+    ): ResponseEntity<Void> {
+        val userId = principal.getUserId()
+
+        roomService.createRoom(userId, requestDto)
+
+        return NO_CONTENT
+    }
+
+    @GetMapping
+    @Operation(
+        summary = "방 조회",
+        description = "해당 사용자가 참여한 모든 티밍룸 정보를 조회합니다."
+    )
+    fun getRooms(
+        principal: Principal
+    ): ResponseEntity<List<RoomInfoResponseDto>> {
+        val userId = principal.getUserId()
+
+        val response = roomService.getRooms(userId)
+
+        return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/{roomId}")
+    @Operation(
+        summary = "방 떠나기",
+        description = "티밍룸을 떠납니다. 사전에 결제가 완료되어야 있어야 합니다."
+    )
+    fun leaveRoom(
+        principal: Principal,
+        @PathVariable roomId: Long
+    ): ResponseEntity<Void> {
+        val userId = principal.getUserId()
+
+        roomService.leaveRoom(userId, roomId)
+
+        return NO_CONTENT
+    }
+
+    @PatchMapping("/{roomId}/success")
+    @Operation(
+        summary = "팀플 성공",
+        description = "해당 방의 팀플을 종료합니다."
+    )
+    fun successTeaming(
+        principal: Principal,
+        @PathVariable roomId: Long
+    ): ResponseEntity<Void> {
+        val userId = principal.getUserId()
+
+        roomService.setSuccess(userId, roomId)
+
+        return NO_CONTENT
+    }
+
+    @PostMapping("/invite")
+    @Operation(
+        summary = "초대 수락",
+        description = "초대 코드를 통해 티밍룸에 들어갑니다."
+    )
+    fun acceptInvite(
+        principal: Principal,
+        @RequestBody requestDto: InviteAcceptRequestDto
+    ): ResponseEntity<RoomInfoResponseDto> {
+        val userId = principal.getUserId()
+
+        val response = roomService.acceptInvite(userId, requestDto)
+
+        return ResponseEntity.ok(response)
+    }
+
     @GetMapping("/unread")
     @Operation(
         summary = "읽지 않은 메시지 개수 조회",
         description = "모든 방의 읽지 않은 메시지 개수를 조회합니다."
     )
-    fun getUnreadCounts(principal: Principal): List<RoomUnreadCountResponseDto> {
+    fun getUnreadCounts(principal: Principal): ResponseEntity<List<RoomUnreadCountResponseDto>> {
         val userId = principal.getUserId()
 
-        return unreadService.getUnreadCounts(userId)
+        val response = unreadService.getUnreadCounts(userId)
+
+        return ResponseEntity.ok(response)
     }
 
     @GetMapping("/{roomId}/messages")
@@ -47,10 +131,12 @@ class ChatRestController(
         @PathVariable roomId: Long,
         @RequestParam(defaultValue = "50") limit: Int,
         @RequestParam(required = false) cursor: Long?
-    ): ChatMessagePageResponseDto {
+    ): ResponseEntity<ChatMessagePageResponseDto> {
         val userId = principal.getUserId()
 
-        return chatService.findMessages(userId, roomId, limit.coerceIn(1, 200), cursor)
+        val response = messageService.findMessages(userId, roomId, limit, cursor)
+
+        return ResponseEntity.ok(response)
     }
 
     @PostMapping("/{roomId}/read")

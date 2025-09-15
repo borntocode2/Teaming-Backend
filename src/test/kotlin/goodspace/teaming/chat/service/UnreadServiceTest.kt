@@ -2,6 +2,7 @@ package goodspace.teaming.chat.service
 
 import goodspace.teaming.chat.domain.mapper.RoomUnreadCountMapper
 import goodspace.teaming.chat.dto.RoomUnreadCountResponseDto
+import goodspace.teaming.chat.event.ReadBoundaryUpdateEvent
 import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
@@ -14,19 +15,29 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.test.context.event.RecordApplicationEvents
 
 private const val USER_ID = 10L
 private const val ROOM_ID = 100L
 
+@RecordApplicationEvents
 class UnreadServiceTest {
     private val userRoomRepository = mockk<UserRoomRepository>(relaxed = true)
     private val messageRepository = mockk<MessageRepository>(relaxed = true)
     private val roomUnreadCountMapper = mockk<RoomUnreadCountMapper>(relaxed = true)
-    private val unreadService = UnreadServiceImpl(userRoomRepository, messageRepository, roomUnreadCountMapper)
+    private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
+
+    private val unreadService = UnreadServiceImpl(
+        userRoomRepository = userRoomRepository,
+        messageRepository = messageRepository,
+        roomUnreadCountMapper = roomUnreadCountMapper,
+        eventPublisher = eventPublisher
+    )
 
     @BeforeEach
     fun setUp() {
-        clearMocks(userRoomRepository, messageRepository, roomUnreadCountMapper)
+        clearMocks(userRoomRepository, messageRepository, roomUnreadCountMapper, eventPublisher)
     }
 
     @Nested
@@ -35,12 +46,12 @@ class UnreadServiceTest {
         @Test
         fun `사용자의 모든 티밍룸에 대한 정보를 DTO로 변환해 반환한다`() {
             // given
-            val userRoom1 = userRoom(lastReadId = 5L)
-            val userRoom2 = userRoom(lastReadId = 7L)
-            every { userRoomRepository.findByUserId(USER_ID) } returns listOf(userRoom1, userRoom2)
-
+            val userRoom1 = userRoom(5L)
+            val userRoom2 = userRoom(7L)
             val dto1 = mockk<RoomUnreadCountResponseDto>()
             val dto2 = mockk<RoomUnreadCountResponseDto>()
+
+            every { userRoomRepository.findByUserId(USER_ID) } returns listOf(userRoom1, userRoom2)
             every { roomUnreadCountMapper.map(userRoom1) } returns dto1
             every { roomUnreadCountMapper.map(userRoom2) } returns dto2
 
@@ -66,28 +77,77 @@ class UnreadServiceTest {
         }
 
         @Test
-        fun `요청 값이 null일 경우, 최신 메시지까지 읽은 것으로 판단해 포인터를 상승시킨다`() {
+        fun `요청 값이 null일 경우, 최신 메시지까지 읽은 것으로 판단해 읽음 경계를 상승시킨다`() {
             // given
-            val currentReadId = 5L
-            val latestId = 10L
+            val currentReadMessageId = 5L
+            val latestMessageId = 10L
+            val existingUserRoom = userRoom(currentReadMessageId)
+            val updatedUserRoom  = userRoom(latestMessageId)
 
-            val userRoomBeforeRaise = userRoom(lastReadId = currentReadId)
-            val userRoomAfterRaise  = userRoom(lastReadId = latestId)
-
-            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoomBeforeRaise
-            every { messageRepository.findLatestMessageId(userRoomBeforeRaise.room) } returns latestId
-            every { userRoomRepository.raiseLastReadMessageId(USER_ID, ROOM_ID, latestId) } returns 1
-            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returnsMany listOf(userRoomBeforeRaise, userRoomAfterRaise)
-
-            val dto = mockk<RoomUnreadCountResponseDto>()
-            every { roomUnreadCountMapper.map(userRoomAfterRaise) } returns dto
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returnsMany listOf(existingUserRoom, updatedUserRoom)
+            every { messageRepository.findLatestMessageId(existingUserRoom.room) } returns latestMessageId
+            every { userRoomRepository.raiseLastReadMessageId(USER_ID, ROOM_ID, latestMessageId) } returns 1
+            every { roomUnreadCountMapper.map(updatedUserRoom) } returns mockk(relaxed = true)
 
             // when
-            val result = unreadService.markRead(USER_ID, ROOM_ID, lastReadMessageId = null)
+            unreadService.markRead(USER_ID, ROOM_ID, lastReadMessageId = null)
 
             // then
-            assertThat(result).isSameAs(dto)
-            verify(exactly = 1) { userRoomRepository.raiseLastReadMessageId(USER_ID, ROOM_ID, latestId) }
+            verify(exactly = 1) { userRoomRepository.raiseLastReadMessageId(USER_ID, ROOM_ID, latestMessageId) }
+        }
+
+        @Test
+        fun `이미 최신 메시지까지 읽은 상태라면 읽음 경계를 상승시키지 않는다`() {
+            // given
+            val latestMessageId = 10L
+            val userRoom = userRoom(latestMessageId)
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+            every { messageRepository.findLatestMessageId(userRoom.room) } returns latestMessageId
+            every { roomUnreadCountMapper.map(userRoom) } returns mockk(relaxed = true)
+
+            // when
+            unreadService.markRead(USER_ID, ROOM_ID, lastReadMessageId = latestMessageId)
+
+            // then
+            verify(exactly = 0) { userRoomRepository.raiseLastReadMessageId(any(), any(), any()) }
+        }
+
+        @Test
+        fun `읽음 경계를 상승시켰다면 이벤트를 발행한다`() {
+            // given
+            val currentReadMessageId = 5L
+            val latestMessageId = 10L
+            val existingUserRoom = userRoom(currentReadMessageId)
+            val updatedUserRoom  = userRoom(latestMessageId)
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returnsMany listOf(existingUserRoom, updatedUserRoom)
+            every { messageRepository.findLatestMessageId(existingUserRoom.room) } returns latestMessageId
+            every { userRoomRepository.raiseLastReadMessageId(USER_ID, ROOM_ID, latestMessageId) } returns 1
+            every { roomUnreadCountMapper.map(updatedUserRoom) } returns mockk(relaxed = true)
+
+            // when
+            unreadService.markRead(USER_ID, ROOM_ID, lastReadMessageId = null)
+
+            // then
+            verify(exactly = 1) { eventPublisher.publishEvent(any<ReadBoundaryUpdateEvent>()) }
+        }
+
+        @Test
+        fun `읽음 경계를 상승시키지 않았다면 이벤트를 발행하지 않는다`() {
+            // given: 최신 메시지까지 읽은 상태
+            val latestMessageId = 10L
+            val userRoom = userRoom(latestMessageId)
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+            every { messageRepository.findLatestMessageId(userRoom.room) } returns latestMessageId
+            every { roomUnreadCountMapper.map(userRoom) } returns mockk(relaxed = true)
+
+            // when
+            unreadService.markRead(USER_ID, ROOM_ID, lastReadMessageId = latestMessageId)
+
+            // then
+            verify(exactly = 0) { eventPublisher.publishEvent(any<ReadBoundaryUpdateEvent>()) }
         }
     }
 

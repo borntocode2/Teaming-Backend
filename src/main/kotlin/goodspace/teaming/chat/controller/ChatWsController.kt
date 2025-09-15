@@ -1,7 +1,7 @@
 package goodspace.teaming.chat.controller
 
 import goodspace.teaming.chat.dto.ChatSendRequestDto
-import goodspace.teaming.chat.service.ChatService
+import goodspace.teaming.chat.service.MessageService
 import goodspace.teaming.global.security.getUserId
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.messaging.handler.annotation.DestinationVariable
@@ -12,18 +12,19 @@ import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Controller
 import java.security.Principal
 
-private const val PREFIX = "rooms"
-
 @Controller
-@MessageMapping(PREFIX)
+@MessageMapping("/rooms")
 @Tag(
     name = "채팅 API (웹소캣)",
     description = "AsyncAPI 문서 링크 첨부 예정"
 )
 class ChatWsController(
-    private val chatService: ChatService,
+    private val messageService: MessageService,
     private val messaging: SimpMessagingTemplate
 ) {
+    /**
+     * 메시지 생성
+     */
     @MessageMapping("/{roomId}/send")
     fun sendMessage(
         @DestinationVariable roomId: Long,
@@ -32,9 +33,7 @@ class ChatWsController(
     ) {
         val senderId = principal.getUserId()
 
-        val savedMessage = chatService.saveMessage(senderId, roomId, requestDto)
-
-        messaging.convertAndSend("/topic/$PREFIX/$roomId", savedMessage)
+        messageService.saveMessage(senderId, roomId, requestDto)
     }
 
     /**

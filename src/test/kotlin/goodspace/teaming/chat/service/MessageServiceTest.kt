@@ -33,14 +33,14 @@ private const val RECENT_MESSAGE_LOWER_BOUND = 10
 private const val RECENT_MESSAGE_UPPER_BOUND = 50
 
 @RecordApplicationEvents
-class ChatServiceTest {
+class MessageServiceTest {
     private val userRoomRepository = mockk<UserRoomRepository>()
     private val messageRepository = mockk<MessageRepository>()
     private val fileRepository = mockk<FileRepository>()
     private val chatMessageResponseMapper = mockk<ChatMessageResponseMapper>()
     private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
-    private val chatService: ChatService = ChatServiceImpl(
+    private val messageService: MessageService = MessageServiceImpl(
         userRoomRepository = userRoomRepository,
         messageRepository = messageRepository,
         fileRepository = fileRepository,
@@ -55,7 +55,7 @@ class ChatServiceTest {
     // 공통 픽스쳐
     private val user = mockk<User>(relaxed = true) { every { id } returns USER_ID }
     private val room = mockk<Room>(relaxed = true) { every { id } returns ROOM_ID }
-    private val userRoom = createUserRoom(user, room)
+    private val userRoom = createUserRoom(user, room, PaymentStatus.PAID)
 
     @BeforeEach
     fun mocking() {
@@ -104,10 +104,20 @@ class ChatServiceTest {
             val request = getChatSendRequestDto()
 
             // when
-            chatService.saveMessage(USER_ID, ROOM_ID, request)
+            messageService.saveMessage(USER_ID, ROOM_ID, request)
 
             // then
             verify(exactly = 1) { messageRepository.save(any<Message>()) }
+        }
+
+        @Test
+        fun `결제되지 않았다면 예외가 발생한다`() {
+            // given
+            val request = getChatSendRequestDto()
+            userRoom.paymentStatus = PaymentStatus.NOT_PAID
+
+            // when & then
+            assertThatThrownBy { messageService.saveMessage(USER_ID, ROOM_ID, request) }
         }
 
         @Test
@@ -116,7 +126,7 @@ class ChatServiceTest {
             val request = getChatSendRequestDto()
 
             // when & then
-            assertThatThrownBy { chatService.saveMessage(USER_ID, WRONG_ID, request) }
+            assertThatThrownBy { messageService.saveMessage(USER_ID, WRONG_ID, request) }
                 .isInstanceOf(IllegalArgumentException::class.java)
         }
 
@@ -126,7 +136,7 @@ class ChatServiceTest {
             val request = getChatSendRequestDto()
 
             // when
-            chatService.saveMessage(USER_ID, ROOM_ID, request)
+            messageService.saveMessage(USER_ID, ROOM_ID, request)
 
             // then
             verify(exactly = 1) { eventPublisher.publishEvent(ofType<ChatMessageCreatedEvent>()) }
@@ -143,10 +153,21 @@ class ChatServiceTest {
             existingMessagesCount = 10_000
 
             // when
-            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = messageService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
             assertThat(result.items.size).isEqualTo(requestAmount)
+        }
+
+        @Test
+        fun `결제되지 않았다면 예외가 발생한다`() {
+            // given
+            existingMessagesCount = 10_000
+            val requestAmount = 40
+            userRoom.paymentStatus = PaymentStatus.NOT_PAID
+
+            // when & then
+            assertThatThrownBy { messageService.findMessages(USER_ID, ROOM_ID, requestAmount) }
         }
 
         @Test
@@ -156,7 +177,7 @@ class ChatServiceTest {
             val requestAmount = 40
 
             // when
-            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = messageService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
             assertThat(result.items.size).isEqualTo(existingMessagesCount)
@@ -170,7 +191,7 @@ class ChatServiceTest {
             existingMessagesCount = 10_000
 
             // when
-            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = messageService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
             assertThat(result.items.size).isEqualTo(RECENT_MESSAGE_UPPER_BOUND)
@@ -184,7 +205,7 @@ class ChatServiceTest {
             existingMessagesCount = 10_000
 
             // when
-            val result = chatService.findMessages(USER_ID, ROOM_ID, requestAmount)
+            val result = messageService.findMessages(USER_ID, ROOM_ID, requestAmount)
 
             // then
             assertThat(result.items.size).isEqualTo(RECENT_MESSAGE_LOWER_BOUND)
@@ -192,11 +213,12 @@ class ChatServiceTest {
         }
     }
 
-    private fun createUserRoom(user: User, room: Room): UserRoom {
+    private fun createUserRoom(user: User, room: Room, paymentStatus: PaymentStatus): UserRoom {
         return UserRoom(
             user = user,
             room = room,
-            roomRole = RoomRole.MEMBER
+            roomRole = RoomRole.MEMBER,
+            paymentStatus = paymentStatus
         )
     }
 

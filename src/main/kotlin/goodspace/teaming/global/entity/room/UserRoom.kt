@@ -4,6 +4,7 @@ import goodspace.teaming.global.entity.BaseEntity
 import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import jakarta.persistence.EnumType.*
+import jakarta.persistence.FetchType.*
 import jakarta.persistence.GenerationType.*
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
@@ -12,11 +13,11 @@ import org.hibernate.annotations.SQLRestriction
 @SQLDelete(sql = "UPDATE user_room SET deleted = true, deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted = false")
 class UserRoom(
-    @ManyToOne
+    @ManyToOne(fetch = LAZY)
     @JoinColumn(nullable = false)
     val user: User,
 
-    @ManyToOne
+    @ManyToOne(fetch = LAZY)
     @JoinColumn(nullable = false)
     val room: Room,
 
@@ -27,7 +28,7 @@ class UserRoom(
     var lastReadMessageId: Long? = null,
 
     @Column(nullable = false)
-    val paid: Boolean = false
+    var paymentStatus: PaymentStatus = PaymentStatus.NOT_PAID
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = IDENTITY)
