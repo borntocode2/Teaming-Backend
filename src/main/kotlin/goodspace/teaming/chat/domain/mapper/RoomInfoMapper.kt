@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component
 @Component
 class RoomInfoMapper(
     private val messageRepository: MessageRepository,
-    private val lastMessagePreviewMapper: LastMessagePreviewMapper
+    private val lastMessagePreviewMapper: LastMessagePreviewMapper,
+    private val roomMemberMapper: RoomMemberMapper
 )  {
     fun map(userRoom: UserRoom): RoomInfoResponseDto {
         val lastReadMessageId = userRoom.lastReadMessageId
@@ -25,6 +26,7 @@ class RoomInfoMapper(
             ?.orElse(null)
 
         val room = userRoom.room
+        val members = room.userRooms
 
         return RoomInfoResponseDto(
             roomId = room.id!!,
@@ -35,7 +37,8 @@ class RoomInfoMapper(
             imageVersion = room.imageVersion,
             type = room.type,
             memberCount = room.memberCount,
-            success = room.success
+            success = room.success,
+            members = members.map { roomMemberMapper.map(it) }
         )
     }
 }

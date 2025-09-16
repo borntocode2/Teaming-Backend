@@ -29,13 +29,15 @@ class RoomInfoMapperTest {
 
     private lateinit var messageRepository: MessageRepository
     private lateinit var lastMessagePreviewMapper: LastMessagePreviewMapper
+    private lateinit var roomMemberMapper: RoomMemberMapper
     private lateinit var roomInfoMapper: RoomInfoMapper
 
     @BeforeEach
     fun setUp() {
         messageRepository = mockk(relaxed = true)
         lastMessagePreviewMapper = mockk(relaxed = true)
-        roomInfoMapper = RoomInfoMapper(messageRepository, lastMessagePreviewMapper)
+        roomMemberMapper = mockk(relaxed = true)
+        roomInfoMapper = RoomInfoMapper(messageRepository, lastMessagePreviewMapper, roomMemberMapper)
     }
 
     @Test
