@@ -23,7 +23,7 @@ class GoogleAuthService (
         val params = mapOf(
             "code" to code,
             "client_id" to googleProperties.clientId,
-            "redirect_uri" to googleProperties.redirectUri
+            "redirect_uri" to googleProperties.redirectUri,
             "client_secret" to googleProperties.clientSecret,
             "grant_type" to "authorization_code",
         )
