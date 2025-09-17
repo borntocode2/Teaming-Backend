@@ -3,12 +3,17 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.dto.InviteAcceptRequestDto
 import goodspace.teaming.chat.dto.RoomCreateRequestDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
+import goodspace.teaming.chat.dto.RoomSearchResponseDto
 
 interface RoomService {
     fun createRoom(
         userId: Long,
         requestDto: RoomCreateRequestDto
     )
+
+    fun searchRoom(
+        inviteCode: String
+    ): RoomSearchResponseDto
 
     fun acceptInvite(
         userId: Long,

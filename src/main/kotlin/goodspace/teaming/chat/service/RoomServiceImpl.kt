@@ -3,9 +3,11 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
 import goodspace.teaming.chat.domain.mapper.RoomMapper
+import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
 import goodspace.teaming.chat.dto.InviteAcceptRequestDto
 import goodspace.teaming.chat.dto.RoomCreateRequestDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
+import goodspace.teaming.chat.dto.RoomSearchResponseDto
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
@@ -32,6 +34,7 @@ class RoomServiceImpl(
     private val roomRepository: RoomRepository,
     private val userRoomRepository: UserRoomRepository,
     private val roomMapper: RoomMapper,
+    private val roomSearchMapper: RoomSearchMapper,
     private val roomInfoMapper: RoomInfoMapper,
     private val inviteCodeGenerator: InviteCodeGenerator
 ) : RoomService {
@@ -57,6 +60,14 @@ class RoomServiceImpl(
 
         // 초대 코드가 중복될 시 재시도하기 위한 플러쉬
         roomRepository.saveAndFlush(room)
+    }
+
+    @Transactional(readOnly = true)
+    override fun searchRoom(inviteCode: String): RoomSearchResponseDto {
+        val room = roomRepository.findByInviteCode(inviteCode)
+            ?: throw IllegalArgumentException(WRONG_INVITE_CODE)
+
+        return roomSearchMapper.map(room)
     }
 
     @Transactional

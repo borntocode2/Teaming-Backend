@@ -55,6 +55,19 @@ class ChatRestController(
         return ResponseEntity.ok(response)
     }
 
+    @GetMapping("/search")
+    @Operation(
+        summary = "방 검색",
+        description = "초대 코드를 통해 티밍룸을 검색합니다."
+    )
+    fun searchRoom(
+        @RequestParam inviteCode: String
+    ): ResponseEntity<RoomSearchResponseDto> {
+        val response = roomService.searchRoom(inviteCode)
+
+        return ResponseEntity.ok(response)
+    }
+
     @DeleteMapping("/{roomId}")
     @Operation(
         summary = "방 떠나기",
