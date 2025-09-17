@@ -31,6 +31,8 @@ class SecurityConfig(
                     .requestMatchers("/v3/api-docs/**").permitAll() // SpringDoc
                     .requestMatchers("/email/**").permitAll()
                     .requestMatchers("/ws/**").permitAll() // 웹소캣 핸드셰이크
+                    .requestMatchers("/static/**", "/nicepay-test.html").permitAll()
+                    .requestMatchers("/payment/**").permitAll()
                     .anyRequest().authenticated()
             }
             .cors { it.configurationSource(configurationSource()) }

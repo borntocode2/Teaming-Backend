@@ -66,6 +66,9 @@ dependencies {
     // 웹소켓
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
+    //웹클라이언트(instead of RestTemplate)
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
     // AWS & S3
     implementation(platform("software.amazon.awssdk:bom:2.33.7"))
     implementation("software.amazon.awssdk:s3")
