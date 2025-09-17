@@ -45,6 +45,8 @@ class Room(
         return userRooms.isEmpty()
     }
 
+    fun currentMemberCount() = userRooms.size
+
     fun addUserRoom(userRoom: UserRoom) {
         require(userRooms.size <= memberCount) { throw IllegalStateException("방의 최대 인원 수를 초과했습니다.") }
 

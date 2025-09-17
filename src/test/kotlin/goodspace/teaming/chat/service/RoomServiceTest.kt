@@ -3,9 +3,11 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
 import goodspace.teaming.chat.domain.mapper.RoomMapper
+import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
 import goodspace.teaming.chat.dto.InviteAcceptRequestDto
 import goodspace.teaming.chat.dto.RoomCreateRequestDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
+import goodspace.teaming.chat.dto.RoomSearchResponseDto
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
@@ -40,6 +42,7 @@ class RoomServiceTest {
     private val userRoomRepository: UserRoomRepository = mockk()
     private val roomMapper: RoomMapper = mockk()
     private val roomInfoMapper: RoomInfoMapper = mockk(relaxed = true)
+    private val roomSearchMapper: RoomSearchMapper = mockk(relaxed = true)
     private val inviteCodeGenerator: InviteCodeGenerator = mockk()
 
     private val roomService = RoomServiceImpl(
@@ -48,6 +51,7 @@ class RoomServiceTest {
         userRoomRepository = userRoomRepository,
         roomMapper = roomMapper,
         roomInfoMapper = roomInfoMapper,
+        roomSearchMapper = roomSearchMapper,
         inviteCodeGenerator = inviteCodeGenerator
     )
 
@@ -122,6 +126,41 @@ class RoomServiceTest {
             // when & then
             assertThatThrownBy { roomService.createRoom(USER_ID, getRoomCreateDto()) }
                 .isInstanceOf(InviteCodeAllocationFailedException::class.java)
+        }
+    }
+
+    @Nested
+    @DisplayName("searchRoom")
+    inner class SearchRoom {
+        @Nested
+        @DisplayName("searchRoom")
+        inner class SearchRoom {
+            @Test
+            fun `초대코드로 방을 조회하고 DTO로 매핑하여 반환한다`() {
+                // given
+                val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+                    .apply { inviteCode = INVITE_CODE }
+                val dto = mockk<RoomSearchResponseDto>()
+
+                every { roomRepository.findByInviteCode(INVITE_CODE) } returns room
+                every { roomSearchMapper.map(room) } returns dto
+
+                // when
+                val result = roomService.searchRoom(INVITE_CODE)
+
+                // then
+                assertThat(result).isSameAs(dto)
+            }
+
+            @Test
+            fun `존재하지 않는 초대코드면 예외를 던진다`() {
+                // given
+                every { roomRepository.findByInviteCode(INVITE_CODE) } returns null
+
+                // when & then
+                assertThatThrownBy { roomService.searchRoom(INVITE_CODE) }
+                    .isInstanceOf(IllegalArgumentException::class.java)
+            }
         }
     }
 
