@@ -2,7 +2,7 @@ package goodspace.teaming.chat.service
 
 import goodspace.teaming.chat.domain.mapper.RoomUnreadCountMapper
 import goodspace.teaming.chat.dto.RoomUnreadCountResponseDto
-import goodspace.teaming.chat.event.ReadBoundaryUpdateEvent
+import goodspace.teaming.chat.event.ReadBoundaryUpdatedEvent
 import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
@@ -130,7 +130,7 @@ class UnreadServiceTest {
             unreadService.markRead(USER_ID, ROOM_ID, lastReadMessageId = null)
 
             // then
-            verify(exactly = 1) { eventPublisher.publishEvent(any<ReadBoundaryUpdateEvent>()) }
+            verify(exactly = 1) { eventPublisher.publishEvent(any<ReadBoundaryUpdatedEvent>()) }
         }
 
         @Test
@@ -147,7 +147,7 @@ class UnreadServiceTest {
             unreadService.markRead(USER_ID, ROOM_ID, lastReadMessageId = latestMessageId)
 
             // then
-            verify(exactly = 0) { eventPublisher.publishEvent(any<ReadBoundaryUpdateEvent>()) }
+            verify(exactly = 0) { eventPublisher.publishEvent(any<ReadBoundaryUpdatedEvent>()) }
         }
     }
 
