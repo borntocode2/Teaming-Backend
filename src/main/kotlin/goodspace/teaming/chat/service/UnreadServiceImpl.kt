@@ -2,7 +2,7 @@ package goodspace.teaming.chat.service
 
 import goodspace.teaming.chat.domain.mapper.RoomUnreadCountMapper
 import goodspace.teaming.chat.dto.RoomUnreadCountResponseDto
-import goodspace.teaming.chat.event.ReadBoundaryUpdateEvent
+import goodspace.teaming.chat.event.ReadBoundaryUpdatedEvent
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.MessageRepository
@@ -49,7 +49,7 @@ class UnreadServiceImpl(
         val newLastReadId = nextMonotonicLastReadId(currentReadId, clampedLastReadMessageId)
 
         val shouldRaise = shouldRaise(newLastReadId, currentReadId)
-        if (shouldRaise(newLastReadId, currentReadId)) {
+        if (shouldRaise) {
             userRoomRepository.raiseLastReadMessageId(userId, roomId, newLastReadId!!)
         }
 
@@ -58,7 +58,7 @@ class UnreadServiceImpl(
         val responseDto = roomUnreadCountMapper.map(updatedUserRoom)
 
         if (shouldRaise) {
-            eventPublisher.publishEvent(ReadBoundaryUpdateEvent(
+            eventPublisher.publishEvent(ReadBoundaryUpdatedEvent(
                 roomId = roomId,
                 userId = userId,
                 lastReadMessageId = newLastReadId,

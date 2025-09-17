@@ -1,9 +1,9 @@
 package goodspace.teaming.global.entity.file
 
-import goodspace.teaming.global.entity.file.AntiVirusScanStatus.PENDING
+import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.file.AntiVirusScanStatus.PASSED
 import goodspace.teaming.global.entity.file.TranscodeStatus.NONE
 import goodspace.teaming.global.entity.room.Room
-import goodspace.teaming.global.entity.BaseEntity
 import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import jakarta.persistence.EnumType.STRING
@@ -55,7 +55,7 @@ class File(
 
     @Enumerated(STRING)
     @Column(nullable = false)
-    var antiVirusScanStatus: AntiVirusScanStatus = PENDING,
+    var antiVirusScanStatus: AntiVirusScanStatus = PASSED,
 
     @Enumerated(STRING)
     @Column(nullable = false)

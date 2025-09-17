@@ -1,6 +1,6 @@
 package goodspace.teaming.chat.event
 
-data class ReadBoundaryUpdateEvent(
+data class ReadBoundaryUpdatedEvent(
     val roomId: Long,
     val userId: Long,
     val lastReadMessageId: Long?,

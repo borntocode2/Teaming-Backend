@@ -7,11 +7,11 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 @Component
-class ReadBoundUpdateEventHandler(
+class ReadBoundUpdatedEventHandler(
     private val messaging: SimpMessagingTemplate
 ) {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun onReadBoundaryUpdated(event: ReadBoundaryUpdateEvent) {
+    fun onReadBoundaryUpdated(event: ReadBoundaryUpdatedEvent) {
         messaging.convertAndSend(
             "/topic/rooms/${event.roomId}/read",
             ReadBoundaryUpdateResponseDto(

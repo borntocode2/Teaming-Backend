@@ -11,5 +11,6 @@ data class RoomInfoResponseDto(
     val imageVersion: Int?,
     val type: RoomType,
     val memberCount: Int,
-    val success: Boolean
+    val success: Boolean,
+    val members: List<RoomMemberResponseDto>
 )
