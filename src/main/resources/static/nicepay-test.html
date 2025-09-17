@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>결제테스트</title>
+    <script src = "https://pay.nicepay.co.kr/v1/js/"></script>
+</head>
+<body>
+
+<button onclick="serverAuth()">serverAuth 결제하기</button>
+
+<script>
+    function serverAuth() {
+        AUTHNICE.requestPay({
+            clientId: 'S2_fb903ce81792411ab6c459ec3a2a82c6', // 발급받은 테스트 clientId
+            method: 'card',
+            orderId: 'a1', // 테스트용 orderId
+            amount: 1004,
+            goodsName: '나이스페이-상품',
+            returnUrl: 'http://localhost:8080/payment/request', // Spring 컨트롤러 엔드포인트
+            fnError: function(result) {
+                alert('개발자 확인용 : ' + result.errorMsg);
+            }
+        });
+    }
+</script>
+</body>
+</html>
