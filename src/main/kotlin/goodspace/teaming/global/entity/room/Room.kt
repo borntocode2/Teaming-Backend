@@ -1,6 +1,7 @@
 package goodspace.teaming.global.entity.room
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.aissgnment.Assignment
 import jakarta.persistence.*
 import jakarta.persistence.CascadeType.*
 import jakarta.persistence.EnumType.*
@@ -38,6 +39,9 @@ class Room(
 
     @OneToMany(fetch = LAZY, mappedBy = "room", cascade = [ALL], orphanRemoval = true)
     val userRooms: MutableList<UserRoom> = mutableListOf()
+
+    @OneToMany(fetch = LAZY, mappedBy = "room", cascade = [ALL], orphanRemoval = true)
+    val assignments: MutableList<Assignment> = mutableListOf()
 
     var success: Boolean = false
 
