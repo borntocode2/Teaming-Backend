@@ -5,6 +5,7 @@ import goodspace.teaming.global.entity.file.File
 import jakarta.persistence.*
 import jakarta.persistence.CascadeType.*
 import jakarta.persistence.FetchType.*
+import jakarta.persistence.GenerationType.*
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
 
@@ -27,6 +28,6 @@ class Submission(
     val description: String,
 ) : BaseEntity() {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = IDENTITY)
     val id: Long? = null
 }
