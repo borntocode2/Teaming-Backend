@@ -32,12 +32,12 @@ class ChatRestController(
     fun createRoom(
         principal: Principal,
         @RequestBody requestDto: RoomCreateRequestDto
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<RoomInviteCodeResponseDto> {
         val userId = principal.getUserId()
 
-        roomService.createRoom(userId, requestDto)
+        val response = roomService.createRoom(userId, requestDto)
 
-        return NO_CONTENT
+        return ResponseEntity.ok(response)
     }
 
     @GetMapping
@@ -112,6 +112,22 @@ class ChatRestController(
         val userId = principal.getUserId()
 
         val response = roomService.acceptInvite(userId, requestDto)
+
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{roomId}/invite")
+    @Operation(
+        summary = "초대 코드 조회",
+        description = "해당 티밍룸의 초대 코드를 조회합니다. 팀장만 호출할 수 있습니다."
+    )
+    fun getInviteRoom(
+        principal: Principal,
+        @PathVariable roomId: Long
+    ): ResponseEntity<RoomInviteCodeResponseDto> {
+        val userId = principal.getUserId()
+
+        val response = roomService.getInviteCode(userId, roomId)
 
         return ResponseEntity.ok(response)
     }

@@ -44,7 +44,7 @@ class RoomServiceImpl(
     override fun createRoom(
         userId: Long,
         requestDto: RoomCreateRequestDto
-    ): RoomCreateResponseDto {
+    ): RoomInviteCodeResponseDto {
         val user = userRepository.findById(userId).orElse(null)
             ?: throw IllegalArgumentException(USER_NOT_FOUND)
 
@@ -61,7 +61,7 @@ class RoomServiceImpl(
         // 초대 코드가 중복될 시 재시도하기 위한 플러쉬
         roomRepository.saveAndFlush(room)
 
-        return RoomCreateResponseDto(inviteCode = room.inviteCode!!)
+        return RoomInviteCodeResponseDto(inviteCode = room.inviteCode!!)
     }
 
     @Transactional(readOnly = true)
@@ -90,6 +90,18 @@ class RoomServiceImpl(
         room.addUserRoom(userRoom)
 
         return roomInfoMapper.map(userRoom)
+    }
+
+    @Transactional(readOnly = true)
+    override fun getInviteCode(userId: Long, roomId: Long): RoomInviteCodeResponseDto {
+        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
+            ?: throw java.lang.IllegalArgumentException(ROOM_NOT_FOUND)
+
+        require(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+
+        val room = userRoom.room
+
+        return RoomInviteCodeResponseDto(inviteCode = room.inviteCode!!)
     }
 
     @Transactional(readOnly = true)
