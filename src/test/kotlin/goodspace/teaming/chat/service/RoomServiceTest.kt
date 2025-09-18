@@ -259,6 +259,48 @@ class RoomServiceTest {
     }
 
     @Nested
+    @DisplayName("getInviteCode")
+    inner class GetInviteCode {
+        @Test
+        fun `방의 초대 코드를 반환한다`() {
+            // given
+            val user = mockk<User>(relaxed = true)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT).apply { inviteCode = INVITE_CODE }
+            val userRoom = UserRoom(
+                user = user,
+                room = room,
+                roomRole = RoomRole.LEADER
+            )
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+
+            // when
+            val responseDto = roomService.getInviteCode(USER_ID, ROOM_ID)
+
+            // then
+            assertThat(responseDto.inviteCode).isEqualTo(INVITE_CODE)
+        }
+
+        @Test
+        fun `팀장이 아니라면 예외가 발생한다`() {
+            // given
+            val user = mockk<User>(relaxed = true)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            val userRoom = UserRoom(
+                user = user,
+                room = room,
+                roomRole = RoomRole.MEMBER
+            )
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+
+            // when & then
+            assertThatThrownBy { roomService.getInviteCode(USER_ID, ROOM_ID) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+        }
+    }
+
+    @Nested
     @DisplayName("getRooms")
     inner class GetRooms {
         @Test

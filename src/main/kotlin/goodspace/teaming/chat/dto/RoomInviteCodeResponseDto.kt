@@ -1,5 +1,5 @@
 package goodspace.teaming.chat.dto
 
-class RoomCreateResponseDto(
+class RoomInviteCodeResponseDto(
     val inviteCode: String
 )
