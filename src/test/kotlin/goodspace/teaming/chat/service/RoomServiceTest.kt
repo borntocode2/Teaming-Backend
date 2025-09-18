@@ -95,7 +95,7 @@ class RoomServiceTest {
             val user = mockk<User>(relaxed = true)
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
-            val room = Room(title = "제목", type = RoomType.BASIC, memberCount = 5)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
             every { roomMapper.map(any()) } returns room
 
             // 두 번까지는 중복된 초대코드를 발행하도록 설정
@@ -117,7 +117,7 @@ class RoomServiceTest {
             val user = mockk<User>(relaxed = true)
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
-            val room = Room(title = "제목", type = RoomType.BASIC, memberCount = 5)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
             every { roomMapper.map(any()) } returns room
 
             every { inviteCodeGenerator.generate() } returns DUPLICATE_CODE
@@ -126,6 +126,26 @@ class RoomServiceTest {
             // when & then
             assertThatThrownBy { roomService.createRoom(USER_ID, getRoomCreateDto()) }
                 .isInstanceOf(InviteCodeAllocationFailedException::class.java)
+        }
+
+        @Test
+        fun `초대 코드를 반환한다`() {
+            // given
+            val user = mockk<User>(relaxed = true)
+            every { userRepository.findById(USER_ID) } returns Optional.of(user)
+
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            every { roomMapper.map(any()) } returns room
+
+            every { inviteCodeGenerator.generate() } returns UNIQUE_CODE
+            every { roomRepository.existsByInviteCode(UNIQUE_CODE) } returns false
+            every { roomRepository.saveAndFlush(room) } returns room
+
+            // when
+            val responseDto = roomService.createRoom(USER_ID, getRoomCreateDto())
+
+            // then
+            assertThat(responseDto.inviteCode).isEqualTo(UNIQUE_CODE)
         }
     }
 

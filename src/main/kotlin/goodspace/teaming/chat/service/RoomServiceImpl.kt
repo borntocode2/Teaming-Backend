@@ -4,10 +4,7 @@ import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
 import goodspace.teaming.chat.domain.mapper.RoomMapper
 import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
-import goodspace.teaming.chat.dto.InviteAcceptRequestDto
-import goodspace.teaming.chat.dto.RoomCreateRequestDto
-import goodspace.teaming.chat.dto.RoomInfoResponseDto
-import goodspace.teaming.chat.dto.RoomSearchResponseDto
+import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
@@ -44,7 +41,10 @@ class RoomServiceImpl(
         maxAttempts = 3,
         backoff = Backoff(delay = 50, multiplier = 2.0)
     )
-    override fun createRoom(userId: Long, requestDto: RoomCreateRequestDto) {
+    override fun createRoom(
+        userId: Long,
+        requestDto: RoomCreateRequestDto
+    ): RoomCreateResponseDto {
         val user = userRepository.findById(userId).orElse(null)
             ?: throw IllegalArgumentException(USER_NOT_FOUND)
 
@@ -60,6 +60,8 @@ class RoomServiceImpl(
 
         // 초대 코드가 중복될 시 재시도하기 위한 플러쉬
         roomRepository.saveAndFlush(room)
+
+        return RoomCreateResponseDto(inviteCode = room.inviteCode!!)
     }
 
     @Transactional(readOnly = true)

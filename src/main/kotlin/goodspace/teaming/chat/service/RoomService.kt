@@ -1,15 +1,12 @@
 package goodspace.teaming.chat.service
 
-import goodspace.teaming.chat.dto.InviteAcceptRequestDto
-import goodspace.teaming.chat.dto.RoomCreateRequestDto
-import goodspace.teaming.chat.dto.RoomInfoResponseDto
-import goodspace.teaming.chat.dto.RoomSearchResponseDto
+import goodspace.teaming.chat.dto.*
 
 interface RoomService {
     fun createRoom(
         userId: Long,
         requestDto: RoomCreateRequestDto
-    )
+    ): RoomCreateResponseDto
 
     fun searchRoom(
         inviteCode: String
