@@ -39,6 +39,9 @@ abstract class User(
     private val refreshToken: RefreshToken = RefreshToken()
 
     @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
+    private val roles = mutableListOf<UserRole>()
+
+    @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
     val userRooms = mutableListOf<UserRoom>()
 
     var token = refreshToken.tokenValue
@@ -49,5 +52,9 @@ abstract class User(
 
     fun addUserRoom(userRoom: UserRoom) {
         userRooms.add(userRoom)
+    }
+
+    fun addRole(vararg role: UserRole) {
+        roles.addAll(role)
     }
 }
