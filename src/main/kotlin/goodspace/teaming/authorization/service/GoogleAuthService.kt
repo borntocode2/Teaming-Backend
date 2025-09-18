@@ -1,37 +1,54 @@
 package goodspace.teaming.authorization.service
 
 import goodspace.teaming.authorization.config.GoogleProperties
+import goodspace.teaming.authorization.dto.GoogleAccessTokenDto
+import goodspace.teaming.authorization.dto.GoogleUserInfoResponseDto
+import goodspace.teaming.authorization.dto.TokenResponseDto
+import goodspace.teaming.global.entity.user.OAuthUser
+import goodspace.teaming.global.entity.user.TeamingUser
+import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.entity.user.UserType
+import goodspace.teaming.global.repository.UserRepository
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
 
 class GoogleAuthService (
-    private val googleProperties : GoogleProperties,
-    private val restTemplate: RestTemplate = RestTemplate()
+    private val restTemplate: RestTemplate = RestTemplate(),
+    private val userRepository: UserRepository
 ) {
-    // 1. 사용자에게 구글로그인 폼 전송
-    fun getGoogleLoginUrl(): String {
-        val base = "https://www.googleapis.com/oauth2/v2/token"
-        val scope = "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
+    fun getAccessTokenFromGoogleAccessToken(googleAccessTokenDto: GoogleAccessTokenDto): TokenResponseDto {
+        val googleUserInfo: GoogleUserInfoResponseDto = getGoogleUserInfo(googleAccessTokenDto.accessToken)
 
-        return "$base?client_id=${googleProperties.clientId}" +
-                "&redirect_uri=${googleProperties.redirectUri}" +
-                "&response_type=code" +
-                "&scope=$scope"
+        val user = userRepository.findByIdentifierAndUserType(
+            identifier = googleUserInfo.id,
+            userType = UserType.GOOGLE
+        ) ?: run {
+            val newUser = OAuthUser(
+                identifier = googleUserInfo.id,
+                email = googleUserInfo.email,
+                name = googleUserInfo.name,
+                type = UserType.GOOGLE
+            )
+            userRepository.save(newUser)
+        }
     }
 
-    fun getAccessTokenFromCode(code: String): String {
-        val tokenUrl = "https://oauth2.googleapis.com/token"
-        val params = mapOf(
-            "code" to code,
-            "client_id" to googleProperties.clientId,
-            "redirect_uri" to googleProperties.redirectUri,
-            "client_secret" to googleProperties.clientSecret,
-            "grant_type" to "authorization_code",
+    private fun getGoogleUserInfo(accessToken: String): GoogleUserInfoResponseDto {
+        val headers = HttpHeaders().apply {
+            set("Authorization", "Bearer $accessToken")
+        }
+
+        val entity = HttpEntity<Void>(headers)
+        val response = restTemplate.exchange(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            HttpMethod.GET,
+            entity,
+            GoogleUserInfoResponseDto::class.java
         )
-        val tokenResponse = restTemplate.postForEntity(tokenUrl, params, Map::class.java).body!!
-        val accessToken = tokenResponse["access_token"] as String
 
-        return accessToken
+        return response.body!!
     }
-
 
 }
