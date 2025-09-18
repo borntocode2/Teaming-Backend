@@ -8,6 +8,8 @@ import goodspace.teaming.assignment.dto.SubmissionRequestDto
 import goodspace.teaming.global.entity.aissgnment.Assignment
 import goodspace.teaming.global.entity.aissgnment.AssignmentStatus.COMPLETE
 import goodspace.teaming.global.entity.aissgnment.Submission
+import goodspace.teaming.global.entity.aissgnment.SubmittedFile
+import goodspace.teaming.global.entity.file.File
 import goodspace.teaming.global.entity.room.PaymentStatus.NOT_PAID
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
@@ -69,10 +71,11 @@ class AssignmentServiceImpl(
         val assignment = room.assignments.findById(requestDto.assignmentId)
         val submission = Submission(
             assignment = assignment,
-            files = files,
             submitterId = userId,
             description = requestDto.description
         )
+        val submittedFiles = files.toSubmittedFiles(submission)
+        submission.addSubmittedFiles(submittedFiles)
 
         assignment.addSubmission(submission)
         assignment.status = COMPLETE
@@ -97,5 +100,9 @@ class AssignmentServiceImpl(
     private fun List<Assignment>.findById(id: Long): Assignment {
         return this.firstOrNull { it.id == id }
             ?: throw IllegalArgumentException(FILE_NOT_FOUND)
+    }
+
+    private fun List<File>.toSubmittedFiles(submission: Submission): List<SubmittedFile> {
+        return this.map { SubmittedFile(submission, it) }
     }
 }
