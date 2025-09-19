@@ -5,5 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface RoomRepository : JpaRepository<Room, Long> {
     fun existsByInviteCode(inviteCode: String): Boolean
+
     fun findByInviteCode(inviteCode: String): Room?
+
+    fun countBySuccessTrue(): Long
 }
