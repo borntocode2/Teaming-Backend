@@ -72,6 +72,11 @@ dependencies {
     // AWS & S3
     implementation(platform("software.amazon.awssdk:bom:2.33.7"))
     implementation("software.amazon.awssdk:s3")
+
+    // Jwt 라이브러리
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
 }
 
 kotlin {

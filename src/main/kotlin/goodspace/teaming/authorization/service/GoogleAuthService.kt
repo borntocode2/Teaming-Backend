@@ -1,24 +1,25 @@
 package goodspace.teaming.authorization.service
 
-import goodspace.teaming.authorization.config.GoogleProperties
 import goodspace.teaming.authorization.dto.GoogleAccessTokenDto
 import goodspace.teaming.authorization.dto.GoogleUserInfoResponseDto
-import goodspace.teaming.authorization.dto.TokenResponseDto
-import goodspace.teaming.global.entity.user.OAuthUser
-import goodspace.teaming.global.entity.user.TeamingUser
-import goodspace.teaming.global.entity.user.User
-import goodspace.teaming.global.entity.user.UserType
+import goodspace.teaming.global.security.TokenResponse
+import goodspace.teaming.global.entity.user.*
 import goodspace.teaming.global.repository.UserRepository
+import goodspace.teaming.global.security.TokenProvider
+import goodspace.teaming.global.security.TokenType
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
+@Service
 class GoogleAuthService (
-    private val restTemplate: RestTemplate = RestTemplate(),
-    private val userRepository: UserRepository
+    private val restTemplate: RestTemplate,
+    private val userRepository: UserRepository,
+    private val toKenProvider: TokenProvider
 ) {
-    fun getAccessTokenFromGoogleAccessToken(googleAccessTokenDto: GoogleAccessTokenDto): TokenResponseDto {
+    fun googleSignInOrSingUp(googleAccessTokenDto: GoogleAccessTokenDto): TokenResponse {
         val googleUserInfo: GoogleUserInfoResponseDto = getGoogleUserInfo(googleAccessTokenDto.accessToken)
 
         val user = userRepository.findByIdentifierAndUserType(
@@ -33,6 +34,14 @@ class GoogleAuthService (
             )
             userRepository.save(newUser)
         }
+
+        val accessToken = toKenProvider.createToken(user.id!!, TokenType.ACCESS, listOf(Role.USER))
+        val refreshToken = toKenProvider.createToken(user.id!!, TokenType.REFRESH, listOf(Role.USER))
+
+        user.token = refreshToken
+        userRepository.save(user)
+
+        return TokenResponse(accessToken, refreshToken)
     }
 
     private fun getGoogleUserInfo(accessToken: String): GoogleUserInfoResponseDto {
@@ -48,7 +57,7 @@ class GoogleAuthService (
             GoogleUserInfoResponseDto::class.java
         )
 
-        return response.body!!
+        return response.body!! ?: throw IllegalArgumentException("구글 사용자 정보를 불러올 수 없습니다.")
     }
 
 }
