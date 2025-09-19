@@ -21,8 +21,6 @@ class AuthController(
     private val kakaoAuthService: KakaoAuthService,
     private val naverAuthService: NaverAuthService
 ) {
-
-
     @PostMapping("/google")
     @Operation(summary = "구글 소셜 로그인(앱)", description = "구글가 발급한 AccessToken을 통해 사용자를 인증하고 JWT를 발급합니다")
     fun googleLogin(@RequestBody googleAccessTokenDto: OauthAccessTokenDto): ResponseEntity<TokenResponse> {
