@@ -1,5 +1,5 @@
 package goodspace.teaming.authorization.dto
 
-class GoogleAccessTokenDto (
+class OauthAccessTokenDto (
     val accessToken: String,
 )

@@ -1,6 +1,6 @@
 package goodspace.teaming.authorization.dto
 
-class KakaoUserInfoResponseDto (
+class NaverUserInfoResponseDto (
     val id: String,
     val name: String,
     val email: String,
