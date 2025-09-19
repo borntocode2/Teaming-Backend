@@ -1,5 +1,6 @@
 package goodspace.teaming.authorization.service
 
+import goodspace.teaming.authorization.dto.KakaoAccessTokenDto
 import goodspace.teaming.authorization.dto.OauthAccessTokenDto
 import goodspace.teaming.authorization.dto.KakaoUserInfoResponseDto
 import goodspace.teaming.global.entity.user.OAuthUser
@@ -21,8 +22,8 @@ class KakaoAuthService (
     private val userRepository: UserRepository,
     private val toKenProvider: TokenProvider
 ) {
-    fun kakaoSignInOrSingUp(oauthAccessTokenDto: OauthAccessTokenDto): TokenResponse {
-        val kakaoUserInfo: KakaoUserInfoResponseDto = getKakaoUserInfo(oauthAccessTokenDto.accessToken)
+    fun kakaoSignInOrSignUp(kakaoAccessTokenDto: KakaoAccessTokenDto): TokenResponse {
+        val kakaoUserInfo: KakaoUserInfoResponseDto = getKakaoUserInfo(kakaoAccessTokenDto.accessToken)
 
         val user = userRepository.findByIdentifierAndUserType(
             identifier = kakaoUserInfo.id,

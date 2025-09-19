@@ -2,6 +2,7 @@ package goodspace.teaming.authorization.service
 
 import goodspace.teaming.authorization.dto.OauthAccessTokenDto
 import goodspace.teaming.authorization.dto.KakaoUserInfoResponseDto
+import goodspace.teaming.authorization.dto.NaverAccessTokenDto
 import goodspace.teaming.authorization.dto.NaverUserInfoResponseDto
 import goodspace.teaming.global.entity.user.OAuthUser
 import goodspace.teaming.global.entity.user.Role
@@ -22,8 +23,8 @@ class NaverAuthService (
     private val userRepository: UserRepository,
     private val toKenProvider: TokenProvider
 ) {
-    fun NaverAuthService(oauthAccessTokenDto: OauthAccessTokenDto): TokenResponse {
-        val NaverUserInfo: NaverUserInfoResponseDto = getNaverUserInfo(oauthAccessTokenDto.accessToken)
+    fun NaverSignInOrSignUp(naverAccessTokenDto: NaverAccessTokenDto): TokenResponse {
+        val NaverUserInfo: NaverUserInfoResponseDto = getNaverUserInfo(naverAccessTokenDto.accessToken)
 
         val user = userRepository.findByIdentifierAndUserType(
             identifier = NaverUserInfo.id,

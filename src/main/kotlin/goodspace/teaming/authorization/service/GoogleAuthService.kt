@@ -19,7 +19,7 @@ class GoogleAuthService (
     private val userRepository: UserRepository,
     private val toKenProvider: TokenProvider
 ) {
-    fun googleSignInOrSingUp(oauthAccessTokenDto: OauthAccessTokenDto): TokenResponse {
+    fun googleSignInOrSignUp(oauthAccessTokenDto: OauthAccessTokenDto): TokenResponse {
         val googleUserInfo: GoogleUserInfoResponseDto = getGoogleUserInfo(oauthAccessTokenDto.accessToken)
 
         val user = userRepository.findByIdentifierAndUserType(
