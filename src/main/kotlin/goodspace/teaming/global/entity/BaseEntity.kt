@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import java.time.Instant
 import java.time.LocalDateTime
 
 @MappedSuperclass
@@ -20,11 +21,11 @@ import java.time.LocalDateTime
 class BaseEntity(
     @CreatedDate
     @Column(updatable = false, nullable = false)
-    var createdAt: LocalDateTime? = null,
+    var createdAt: Instant? = null,
 
     @LastModifiedDate
     @Column(nullable = false)
-    var updatedAt: LocalDateTime? = null,
+    var updatedAt: Instant? = null,
 
     @Column(nullable = false)
     var deleted: Boolean = false,

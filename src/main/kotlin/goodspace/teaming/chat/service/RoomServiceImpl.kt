@@ -3,9 +3,8 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
 import goodspace.teaming.chat.domain.mapper.RoomMapper
-import goodspace.teaming.chat.dto.InviteAcceptRequestDto
-import goodspace.teaming.chat.dto.RoomCreateRequestDto
-import goodspace.teaming.chat.dto.RoomInfoResponseDto
+import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
+import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
@@ -32,6 +31,7 @@ class RoomServiceImpl(
     private val roomRepository: RoomRepository,
     private val userRoomRepository: UserRoomRepository,
     private val roomMapper: RoomMapper,
+    private val roomSearchMapper: RoomSearchMapper,
     private val roomInfoMapper: RoomInfoMapper,
     private val inviteCodeGenerator: InviteCodeGenerator
 ) : RoomService {
@@ -41,7 +41,10 @@ class RoomServiceImpl(
         maxAttempts = 3,
         backoff = Backoff(delay = 50, multiplier = 2.0)
     )
-    override fun createRoom(userId: Long, requestDto: RoomCreateRequestDto) {
+    override fun createRoom(
+        userId: Long,
+        requestDto: RoomCreateRequestDto
+    ): RoomInviteCodeResponseDto {
         val user = userRepository.findById(userId).orElse(null)
             ?: throw IllegalArgumentException(USER_NOT_FOUND)
 
@@ -57,6 +60,16 @@ class RoomServiceImpl(
 
         // 초대 코드가 중복될 시 재시도하기 위한 플러쉬
         roomRepository.saveAndFlush(room)
+
+        return RoomInviteCodeResponseDto(inviteCode = room.inviteCode!!)
+    }
+
+    @Transactional(readOnly = true)
+    override fun searchRoom(inviteCode: String): RoomSearchResponseDto {
+        val room = roomRepository.findByInviteCode(inviteCode)
+            ?: throw IllegalArgumentException(WRONG_INVITE_CODE)
+
+        return roomSearchMapper.map(room)
     }
 
     @Transactional
@@ -77,6 +90,18 @@ class RoomServiceImpl(
         room.addUserRoom(userRoom)
 
         return roomInfoMapper.map(userRoom)
+    }
+
+    @Transactional(readOnly = true)
+    override fun getInviteCode(userId: Long, roomId: Long): RoomInviteCodeResponseDto {
+        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
+            ?: throw java.lang.IllegalArgumentException(ROOM_NOT_FOUND)
+
+        require(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+
+        val room = userRoom.room
+
+        return RoomInviteCodeResponseDto(inviteCode = room.inviteCode!!)
     }
 
     @Transactional(readOnly = true)

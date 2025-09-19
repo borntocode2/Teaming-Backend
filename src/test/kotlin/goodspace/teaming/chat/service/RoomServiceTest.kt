@@ -3,9 +3,11 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
 import goodspace.teaming.chat.domain.mapper.RoomMapper
+import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
 import goodspace.teaming.chat.dto.InviteAcceptRequestDto
 import goodspace.teaming.chat.dto.RoomCreateRequestDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
+import goodspace.teaming.chat.dto.RoomSearchResponseDto
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
@@ -40,6 +42,7 @@ class RoomServiceTest {
     private val userRoomRepository: UserRoomRepository = mockk()
     private val roomMapper: RoomMapper = mockk()
     private val roomInfoMapper: RoomInfoMapper = mockk(relaxed = true)
+    private val roomSearchMapper: RoomSearchMapper = mockk(relaxed = true)
     private val inviteCodeGenerator: InviteCodeGenerator = mockk()
 
     private val roomService = RoomServiceImpl(
@@ -48,6 +51,7 @@ class RoomServiceTest {
         userRoomRepository = userRoomRepository,
         roomMapper = roomMapper,
         roomInfoMapper = roomInfoMapper,
+        roomSearchMapper = roomSearchMapper,
         inviteCodeGenerator = inviteCodeGenerator
     )
 
@@ -91,7 +95,7 @@ class RoomServiceTest {
             val user = mockk<User>(relaxed = true)
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
-            val room = Room(title = "제목", type = RoomType.BASIC, memberCount = 5)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
             every { roomMapper.map(any()) } returns room
 
             // 두 번까지는 중복된 초대코드를 발행하도록 설정
@@ -113,7 +117,7 @@ class RoomServiceTest {
             val user = mockk<User>(relaxed = true)
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
-            val room = Room(title = "제목", type = RoomType.BASIC, memberCount = 5)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
             every { roomMapper.map(any()) } returns room
 
             every { inviteCodeGenerator.generate() } returns DUPLICATE_CODE
@@ -122,6 +126,61 @@ class RoomServiceTest {
             // when & then
             assertThatThrownBy { roomService.createRoom(USER_ID, getRoomCreateDto()) }
                 .isInstanceOf(InviteCodeAllocationFailedException::class.java)
+        }
+
+        @Test
+        fun `초대 코드를 반환한다`() {
+            // given
+            val user = mockk<User>(relaxed = true)
+            every { userRepository.findById(USER_ID) } returns Optional.of(user)
+
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            every { roomMapper.map(any()) } returns room
+
+            every { inviteCodeGenerator.generate() } returns UNIQUE_CODE
+            every { roomRepository.existsByInviteCode(UNIQUE_CODE) } returns false
+            every { roomRepository.saveAndFlush(room) } returns room
+
+            // when
+            val responseDto = roomService.createRoom(USER_ID, getRoomCreateDto())
+
+            // then
+            assertThat(responseDto.inviteCode).isEqualTo(UNIQUE_CODE)
+        }
+    }
+
+    @Nested
+    @DisplayName("searchRoom")
+    inner class SearchRoom {
+        @Nested
+        @DisplayName("searchRoom")
+        inner class SearchRoom {
+            @Test
+            fun `초대코드로 방을 조회하고 DTO로 매핑하여 반환한다`() {
+                // given
+                val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+                    .apply { inviteCode = INVITE_CODE }
+                val dto = mockk<RoomSearchResponseDto>()
+
+                every { roomRepository.findByInviteCode(INVITE_CODE) } returns room
+                every { roomSearchMapper.map(room) } returns dto
+
+                // when
+                val result = roomService.searchRoom(INVITE_CODE)
+
+                // then
+                assertThat(result).isSameAs(dto)
+            }
+
+            @Test
+            fun `존재하지 않는 초대코드면 예외를 던진다`() {
+                // given
+                every { roomRepository.findByInviteCode(INVITE_CODE) } returns null
+
+                // when & then
+                assertThatThrownBy { roomService.searchRoom(INVITE_CODE) }
+                    .isInstanceOf(IllegalArgumentException::class.java)
+            }
         }
     }
 
@@ -196,6 +255,48 @@ class RoomServiceTest {
 
             // then
             assertThat(result).isSameAs(roomDto)
+        }
+    }
+
+    @Nested
+    @DisplayName("getInviteCode")
+    inner class GetInviteCode {
+        @Test
+        fun `방의 초대 코드를 반환한다`() {
+            // given
+            val user = mockk<User>(relaxed = true)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT).apply { inviteCode = INVITE_CODE }
+            val userRoom = UserRoom(
+                user = user,
+                room = room,
+                roomRole = RoomRole.LEADER
+            )
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+
+            // when
+            val responseDto = roomService.getInviteCode(USER_ID, ROOM_ID)
+
+            // then
+            assertThat(responseDto.inviteCode).isEqualTo(INVITE_CODE)
+        }
+
+        @Test
+        fun `팀장이 아니라면 예외가 발생한다`() {
+            // given
+            val user = mockk<User>(relaxed = true)
+            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            val userRoom = UserRoom(
+                user = user,
+                room = room,
+                roomRole = RoomRole.MEMBER
+            )
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+
+            // when & then
+            assertThatThrownBy { roomService.getInviteCode(USER_ID, ROOM_ID) }
+                .isInstanceOf(IllegalArgumentException::class.java)
         }
     }
 

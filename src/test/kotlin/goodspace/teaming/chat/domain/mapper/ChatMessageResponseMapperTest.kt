@@ -21,14 +21,14 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.test.util.ReflectionTestUtils
-import java.time.LocalDateTime
+import java.time.Instant
 
 private const val DEFAULT_MESSAGE_ID = 1001L
 private const val DEFAULT_ROOM_ID = 2002L
 private const val DEFAULT_USER_ID = 3003L
 private const val DEFAULT_CLIENT_MESSAGE_ID = "client-123"
 private const val DEFAULT_CONTENT = "hello world"
-private val DEFAULT_CREATED_AT = LocalDateTime.now()
+private val DEFAULT_CREATED_AT = Instant.now()
 
 class ChatMessageResponseMapperTest {
     private val attachmentMapper = mockk<AttachmentMapper>()

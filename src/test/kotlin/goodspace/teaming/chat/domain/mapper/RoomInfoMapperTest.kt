@@ -26,7 +26,6 @@ private const val UNREAD_COUNT = 7L
 private const val SUCCESS = false
 
 class RoomInfoMapperTest {
-
     private lateinit var messageRepository: MessageRepository
     private lateinit var lastMessagePreviewMapper: LastMessagePreviewMapper
     private lateinit var roomMemberMapper: RoomMemberMapper
@@ -131,5 +130,6 @@ class RoomInfoMapperTest {
         every { type } returns ROOM_TYPE
         every { memberCount } returns MEMBER_COUNT
         every { success } returns SUCCESS
+        every { userRooms } returns mutableListOf()
     }
 }

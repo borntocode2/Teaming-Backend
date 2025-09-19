@@ -1,6 +1,7 @@
 package goodspace.teaming.global.entity.room
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.aissgnment.Assignment
 import jakarta.persistence.*
 import jakarta.persistence.CascadeType.*
 import jakarta.persistence.EnumType.*
@@ -39,11 +40,16 @@ class Room(
     @OneToMany(fetch = LAZY, mappedBy = "room", cascade = [ALL], orphanRemoval = true)
     val userRooms: MutableList<UserRoom> = mutableListOf()
 
+    @OneToMany(fetch = LAZY, mappedBy = "room", cascade = [ALL], orphanRemoval = true)
+    val assignments: MutableList<Assignment> = mutableListOf()
+
     var success: Boolean = false
 
     fun isEmpty(): Boolean {
         return userRooms.isEmpty()
     }
+
+    fun currentMemberCount() = userRooms.size
 
     fun addUserRoom(userRoom: UserRoom) {
         require(userRooms.size <= memberCount) { throw IllegalStateException("방의 최대 인원 수를 초과했습니다.") }

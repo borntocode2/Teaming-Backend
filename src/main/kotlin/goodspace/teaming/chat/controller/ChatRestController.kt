@@ -27,17 +27,17 @@ class ChatRestController(
     @PostMapping
     @Operation(
         summary = "방 생성",
-        description = "티밍룸을 생성합니다."
+        description = "티밍룸을 생성합니다. 초대 코드를 반환합니다. 초대 링크는 초대 코드를 기반으로 클라이언트 측에서 제작해주시길 바랍니다."
     )
     fun createRoom(
         principal: Principal,
         @RequestBody requestDto: RoomCreateRequestDto
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<RoomInviteCodeResponseDto> {
         val userId = principal.getUserId()
 
-        roomService.createRoom(userId, requestDto)
+        val response = roomService.createRoom(userId, requestDto)
 
-        return NO_CONTENT
+        return ResponseEntity.ok(response)
     }
 
     @GetMapping
@@ -51,6 +51,19 @@ class ChatRestController(
         val userId = principal.getUserId()
 
         val response = roomService.getRooms(userId)
+
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/search")
+    @Operation(
+        summary = "방 검색",
+        description = "초대 코드를 통해 티밍룸을 검색합니다."
+    )
+    fun searchRoom(
+        @RequestParam inviteCode: String
+    ): ResponseEntity<RoomSearchResponseDto> {
+        val response = roomService.searchRoom(inviteCode)
 
         return ResponseEntity.ok(response)
     }
@@ -103,6 +116,22 @@ class ChatRestController(
         return ResponseEntity.ok(response)
     }
 
+    @GetMapping("/{roomId}/invite")
+    @Operation(
+        summary = "초대 코드 조회",
+        description = "해당 티밍룸의 초대 코드를 조회합니다. 팀장만 호출할 수 있습니다."
+    )
+    fun getInviteRoom(
+        principal: Principal,
+        @PathVariable roomId: Long
+    ): ResponseEntity<RoomInviteCodeResponseDto> {
+        val userId = principal.getUserId()
+
+        val response = roomService.getInviteCode(userId, roomId)
+
+        return ResponseEntity.ok(response)
+    }
+
     @GetMapping("/unread")
     @Operation(
         summary = "읽지 않은 메시지 개수 조회",
@@ -119,12 +148,7 @@ class ChatRestController(
     @GetMapping("/{roomId}/messages")
     @Operation(
         summary = "메시지 이력 조회",
-        description = """
-            스크롤링을 통해 과거 메시지를 조회할 때 사용합니다.
-            현재까지 조회한 메시지 ID 중 가장 작은 값을 cursor 담으면, 그 이전에 있는 메시지를 limit만큼 반환합니다.
-            처음 조회 시에는 cursor 값을 null로 주면 됩니다.
-            limit는 1 ~ 200 사이의 값입니다.
-        """
+        description = "스크롤링을 통해 과거 메시지를 조회할 때 사용합니다. 현재까지 조회한 메시지 ID 중 가장 작은 값을 cursor 담으면, 그 이전에 있는 메시지를 limit만큼 반환합니다. 처음 조회 시에는 cursor 값을 null로 주면 됩니다. limit는 1 ~ 200 사이의 값입니다."
     )
     fun getMessages(
         principal: Principal,

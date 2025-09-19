@@ -7,14 +7,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.test.util.ReflectionTestUtils
-import java.time.LocalDateTime
+import java.time.Instant
 import java.time.ZoneId
 
 private const val CONTENT = "hello world"
 private const val CLIENT_MESSAGE_ID = "clientMessageId"
 private const val ID = 6L
 private val TYPE = MessageType.TEXT
-private val CREATED_AT = LocalDateTime.now()
+private val CREATED_AT = Instant.now()
 
 class LastMessagePreviewMapperTest {
     private val senderSummaryMapper = mockk<SenderSummaryMapper>(relaxed = true)
