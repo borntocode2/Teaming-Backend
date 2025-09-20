@@ -49,9 +49,9 @@ class AssignmentServiceTest {
         @Test
         fun `새로운 과제를 생성하여 티밍룸에 추가한다`() {
             // given
-            val leader = createUser(id = USER_ID)
-            val assignedMember = createUser(id = ASSIGNED_MEMBER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val leader = createUser()
+            val assignedMember = createUser()
+            val room = createRoom()
 
             val leaderUserRoom = createUserRoom(
                 user = leader,
@@ -86,8 +86,8 @@ class AssignmentServiceTest {
         @Test
         fun `결제 되지 않았다면 예외를 던진다`() {
             // given
-            val leader = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val leader = createUser()
+            val room = createRoom()
 
             val notPaidUserRoom = createUserRoom(
                 user = leader,
@@ -108,8 +108,8 @@ class AssignmentServiceTest {
         @Test
         fun `팀장이 아니라면 예외를 던진다`() {
             // given
-            val member = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val member = createUser()
+            val room = createRoom()
 
             val notLeaderUserRoom = createUserRoom(
                 user = member,
@@ -134,8 +134,8 @@ class AssignmentServiceTest {
         @Test
         fun `해당 티밍룸의 모든 과제를 반환한다`() {
             // given
-            val user = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val user = createUser()
+            val room = createRoom()
 
             val userRoom = createUserRoom(
                 user = user,
@@ -169,8 +169,8 @@ class AssignmentServiceTest {
         @Test
         fun `결제 되지 않았다면 예외를 던진다`() {
             // given
-            val user = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val user = createUser()
+            val room = createRoom()
 
             val notPaidUserRoom = createUserRoom(
                 user = user,
@@ -192,8 +192,8 @@ class AssignmentServiceTest {
         @Test
         fun `과제를 제출한다(Submission을 생성해 연결한다)`() {
             // given: 과제를 할당받은 팀원이라고 가정함
-            val submitter = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val submitter = createUser()
+            val room = createRoom()
             val userRoom = createUserRoom(
                 user = submitter,
                 room = room,
@@ -201,12 +201,10 @@ class AssignmentServiceTest {
             )
             val assignment = createAssignment(
                 room = room,
-                id = ASSIGNMENT_ID
             )
             val assigned = createAssignedMember(
                 user = submitter,
                 assignment = assignment,
-                id = ASSIGNED_MEMBER_ID
             )
             room.addAssignment(assignment)
             assignment.addAssignedMember(assigned)
@@ -234,8 +232,8 @@ class AssignmentServiceTest {
         @Test
         fun `과제의 상태를 '완료됨'으로 변경한다`() {
             // given: 과제를 할당받은 팀원이라고 가정함
-            val submitter = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val submitter = createUser()
+            val room = createRoom()
             val userRoom = createUserRoom(
                 user = submitter,
                 room = room,
@@ -243,13 +241,11 @@ class AssignmentServiceTest {
             )
             val assignment = createAssignment(
                 room = room,
-                id = ASSIGNMENT_ID,
                 status = AssignmentStatus.IN_PROGRESS
             )
             val assigned = createAssignedMember(
                 user = submitter,
                 assignment = assignment,
-                id = ASSIGNED_MEMBER_ID
             )
             room.addAssignment(assignment)
             assignment.addAssignedMember(assigned)
@@ -270,10 +266,47 @@ class AssignmentServiceTest {
         }
 
         @Test
+        fun `취소된 과제라면 예외가 발생한다`() {
+            // given
+            val member = createUser()
+            val room = createRoom(id = ROOM_ID)
+            val userRoom = createUserRoom(
+                user = member,
+                room = room,
+                paymentStatus = PaymentStatus.PAID
+            )
+            val assignment = createAssignment(
+                room = room,
+                id = ASSIGNMENT_ID,
+                status = AssignmentStatus.CANCELED
+            )
+            val assigned = createAssignedMember(
+                user = member,
+                assignment = assignment,
+                id = ASSIGNED_MEMBER_ID
+            )
+            room.addAssignment(assignment)
+            assignment.addAssignedMember(assigned)
+
+            val requestDto = SubmissionRequestDto(
+                assignmentId = assignment.id!!,
+                description = assignment.description,
+                fileIds = listOf()
+            )
+
+            every { userRoomRepository.findByRoomIdAndUserId(room.id!!, member.id!!) } returns userRoom
+
+            // when & then
+            assertThatThrownBy { assignmentService.submit(member.id!!, room.id!!, requestDto) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("취소된 과제입니다.")
+        }
+
+        @Test
         fun `해당 과제에 할당된 팀원이 아니라면 예외가 발생한다`() {
             // given: 해당 과제를 할당받지 않은 팀원이라고 가정함
-            val notAssignedMember = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val notAssignedMember = createUser()
+            val room = createRoom()
             val userRoom = createUserRoom(
                 user = notAssignedMember,
                 room = room,
@@ -281,7 +314,6 @@ class AssignmentServiceTest {
             )
             val assignment = createAssignment(
                 room = room,
-                id = ASSIGNMENT_ID,
                 status = AssignmentStatus.IN_PROGRESS
             )
             room.addAssignment(assignment)
@@ -303,8 +335,8 @@ class AssignmentServiceTest {
         @Test
         fun `결제 되지 않았다면 예외가 발생한다`() {
             // given
-            val member = createUser(id = USER_ID)
-            val room = createRoom(id = ROOM_ID)
+            val member = createUser()
+            val room = createRoom()
             val notPaidUserRoom = createUserRoom(
                 user = member,
                 room = room,
@@ -312,13 +344,11 @@ class AssignmentServiceTest {
             )
             val assignment = createAssignment(
                 room = room,
-                id = ASSIGNMENT_ID,
                 status = AssignmentStatus.IN_PROGRESS
             )
             val assigned = createAssignedMember(
                 user = member,
                 assignment = assignment,
-                id = ASSIGNED_MEMBER_ID
             )
             assignment.addAssignedMember(assigned)
             room.addAssignment(assignment)
@@ -333,6 +363,111 @@ class AssignmentServiceTest {
 
             // when & then
             assertThatThrownBy { assignmentService.submit(member.id!!, room.id!!, requestDto) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("해당 티밍룸에 접근할 수 없습니다.")
+        }
+    }
+
+    @Nested
+    @DisplayName("cancel")
+    inner class Cancel {
+        @Test
+        fun `과제의 상태를 '취소됨'으로 설정한다`() {
+            // given
+            val leader = createUser()
+            val room = createRoom()
+            val userRoom = createUserRoom(
+                user = leader,
+                room = room,
+                roomRole = RoomRole.LEADER,
+                paymentStatus = PaymentStatus.PAID
+            )
+            val assignment = createAssignment(
+                room = room,
+                status = AssignmentStatus.IN_PROGRESS
+            )
+            room.addAssignment(assignment)
+
+            every { userRoomRepository.findByRoomIdAndUserId(room.id!!, leader.id!!) } returns userRoom
+
+            // when
+            assignmentService.cancel(leader.id!!, room.id!!, assignment.id!!)
+
+            // then
+            assertThat(assignment.status).isEqualTo(AssignmentStatus.CANCELED)
+        }
+
+        @Test
+        fun `이미 완료된 과제라면 예외가 발생한다`() {
+            // given
+            val leader = createUser()
+            val room = createRoom()
+            val userRoom = createUserRoom(
+                user = leader,
+                room = room,
+                roomRole = RoomRole.LEADER,
+                paymentStatus = PaymentStatus.PAID
+            )
+            val completedAssignment = createAssignment(
+                room = room,
+                status = AssignmentStatus.COMPLETE
+            )
+            room.addAssignment(completedAssignment)
+
+            every { userRoomRepository.findByRoomIdAndUserId(room.id!!, leader.id!!) } returns userRoom
+
+            // when & then
+            assertThatThrownBy { assignmentService.cancel(leader.id!!, room.id!!, completedAssignment.id!!) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("이미 완료된 과제입니다.")
+        }
+
+        @Test
+        fun `팀장이 아니라면 예외가 발생한다`() {
+            // given
+            val member = createUser()
+            val room = createRoom()
+            val memberUserRoom = createUserRoom(
+                user = member,
+                room = room,
+                roomRole = RoomRole.MEMBER,
+                paymentStatus = PaymentStatus.PAID
+            )
+            val assignment = createAssignment(
+                room = room,
+                status = AssignmentStatus.IN_PROGRESS
+            )
+            room.addAssignment(assignment)
+
+            every { userRoomRepository.findByRoomIdAndUserId(room.id!!, member.id!!) } returns memberUserRoom
+
+            // when & then
+            assertThatThrownBy { assignmentService.cancel(member.id!!, room.id!!, assignment.id!!) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("팀장이 아닙니다.")
+        }
+
+        @Test
+        fun `결제 되지 않았다면 예외가 발생한다`() {
+            // given
+            val leader = createUser()
+            val room = createRoom()
+            val notPaidLeaderUserRoom = createUserRoom(
+                user = leader,
+                room = room,
+                roomRole = RoomRole.LEADER,
+                paymentStatus = PaymentStatus.NOT_PAID
+            )
+            val assignment = createAssignment(
+                room = room,
+                status = AssignmentStatus.IN_PROGRESS
+            )
+            room.addAssignment(assignment)
+
+            every { userRoomRepository.findByRoomIdAndUserId(room.id!!, leader.id!!) } returns notPaidLeaderUserRoom
+
+            // when & then
+            assertThatThrownBy { assignmentService.cancel(leader.id!!, room.id!!, assignment.id!!) }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage("해당 티밍룸에 접근할 수 없습니다.")
         }

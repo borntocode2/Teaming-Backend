@@ -21,4 +21,10 @@ interface AssignmentService {
         roomId: Long,
         requestDto: SubmissionRequestDto
     )
+
+    fun cancel(
+        userId: Long,
+        roomId: Long,
+        assignmentId: Long
+    )
 }
