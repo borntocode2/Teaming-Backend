@@ -1,9 +1,11 @@
 package goodspace.teaming.chat.service
 
+import goodspace.teaming.chat.domain.mapper.AttachmentMapper
 import goodspace.teaming.chat.domain.mapper.ChatMessageResponseMapper
 import goodspace.teaming.chat.dto.ChatMessagePageResponseDto
 import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.ChatSendRequestDto
+import goodspace.teaming.chat.dto.MessageAttachmentResponseDto
 import goodspace.teaming.chat.event.ChatMessageCreatedEvent
 import goodspace.teaming.global.entity.file.AntiVirusScanStatus
 import goodspace.teaming.global.entity.file.Attachment
@@ -33,6 +35,7 @@ class MessageServiceImpl(
     private val messageRepository: MessageRepository,
     private val fileRepository: FileRepository,
     private val chatMessageResponseMapper: ChatMessageResponseMapper,
+    private val attachmentMapper: AttachmentMapper,
     private val eventPublisher: ApplicationEventPublisher,
     @Value("\${chat.recent-message.lower-bound:1}")
     private val recentMessageLowerBound: Int,
@@ -41,8 +44,7 @@ class MessageServiceImpl(
 ) : MessageService {
     @Transactional
     override fun saveMessage(userId: Long, roomId: Long, requestDto: ChatSendRequestDto): ChatMessageResponseDto {
-        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+        val userRoom = findUserRoom(userId, roomId)
 
         assertPaymentStatus(userRoom)
 
@@ -64,8 +66,7 @@ class MessageServiceImpl(
         amount: Int,
         beforeMessageId: Long?
     ): ChatMessagePageResponseDto {
-        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+        val userRoom = findUserRoom(userId, roomId)
 
         assertPaymentStatus(userRoom)
 
@@ -83,6 +84,26 @@ class MessageServiceImpl(
             hasNext = messageSlice.hasNext(),
             nextCursor = messageSlice.nextCursor()
         )
+    }
+
+    @Transactional(readOnly = true)
+    override fun getMessageAttachment(
+        userId: Long,
+        roomId: Long
+    ): List<MessageAttachmentResponseDto> {
+        val userRoom = findUserRoom(userId, roomId)
+        val room = userRoom.room
+
+        assertPaymentStatus(userRoom)
+
+        return room.messages
+            .flatMap { it.attachments }
+            .map { attachmentMapper.map(it) }
+    }
+
+    private fun findUserRoom(userId: Long, roomId: Long): UserRoom {
+        return userRoomRepository.findByRoomIdAndUserId(roomId, userId)
+            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
     }
 
     private fun getExistsOrCreate(user: User, room: Room, requestDto: ChatSendRequestDto): Message {
@@ -152,6 +173,6 @@ class MessageServiceImpl(
     }
 
     private fun assertPaymentStatus(userRoom: UserRoom) {
-        require(userRoom.paymentStatus != PaymentStatus.NOT_PAID) { NOT_PAID }
+        check(userRoom.paymentStatus != PaymentStatus.NOT_PAID) { NOT_PAID }
     }
 }
