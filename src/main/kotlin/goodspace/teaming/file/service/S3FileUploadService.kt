@@ -75,7 +75,7 @@ class S3FileUploadService(
         val file = fileRepository.save(
             File(
                 room = userRoom.room,
-                user = userRoom.user,
+                uploaderId = userRoom.user.id!!,
                 name = extractOriginalName(storedName),
                 type = mime.toFileType(),
                 mimeType = mime,

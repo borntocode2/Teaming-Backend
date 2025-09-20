@@ -72,6 +72,9 @@ dependencies {
     // AWS & S3
     implementation(platform("software.amazon.awssdk:bom:2.33.7"))
     implementation("software.amazon.awssdk:s3")
+
+    // 테스트용 H2 DB
+    testRuntimeOnly("com.h2database:h2")
 }
 
 kotlin {

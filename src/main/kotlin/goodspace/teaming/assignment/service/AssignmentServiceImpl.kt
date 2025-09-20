@@ -9,7 +9,7 @@ import goodspace.teaming.global.entity.aissgnment.Assignment
 import goodspace.teaming.global.entity.aissgnment.AssignmentStatus.CANCELED
 import goodspace.teaming.global.entity.aissgnment.AssignmentStatus.COMPLETE
 import goodspace.teaming.global.entity.aissgnment.Submission
-import goodspace.teaming.global.entity.aissgnment.SubmittedFile
+import goodspace.teaming.global.entity.file.SubmittedFile
 import goodspace.teaming.global.entity.file.File
 import goodspace.teaming.global.entity.room.PaymentStatus.NOT_PAID
 import goodspace.teaming.global.entity.room.RoomRole
