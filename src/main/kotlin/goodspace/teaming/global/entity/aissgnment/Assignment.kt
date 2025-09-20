@@ -50,6 +50,9 @@ class Assignment(
     fun addAssignedMembers(assignedMembers: Collection<AssignedMember>) {
         this.assignedMembers.addAll(assignedMembers)
     }
+    fun addAssignedMember(assignedMember: AssignedMember) {
+        assignedMembers.add(assignedMember)
+    }
 
     fun addSubmission(submission: Submission) {
         submissions.add(submission)

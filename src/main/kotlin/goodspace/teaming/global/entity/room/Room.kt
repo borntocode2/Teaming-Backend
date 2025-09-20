@@ -60,4 +60,12 @@ class Room(
     fun removeUserRoom(userRoom: UserRoom) {
         userRooms.remove(userRoom)
     }
+
+    fun addAssignment(assignment: Assignment) {
+        assignments.add(assignment)
+    }
+
+    fun addAssignments(vararg assignments: Assignment) {
+        this.assignments.addAll(assignments)
+    }
 }
