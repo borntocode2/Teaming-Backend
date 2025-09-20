@@ -4,7 +4,6 @@ import goodspace.teaming.global.entity.BaseEntity
 import goodspace.teaming.global.entity.file.AntiVirusScanStatus.PASSED
 import goodspace.teaming.global.entity.file.TranscodeStatus.NONE
 import goodspace.teaming.global.entity.room.Room
-import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import jakarta.persistence.EnumType.STRING
 import jakarta.persistence.GenerationType.IDENTITY
@@ -19,9 +18,8 @@ class File(
     @JoinColumn(nullable = false)
     val room: Room,
 
-    @ManyToOne
-    @JoinColumn(nullable = false)
-    val user: User,
+    @Column(nullable = false)
+    val uploaderId: Long,
 
     @Column(nullable = false)
     var name: String,

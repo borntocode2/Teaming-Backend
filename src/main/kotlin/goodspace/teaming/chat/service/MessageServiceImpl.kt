@@ -121,7 +121,7 @@ class MessageServiceImpl(
         require(files.size == fileIds.size) { NOT_EXIST_FILE }
 
         files.forEach { file ->
-            require(file.room.id == room.id && file.user.id == user.id) { "이 방/사용자의 파일이 아닙니다." }
+            require(file.room.id == room.id && file.uploaderId == user.id) { "이 방/사용자의 파일이 아닙니다." }
             require(file.antiVirusScanStatus != AntiVirusScanStatus.INFECTED) { "악성 파일로 차단된 첨부입니다." }
         }
     }
