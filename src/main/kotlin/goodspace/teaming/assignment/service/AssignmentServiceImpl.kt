@@ -6,6 +6,7 @@ import goodspace.teaming.assignment.dto.AssignmentCreateRequestDto
 import goodspace.teaming.assignment.dto.AssignmentResponseDto
 import goodspace.teaming.assignment.dto.SubmissionRequestDto
 import goodspace.teaming.global.entity.aissgnment.Assignment
+import goodspace.teaming.global.entity.aissgnment.AssignmentStatus.CANCELED
 import goodspace.teaming.global.entity.aissgnment.AssignmentStatus.COMPLETE
 import goodspace.teaming.global.entity.aissgnment.Submission
 import goodspace.teaming.global.entity.aissgnment.SubmittedFile
@@ -27,6 +28,8 @@ private const val FILE_NOT_FOUND = "파일을 찾을 수 없습니다."
 private const val NOT_LEADER = "팀장이 아닙니다."
 private const val NOT_ASSIGNED = "해당 과제에 할당되지 않았습니다."
 private const val ASSIGNMENT_NOT_FOUND = "과제를 찾을 수 없습니다."
+private const val CANCELED_ASSIGNMENT = "취소된 과제입니다."
+private const val COMPLETE_ASSIGNMENT = "이미 완료된 과제입니다."
 
 @Service
 class AssignmentServiceImpl(
@@ -85,6 +88,7 @@ class AssignmentServiceImpl(
 
         assertPayment(userRoom)
         assertSubmitter(assignment, submitter)
+        assertNotCanceled(assignment)
 
         val files = fileRepository.findAllById(requestDto.fileIds)
         require(files.size == requestDto.fileIds.size) { FILE_NOT_FOUND }
@@ -99,6 +103,23 @@ class AssignmentServiceImpl(
 
         assignment.addSubmission(submission)
         assignment.status = COMPLETE
+    }
+
+    @Transactional
+    override fun cancel(
+        userId: Long,
+        roomId: Long,
+        assignmentId: Long
+    ) {
+        val userRoom = findUserRoom(userId, roomId)
+        val room = userRoom.room
+        val assignment = room.assignments.findById(assignmentId)
+
+        assertPayment(userRoom)
+        assertLeader(userRoom)
+        assertNotCompleted(assignment)
+
+        assignment.status = CANCELED
     }
 
     private fun findUserRoom(userId: Long, roomId: Long): UserRoom {
@@ -116,6 +137,14 @@ class AssignmentServiceImpl(
 
     private fun assertSubmitter(assignment: Assignment, submitter: User) {
         check(assignment.assignedMemberIds.contains(submitter.id)) { NOT_ASSIGNED }
+    }
+
+    private fun assertNotCanceled(assignment: Assignment) {
+        check(assignment.status != CANCELED) { CANCELED_ASSIGNMENT }
+    }
+
+    private fun assertNotCompleted(assignment: Assignment) {
+        check(assignment.status != COMPLETE) { COMPLETE_ASSIGNMENT }
     }
 
     private fun List<Long>.toUserSet(): Set<User> {
