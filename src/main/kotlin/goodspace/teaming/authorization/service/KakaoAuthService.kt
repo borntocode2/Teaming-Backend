@@ -1,11 +1,14 @@
 package goodspace.teaming.authorization.service
 
+import goodspace.teaming.authorization.dto.KakaoAccessTokenDto
 import goodspace.teaming.authorization.dto.OauthAccessTokenDto
-import goodspace.teaming.authorization.dto.GoogleUserInfoResponseDto
-import goodspace.teaming.global.security.TokenResponse
-import goodspace.teaming.global.entity.user.*
+import goodspace.teaming.authorization.dto.KakaoUserInfoResponseDto
+import goodspace.teaming.global.entity.user.OAuthUser
+import goodspace.teaming.global.entity.user.Role
+import goodspace.teaming.global.entity.user.UserType
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.security.TokenProvider
+import goodspace.teaming.global.security.TokenResponse
 import goodspace.teaming.global.security.TokenType
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -14,23 +17,23 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 @Service
-class GoogleAuthService (
+class KakaoAuthService (
     private val restTemplate: RestTemplate,
     private val userRepository: UserRepository,
     private val toKenProvider: TokenProvider
 ) {
-    fun googleSignInOrSignUp(oauthAccessTokenDto: OauthAccessTokenDto): TokenResponse {
-        val googleUserInfo: GoogleUserInfoResponseDto = getGoogleUserInfo(oauthAccessTokenDto.accessToken)
+    fun kakaoSignInOrSignUp(kakaoAccessTokenDto: KakaoAccessTokenDto): TokenResponse {
+        val kakaoUserInfo: KakaoUserInfoResponseDto = getKakaoUserInfo(kakaoAccessTokenDto.accessToken)
 
         val user = userRepository.findByIdentifierAndUserType(
-            identifier = googleUserInfo.id,
-            userType = UserType.GOOGLE
+            identifier = kakaoUserInfo.id,
+            userType = UserType.KAKAO
         ) ?: run {
             val newUser = OAuthUser(
-                identifier = googleUserInfo.id,
-                email = googleUserInfo.email,
-                name = googleUserInfo.name,
-                type = UserType.GOOGLE
+                identifier = kakaoUserInfo.id,
+                email = kakaoUserInfo.email,
+                name = kakaoUserInfo.name,
+                type = UserType.KAKAO
             )
             userRepository.save(newUser)
         }
@@ -44,20 +47,19 @@ class GoogleAuthService (
         return TokenResponse(accessToken, refreshToken)
     }
 
-    private fun getGoogleUserInfo(accessToken: String): GoogleUserInfoResponseDto {
+    private fun getKakaoUserInfo(accessToken: String): KakaoUserInfoResponseDto {
         val headers = HttpHeaders().apply {
             set("Authorization", "Bearer $accessToken")
         }
 
         val entity = HttpEntity<Void>(headers)
         val response = restTemplate.exchange(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
+            "https://kapi.kakao.com/v2/user/me",
             HttpMethod.GET,
             entity,
-            GoogleUserInfoResponseDto::class.java
+            KakaoUserInfoResponseDto::class.java
         )
 
-        return response.body!! ?: throw IllegalArgumentException("구글 사용자 정보를 불러올 수 없습니다.")
+        return response.body!! ?: throw IllegalArgumentException("카카오 사용자 정보를 불러올 수 없습니다.")
     }
-
 }
