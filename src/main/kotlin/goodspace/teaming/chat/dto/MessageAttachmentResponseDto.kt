@@ -6,6 +6,7 @@ import goodspace.teaming.global.entity.file.TranscodeStatus
 
 data class MessageAttachmentResponseDto(
     val fileId: Long,
+    val uploaderId: Long,
     val sortOrder: Int,
     val name: String,
     val type: FileType,

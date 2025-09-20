@@ -6,11 +6,13 @@ import goodspace.teaming.assignment.dto.AssignmentCreateRequestDto
 import goodspace.teaming.assignment.dto.AssignmentResponseDto
 import goodspace.teaming.assignment.dto.SubmissionRequestDto
 import goodspace.teaming.global.entity.aissgnment.Assignment
+import goodspace.teaming.global.entity.aissgnment.AssignmentStatus.CANCELED
 import goodspace.teaming.global.entity.aissgnment.AssignmentStatus.COMPLETE
 import goodspace.teaming.global.entity.aissgnment.Submission
-import goodspace.teaming.global.entity.aissgnment.SubmittedFile
+import goodspace.teaming.global.entity.file.SubmittedFile
 import goodspace.teaming.global.entity.file.File
 import goodspace.teaming.global.entity.room.PaymentStatus.NOT_PAID
+import goodspace.teaming.global.entity.room.RoomRole
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.FileRepository
@@ -23,6 +25,11 @@ private const val USER_ROOM_NOT_FOUND = "해당 티밍룸에 소속되어있지 
 private const val INACCESSIBLE = "해당 티밍룸에 접근할 수 없습니다."
 private const val MEMBER_FOR_ASSIGNED_NOT_FOUND = "과제를 할당할 회원을 조회할 수 없습니다."
 private const val FILE_NOT_FOUND = "파일을 찾을 수 없습니다."
+private const val NOT_LEADER = "팀장이 아닙니다."
+private const val NOT_ASSIGNED = "해당 과제에 할당되지 않았습니다."
+private const val ASSIGNMENT_NOT_FOUND = "과제를 찾을 수 없습니다."
+private const val CANCELED_ASSIGNMENT = "취소된 과제입니다."
+private const val COMPLETE_ASSIGNMENT = "이미 완료된 과제입니다."
 
 @Service
 class AssignmentServiceImpl(
@@ -33,11 +40,16 @@ class AssignmentServiceImpl(
     private val fileRepository: FileRepository
 ) : AssignmentService {
     @Transactional
-    override fun create(userId: Long, roomId: Long, requestDto: AssignmentCreateRequestDto) {
+    override fun create(
+        userId: Long,
+        roomId: Long,
+        requestDto: AssignmentCreateRequestDto
+    ) {
         val userRoom = findUserRoom(userId, roomId)
         val room = userRoom.room
 
         assertPayment(userRoom)
+        assertLeader(userRoom)
 
         val assignment = assignmentMapper.map(room, requestDto)
         val assignedMembers = requestDto.assignedMemberIds
@@ -45,10 +57,15 @@ class AssignmentServiceImpl(
             .map { assignedMemberMapper.map(it, room, assignment) }
 
         assignment.addAssignedMembers(assignedMembers)
+
+        room.addAssignment(assignment)
     }
 
     @Transactional(readOnly = true)
-    override fun get(userId: Long, roomId: Long): List<AssignmentResponseDto> {
+    override fun get(
+        userId: Long,
+        roomId: Long
+    ): List<AssignmentResponseDto> {
         val userRoom = findUserRoom(userId, roomId)
         val room = userRoom.room
 
@@ -59,16 +76,23 @@ class AssignmentServiceImpl(
     }
 
     @Transactional
-    override fun submit(userId: Long, roomId: Long, requestDto: SubmissionRequestDto) {
+    override fun submit(
+        userId: Long,
+        roomId: Long,
+        requestDto: SubmissionRequestDto
+    ) {
         val userRoom = findUserRoom(userId, roomId)
+        val submitter = userRoom.user
         val room = userRoom.room
+        val assignment = room.assignments.findById(requestDto.assignmentId)
 
         assertPayment(userRoom)
+        assertSubmitter(assignment, submitter)
+        assertNotCanceled(assignment)
 
         val files = fileRepository.findAllById(requestDto.fileIds)
         require(files.size == requestDto.fileIds.size) { FILE_NOT_FOUND }
 
-        val assignment = room.assignments.findById(requestDto.assignmentId)
         val submission = Submission(
             assignment = assignment,
             submitterId = userId,
@@ -81,13 +105,46 @@ class AssignmentServiceImpl(
         assignment.status = COMPLETE
     }
 
+    @Transactional
+    override fun cancel(
+        userId: Long,
+        roomId: Long,
+        assignmentId: Long
+    ) {
+        val userRoom = findUserRoom(userId, roomId)
+        val room = userRoom.room
+        val assignment = room.assignments.findById(assignmentId)
+
+        assertPayment(userRoom)
+        assertLeader(userRoom)
+        assertNotCompleted(assignment)
+
+        assignment.status = CANCELED
+    }
+
     private fun findUserRoom(userId: Long, roomId: Long): UserRoom {
         return userRoomRepository.findByRoomIdAndUserId(roomId, userId)
             ?: throw IllegalArgumentException(USER_ROOM_NOT_FOUND)
     }
 
     private fun assertPayment(userRoom: UserRoom) {
-        require(userRoom.paymentStatus != NOT_PAID) { INACCESSIBLE }
+        check(userRoom.paymentStatus != NOT_PAID) { INACCESSIBLE }
+    }
+
+    private fun assertLeader(userRoom: UserRoom) {
+        check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+    }
+
+    private fun assertSubmitter(assignment: Assignment, submitter: User) {
+        check(assignment.assignedMemberIds.contains(submitter.id)) { NOT_ASSIGNED }
+    }
+
+    private fun assertNotCanceled(assignment: Assignment) {
+        check(assignment.status != CANCELED) { CANCELED_ASSIGNMENT }
+    }
+
+    private fun assertNotCompleted(assignment: Assignment) {
+        check(assignment.status != COMPLETE) { COMPLETE_ASSIGNMENT }
     }
 
     private fun List<Long>.toUserSet(): Set<User> {
@@ -99,7 +156,7 @@ class AssignmentServiceImpl(
 
     private fun List<Assignment>.findById(id: Long): Assignment {
         return this.firstOrNull { it.id == id }
-            ?: throw IllegalArgumentException(FILE_NOT_FOUND)
+            ?: throw IllegalArgumentException(ASSIGNMENT_NOT_FOUND)
     }
 
     private fun List<File>.toSubmittedFiles(submission: Submission): List<SubmittedFile> {

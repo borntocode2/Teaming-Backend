@@ -206,6 +206,7 @@ class ChatMessageResponseMapperTest {
 
         return MessageAttachmentResponseDto(
             fileId = fileId,
+            uploaderId = user.id!!,
             sortOrder = sortOrder,
             name = file.name,
             type = file.type,
