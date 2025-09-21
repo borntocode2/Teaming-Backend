@@ -106,8 +106,8 @@ class NaverAuthService (
             ?: throw IllegalStateException("응답 본문이 비어있습니다.")
 
         val tokenDto = Gson().fromJson(json, NaverAccessTokenDto::class.java)
-        return tokenDto.accessToken
-            ?: throw IllegalStateException("access_token이 응답에 없습니다.")
+        return tokenDto?.accessToken
+            ?: throw IllegalStateException("access_Token이 응답에 없습니다.")
     }
 
     private fun getNaverUserInfo(accessToken: String): NaverUserInfoResponseDto {

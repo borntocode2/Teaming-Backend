@@ -108,8 +108,8 @@ class GoogleAuthService(
         val json = responseEntity.body
             ?: throw IllegalStateException("응답 본문이 비어있습니다.")
 
-        val tokenDto = Gson().fromJson(json, GoogleAccessTokenDto::class.java)
-        return tokenDto.accessToken
+        val tokenDto: GoogleAccessTokenDto? = Gson().fromJson(json, GoogleAccessTokenDto::class.java)
+        return tokenDto?.accessToken
             ?: throw IllegalStateException("access_token이 응답에 없습니다.")
     }
 
