@@ -3,7 +3,7 @@ package goodspace.teaming.authorization.controller
 import goodspace.teaming.authorization.dto.GoogleAccessTokenDto
 import goodspace.teaming.authorization.dto.KakaoAccessTokenDto
 import goodspace.teaming.authorization.dto.NaverAccessTokenDto
-import goodspace.teaming.authorization.dto.WebOauthRequestDto
+import goodspace.teaming.authorization.dto.AppOauthRequestDto
 import goodspace.teaming.authorization.service.GoogleAuthService
 import goodspace.teaming.authorization.service.KakaoAuthService
 import goodspace.teaming.authorization.service.NaverAuthService
@@ -27,7 +27,7 @@ class AppAuthController (
     @Operation(summary = "구글 소셜 로그인(앱)",
         description = "구글을 통해 사용자를 인증하고 JWT를 발급합니다")
 
-    fun googleWebAuthorization(@RequestBody requestDto: WebOauthRequestDto): ResponseEntity<TokenResponseDto?>? {
+    fun googleAppAuthorization(@RequestBody requestDto: AppOauthRequestDto): ResponseEntity<TokenResponseDto?>? {
         val accessToken: String= googleAuthService.getAccessToken(requestDto)
 
         val tokenResponseDto: TokenResponseDto =
@@ -41,7 +41,7 @@ class AppAuthController (
         description = "카카오을 통해 사용자를 인증하고 JWT를 발급합니다")
 
 
-    fun kakaoWebAuthorization(@RequestBody requestDto: WebOauthRequestDto): ResponseEntity<TokenResponseDto?>? {
+    fun kakaoAppAuthorization(@RequestBody requestDto: AppOauthRequestDto): ResponseEntity<TokenResponseDto?>? {
         val accessToken: String= kakaoAuthService.getAccessToken(requestDto)
 
         val tokenResponseDto: TokenResponseDto =
@@ -55,7 +55,7 @@ class AppAuthController (
         description = "네이버을 통해 사용자를 인증하고 JWT를 발급합니다")
 
 
-    fun naverWebAuthorization(@RequestBody requestDto: WebOauthRequestDto): ResponseEntity<TokenResponseDto?>? {
+    fun naverAppAuthorization(@RequestBody requestDto: AppOauthRequestDto): ResponseEntity<TokenResponseDto?>? {
         val accessToken: String= naverAuthService.getAccessToken(requestDto)
 
         val tokenResponseDto: TokenResponseDto =

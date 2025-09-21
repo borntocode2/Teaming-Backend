@@ -1,10 +1,9 @@
 package goodspace.teaming.authorization.service
 
 import com.google.gson.Gson
-import goodspace.teaming.authorization.dto.GoogleAccessTokenDto
 import goodspace.teaming.authorization.dto.KakaoAccessTokenDto
 import goodspace.teaming.authorization.dto.KakaoUserInfoResponseDto
-import goodspace.teaming.authorization.dto.WebOauthRequestDto
+import goodspace.teaming.authorization.dto.AppOauthRequestDto
 import goodspace.teaming.global.entity.user.OAuthUser
 import goodspace.teaming.global.entity.user.Role
 import goodspace.teaming.global.entity.user.UserType
@@ -65,8 +64,8 @@ class KakaoAuthService (
         return TokenResponseDto(accessToken, refreshToken)
     }
 
-    fun getAccessToken(webOauthRequestDto: WebOauthRequestDto): String {
-        val params: Map<String, String> = getTokenParams(webOauthRequestDto.code, webOauthRequestDto.redirectUri)
+    fun getAccessToken(appOauthRequestDto: AppOauthRequestDto): String {
+        val params: Map<String, String> = getTokenParams(appOauthRequestDto.code, appOauthRequestDto.redirectUri)
         val response: ResponseEntity<String> = sendTokenRequest(params)
 
         if (isRequestFailed(response)) {
@@ -81,7 +80,6 @@ class KakaoAuthService (
     private fun getTokenParams(code: String, redirectUri: String): Map<String, String> {
         return java.util.Map.of<String, String>(
             "code", code,
-            "scope", SCOPE,
             "client_id", kakaoClientId,
             "client_secret", kakaoClientSecret,
             "redirect_uri", redirectUri,
