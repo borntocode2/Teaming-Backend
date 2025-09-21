@@ -37,8 +37,6 @@ class GoogleAuthService(
     @Transactional
     fun googleSignInOrSignUp(googleAccessTokenDto: GoogleAccessTokenDto): TokenResponseDto {
         val googleAccessToken = googleAccessTokenDto.accessToken
-            ?: throw IllegalArgumentException("No google access token")
-
         val googleUserInfo: GoogleUserInfoResponseDto = getGoogleUserInfo(googleAccessToken)
 
         val user = userRepository.findByIdentifierAndUserType(
