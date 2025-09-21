@@ -93,7 +93,6 @@ class KakaoAuthService (
 
         val tokenDto = Gson().fromJson(json, KakaoAccessTokenDto::class.java)
         return tokenDto.accessToken
-            ?: throw IllegalStateException("access_token이 응답에 없습니다.")
     }
 
     private fun sendTokenRequest(params: Map<String, String>): ResponseEntity<String> {
