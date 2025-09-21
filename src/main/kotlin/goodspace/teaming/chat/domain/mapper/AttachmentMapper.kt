@@ -25,6 +25,7 @@ class AttachmentMapper(
 
         return MessageAttachmentResponseDto(
             fileId = requireNotNull(file.id),
+            uploaderId = file.uploaderId,
             sortOrder = attachment.sortOrder,
             name = file.name,
             type = file.type,

@@ -6,6 +6,7 @@ import goodspace.teaming.fixture.TeamingUserFixture
 import goodspace.teaming.global.entity.file.*
 import goodspace.teaming.global.entity.room.Message
 import goodspace.teaming.global.entity.room.MessageType
+import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.storage.StorageUrlProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -38,10 +39,11 @@ class AttachmentMapperTest {
     @Test
     fun `UrlProvider에게 URL을 제공받는다`() {
         // given
-        val file = getFileFromFixture(FileFixture.IMAGE)
+        val user = createUser()
+        val file = getFileFromFixture(FileFixture.IMAGE, user)
             .apply { storageKey = DEFAULT_STORAGE_KEY }
             .apply { thumbnailKey = DEFAULT_THUMBNAIL_KEY }
-        val attachment = getTestAttachmentOf(file)
+        val attachment = getTestAttachmentOf(file, user)
 
         // when
         mapper.map(attachment)
@@ -57,8 +59,9 @@ class AttachmentMapperTest {
     @Test
     fun `전달한 정렬 순서를 유지한다`() {
         // given
-        val file = getFileFromFixture(FileFixture.IMAGE)
-        val attachment = getTestAttachmentOf(file, DEFAULT_SORT_ORDER)
+        val user = createUser()
+        val file = getFileFromFixture(FileFixture.IMAGE, user)
+        val attachment = getTestAttachmentOf(file, user, DEFAULT_SORT_ORDER)
 
         // when
         val dto = mapper.map(attachment)
@@ -70,8 +73,9 @@ class AttachmentMapperTest {
     @Test
     fun `이미지 파일은 안티바이러스를 통과했다면 ready를 true로 한다`() {
         // given
-        val file = getFileFromFixture(FileFixture.IMAGE)
-        val attachment = getTestAttachmentOf(file)
+        val user = createUser()
+        val file = getFileFromFixture(FileFixture.IMAGE, user)
+        val attachment = getTestAttachmentOf(file, user)
 
         // when
         val dto = mapper.map(attachment)
@@ -83,10 +87,11 @@ class AttachmentMapperTest {
     @Test
     fun `비디오 파일은 안티바이러스를 통과하더라도 트랜스코딩이 완료되지 않았다면 ready를 false로 한다`() {
         // given
-        val file = getFileFromFixture(FileFixture.VIDEO)
+        val user = createUser()
+        val file = getFileFromFixture(FileFixture.VIDEO, user)
             .apply { antiVirusScanStatus = AntiVirusScanStatus.PASSED }
             .apply { transcodeStatus = TranscodeStatus.PENDING }
-        val attachment = getTestAttachmentOf(file)
+        val attachment = getTestAttachmentOf(file, user)
 
         // when
         val dto = mapper.map(attachment)
@@ -99,10 +104,11 @@ class AttachmentMapperTest {
     @EnumSource(FileType::class)
     fun `안티 바이러스가 실패했다면 항상 ready를 false로 한다`(fileType: FileType) {
         // given
-        val file = getFileFromFixture(FileFixture.IMAGE)
+        val user = createUser()
+        val file = getFileFromFixture(FileFixture.IMAGE, user)
             .apply { type = fileType }
             .apply { antiVirusScanStatus = AntiVirusScanStatus.FAILED }
-        val attachment = getTestAttachmentOf(file)
+        val attachment = getTestAttachmentOf(file, user)
 
         // when
         val dto = mapper.map(attachment)
@@ -114,9 +120,10 @@ class AttachmentMapperTest {
     @Test
     fun `썸네일 키가 없으면 thumbnailUrl 값은 null이 된다`() {
         // given
-        val file = getFileFromFixture(FileFixture.IMAGE)
+        val user = createUser()
+        val file = getFileFromFixture(FileFixture.IMAGE, user)
             .apply { thumbnailKey = null }
-        val attachment = getTestAttachmentOf(file)
+        val attachment = getTestAttachmentOf(file, user)
 
         // when
         val dto = mapper.map(attachment)
@@ -125,9 +132,15 @@ class AttachmentMapperTest {
         assertThat(dto.thumbnailUrl).isNull()
     }
 
-    private fun getFileFromFixture(fixture: FileFixture): File {
-        val room = RoomFixture.DEFAULT.getInstance()
+    private fun createUser(): User {
         val user = TeamingUserFixture.A.getInstance()
+        ReflectionTestUtils.setField(user, "id", goodspace.teaming.fixture.USER_ID)
+
+        return user
+    }
+
+    private fun getFileFromFixture(fixture: FileFixture, user: User): File {
+        val room = RoomFixture.DEFAULT.getInstance()
 
         val file = fixture.getInstanceWith(room, user)
         ReflectionTestUtils.setField(file, "id", DEFAULT_REFLECTION_ID)
@@ -137,11 +150,12 @@ class AttachmentMapperTest {
 
     private fun getTestAttachmentOf(
         file: File,
+        sender: User,
         sortOrder: Int = 0
     ): Attachment {
         val message = Message(
-            sender =  file.user,
-            room =  file.room,
+            sender = sender,
+            room = file.room,
             content = null,
             type = MessageType.FILE,
             clientMessageId = DEFAULT_CLIENT_ID,

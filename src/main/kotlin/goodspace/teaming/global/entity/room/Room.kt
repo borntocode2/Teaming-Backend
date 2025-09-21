@@ -43,6 +43,9 @@ class Room(
     @OneToMany(fetch = LAZY, mappedBy = "room", cascade = [ALL], orphanRemoval = true)
     val assignments: MutableList<Assignment> = mutableListOf()
 
+    @OneToMany(fetch = LAZY, mappedBy = "room", cascade = [ALL], orphanRemoval = true)
+    val messages: MutableList<Message> = mutableListOf()
+
     var success: Boolean = false
 
     fun isEmpty(): Boolean {
@@ -59,5 +62,13 @@ class Room(
 
     fun removeUserRoom(userRoom: UserRoom) {
         userRooms.remove(userRoom)
+    }
+
+    fun addAssignment(assignment: Assignment) {
+        assignments.add(assignment)
+    }
+
+    fun addAssignments(vararg assignments: Assignment) {
+        this.assignments.addAll(assignments)
     }
 }

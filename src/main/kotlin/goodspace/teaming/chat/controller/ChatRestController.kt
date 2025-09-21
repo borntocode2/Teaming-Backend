@@ -172,9 +172,27 @@ class ChatRestController(
         principal: Principal,
         @PathVariable roomId: Long,
         @RequestBody request: MarkReadRequestDto
-    ): RoomUnreadCountResponseDto {
+    ): ResponseEntity<RoomUnreadCountResponseDto> {
         val userId = principal.getUserId()
 
-        return unreadService.markRead(userId, roomId, request.lastReadMessageId)
+        val response = unreadService.markRead(userId, roomId, request.lastReadMessageId)
+
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{roomId}/files")
+    @Operation(
+        summary = "첨부파일 조회",
+        description = "메시지로 첨부한 파일 전체를 조회합니다. 과제로 제출한 파일은 포함되지 않습니다."
+    )
+    fun getAttachments(
+        principal: Principal,
+        @PathVariable roomId: Long
+    ): ResponseEntity<List<MessageAttachmentResponseDto>> {
+        val userId = principal.getUserId()
+
+        val response = messageService.getMessageAttachment(userId, roomId)
+
+        return ResponseEntity.ok(response)
     }
 }

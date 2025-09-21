@@ -55,7 +55,7 @@ enum class FileFixture(
     fun getInstanceWith(room: Room, user: User): File {
         return File(
             room = room,
-            user = user,
+            uploaderId = user.id!!,
             name = filename,
             type = type,
             mimeType = mimeType,

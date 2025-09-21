@@ -8,6 +8,7 @@ import goodspace.teaming.global.security.getUserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -72,6 +73,23 @@ class AssignmentController(
         val userId = principal.getUserId()
 
         assignmentService.submit(userId, roomId, requestDto)
+
+        return NO_CONTENT
+    }
+
+    @DeleteMapping("/{assignmentId}")
+    @Operation(
+        summary = "과제 취소",
+        description = "과제를 취소합니다. 아직 완료하지 않은 과제에 한해서만 호출 가능합니다. 팀장만 호출할 수 있습니다."
+    )
+    fun cancelAssignment(
+        principal: Principal,
+        @PathVariable roomId: Long,
+        @PathVariable assignmentId: Long
+    ): ResponseEntity<Void> {
+        val userId = principal.getUserId()
+
+        assignmentService.cancel(userId, roomId, assignmentId)
 
         return NO_CONTENT
     }

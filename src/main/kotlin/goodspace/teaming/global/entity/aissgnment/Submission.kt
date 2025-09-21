@@ -1,6 +1,7 @@
 package goodspace.teaming.global.entity.aissgnment
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.file.SubmittedFile
 import jakarta.persistence.*
 import jakarta.persistence.CascadeType.*
 import jakarta.persistence.FetchType.*

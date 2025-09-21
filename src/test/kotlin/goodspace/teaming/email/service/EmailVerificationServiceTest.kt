@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.event.ApplicationEvents
 import org.springframework.test.context.event.RecordApplicationEvents
 import org.springframework.transaction.annotation.Transactional
@@ -28,6 +29,7 @@ private const val DEFAULT_PASSWORD = "defaultPassword"
 @SpringBootTest
 @RecordApplicationEvents
 @Transactional
+@ActiveProfiles("test")
 class EmailVerificationServiceTest(
     @Autowired
     private val emailVerificationService: EmailVerificationService,

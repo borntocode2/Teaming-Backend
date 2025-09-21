@@ -1,9 +1,12 @@
 package goodspace.teaming.chat.service
 
+import goodspace.teaming.chat.domain.mapper.AttachmentMapper
 import goodspace.teaming.chat.domain.mapper.ChatMessageResponseMapper
 import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.ChatSendRequestDto
+import goodspace.teaming.chat.dto.MessageAttachmentResponseDto
 import goodspace.teaming.chat.event.ChatMessageCreatedEvent
+import goodspace.teaming.global.entity.file.Attachment
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.FileRepository
@@ -38,6 +41,7 @@ class MessageServiceTest {
     private val messageRepository = mockk<MessageRepository>()
     private val fileRepository = mockk<FileRepository>()
     private val chatMessageResponseMapper = mockk<ChatMessageResponseMapper>()
+    private val attachmentMapper = mockk<AttachmentMapper>()
     private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
     private val messageService: MessageService = MessageServiceImpl(
@@ -45,6 +49,7 @@ class MessageServiceTest {
         messageRepository = messageRepository,
         fileRepository = fileRepository,
         chatMessageResponseMapper = chatMessageResponseMapper,
+        attachmentMapper = attachmentMapper,
         eventPublisher = eventPublisher,
         recentMessageLowerBound = RECENT_MESSAGE_LOWER_BOUND,
         recentMessageUpperBound = RECENT_MESSAGE_UPPER_BOUND
@@ -118,6 +123,7 @@ class MessageServiceTest {
 
             // when & then
             assertThatThrownBy { messageService.saveMessage(USER_ID, ROOM_ID, request) }
+                .isInstanceOf(IllegalStateException::class.java)
         }
 
         @Test
@@ -168,6 +174,7 @@ class MessageServiceTest {
 
             // when & then
             assertThatThrownBy { messageService.findMessages(USER_ID, ROOM_ID, requestAmount) }
+                .isInstanceOf(IllegalStateException::class.java)
         }
 
         @Test
@@ -210,6 +217,41 @@ class MessageServiceTest {
             // then
             assertThat(result.items.size).isEqualTo(RECENT_MESSAGE_LOWER_BOUND)
             assertThat(result.hasNext).isTrue()
+        }
+    }
+
+    @Nested
+    @DisplayName("getMessageAttachment")
+    inner class GetMessageAttachment {
+        @Test
+        fun `해당 티밍룸의 모든 첨부파일을 DTO로 변환해 반환한다`() {
+            // given
+            val message = mockk<Message>()
+            val attachment1 = mockk<Attachment>()
+            val attachment2 = mockk<Attachment>()
+            val dto1 = mockk<MessageAttachmentResponseDto>()
+            val dto2 = mockk<MessageAttachmentResponseDto>()
+
+            every { room.messages } returns mutableListOf(message)
+            every { message.attachments } returns mutableListOf(attachment1, attachment2)
+            every { attachmentMapper.map(attachment1) } returns dto1
+            every { attachmentMapper.map(attachment2) } returns dto2
+
+            // when
+            val response = messageService.getMessageAttachment(USER_ID, ROOM_ID)
+
+            // then
+            assertThat(response).containsExactlyInAnyOrder(dto1, dto2)
+        }
+
+        @Test
+        fun `결제가 되어 있지 않다면 예외가 발생한다`() {
+            // given
+            userRoom.paymentStatus = PaymentStatus.NOT_PAID
+
+            // when & then
+            assertThatThrownBy { messageService.getMessageAttachment(USER_ID, ROOM_ID) }
+                .isInstanceOf(IllegalStateException::class.java)
         }
     }
 
