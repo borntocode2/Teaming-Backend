@@ -1,0 +1,88 @@
+name: Deploy to EC2 via ECR
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  IMAGE_TAG: ${{ github.sha }}
+  DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+  DISCORD_ROLE_ID: ${{ secrets.DISCORD_ROLE_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region "${AWS_REGION}" \
+            | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+
+      - name: Ensure ECR repository exists
+        run: |
+          aws ecr describe-repositories --repository-names "${ECR_REPOSITORY}" >/dev/null 2>&1 \
+            || aws ecr create-repository --repository-name "${ECR_REPOSITORY}" >/dev/null
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push image to ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:buildcache,mode=max
+
+      - name: SSH to EC2 and run deploy.sh (pass envs for deploy.sh)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: AWS_ACCOUNT_ID,AWS_REGION,SPRING_ECR_REPO
+          script: |
+            export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}"
+            export AWS_REGION="${AWS_REGION}"
+            export SPRING_ECR_REPO="${SPRING_ECR_REPO}"
+            bash /home/ubuntu/teaming/deploy.sh
+        env:
+          SPRING_ECR_REPO: ${{ env.ECR_REPOSITORY }}
+
+      - name: Notify success to Discord
+        if: ${{ success() }}
+        run: |
+          jq -nc \
+            --arg content "**✅ CI/CD 성공**\nRepo: ${GITHUB_REPOSITORY}\nCommit: ${GITHUB_SHA}\nRun: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            '{content:$content}' \
+          | curl -sS -X POST -H "Content-Type: application/json" -d @- "${DISCORD_WEBHOOK_URL}"
+
+      - name: Notify failure to Discord (mention role)
+        if: ${{ failure() }}
+        run: |
+          MENTION="<@&${DISCORD_ROLE_ID}>"
+          jq -nc \
+            --arg content "**❌ CI/CD 실패** ${MENTION}\nRepo: ${GITHUB_REPOSITORY}\nCommit: ${GITHUB_SHA}\nRun: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            '{content:$content, allowed_mentions: { parse: ["roles"] }}' \
+          | curl -sS -X POST -H "Content-Type: application/json" -d @- "${DISCORD_WEBHOOK_URL}"
