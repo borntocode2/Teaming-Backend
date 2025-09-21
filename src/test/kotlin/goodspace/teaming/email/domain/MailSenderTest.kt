@@ -14,13 +14,14 @@ class MailSenderTest {
 
     @BeforeEach
     fun setup() {
-        greenMail = GreenMail(ServerSetup.SMTP)
+        val serverSetup = ServerSetup(3025, null, ServerSetup.PROTOCOL_SMTP)
+        greenMail = GreenMail(serverSetup)
         greenMail.start()
 
         // JavaMailSender가 GreenMail을 바라보도록 설정
         javaMailSender = JavaMailSenderImpl().apply {
             host = "localhost"
-            port = ServerSetup.SMTP.port
+            port = serverSetup.port
             javaMailProperties["mail.smtp.auth"] = "false"
         }
 
