@@ -21,7 +21,7 @@ class MailSenderTest {
         // JavaMailSender가 GreenMail을 바라보도록 설정
         javaMailSender = JavaMailSenderImpl().apply {
             host = "localhost"
-            port = ServerSetup.SMTP.port
+            port = serverSetup.port
             javaMailProperties["mail.smtp.auth"] = "false"
         }
 
