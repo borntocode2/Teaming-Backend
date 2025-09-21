@@ -91,8 +91,9 @@ class KakaoAuthService (
         val json = responseEntity.body
             ?: throw IllegalStateException("응답 본문이 비어있습니다.")
 
-        val tokenDto = Gson().fromJson(json, KakaoAccessTokenDto::class.java)
-        return tokenDto.accessToken
+        val tokenDto: KakaoAccessTokenDto?= Gson().fromJson(json, KakaoAccessTokenDto::class.java)
+        return tokenDto?.accessToken
+            ?: throw IllegalStateException("access_Token이 응답에 없습니다.")
     }
 
     private fun sendTokenRequest(params: Map<String, String>): ResponseEntity<String> {
