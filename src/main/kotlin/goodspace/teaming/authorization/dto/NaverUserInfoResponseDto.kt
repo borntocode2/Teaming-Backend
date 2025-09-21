@@ -9,6 +9,6 @@ class NaverUserInfoResponseDto (
     data class Response (
         val id: String,
         val email: String?,
-        val nickname: String?
+        val name: String?
     )
 }
