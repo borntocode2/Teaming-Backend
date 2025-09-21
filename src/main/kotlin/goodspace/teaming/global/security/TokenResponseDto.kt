@@ -1,6 +1,6 @@
 package goodspace.teaming.global.security
 
-class TokenResponse (
+class TokenResponseDto (
     val accessToken: String,
     val refreshToken: String
 )
