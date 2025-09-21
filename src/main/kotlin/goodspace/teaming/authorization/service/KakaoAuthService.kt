@@ -38,7 +38,6 @@ class KakaoAuthService (
     @Transactional
     fun kakaoSignInOrSignUp(kakaoAccessTokenDto: KakaoAccessTokenDto): TokenResponseDto {
         val kakaoAccessToken = kakaoAccessTokenDto.accessToken
-            ?: throw IllegalArgumentException("No kakao access token")
 
         val kakaoUserInfo: KakaoUserInfoResponseDto = getKakaoUserInfo(kakaoAccessToken)
 
@@ -48,10 +47,10 @@ class KakaoAuthService (
         ) ?: run {
             val newUser = OAuthUser(
                 identifier = kakaoUserInfo.id.toString(),
-                email = kakaoUserInfo.kakaoAccount.email ?: "",
-                name = kakaoUserInfo.kakaoAccount.name ?: "Unkown",
-                thumbnailImageUrl = kakaoUserInfo.kakaoAccount.profile?.thumbnailImageUrl ?: "",
-                profileImageUrl = kakaoUserInfo.kakaoAccount.profile?.profileImageUrl ?: "",
+                email = kakaoUserInfo.kakaoAccount?.email ?: "",
+                name = kakaoUserInfo.kakaoAccount?.name ?: "Unkown",
+                thumbnailImageUrl = kakaoUserInfo.kakaoAccount?.profile?.thumbnailImageUrl ?: "",
+                profileImageUrl = kakaoUserInfo.kakaoAccount?.profile?.profileImageUrl ?: "",
                 type = UserType.KAKAO
             )
             userRepository.save(newUser)
