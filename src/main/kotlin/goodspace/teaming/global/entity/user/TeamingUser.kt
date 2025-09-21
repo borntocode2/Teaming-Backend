@@ -13,7 +13,6 @@ import org.hibernate.annotations.SQLDelete
 class TeamingUser(
     @Column(nullable = false)
     var password: String,
-
     email: String,
     name: String,
     avatarKey: String? = null,

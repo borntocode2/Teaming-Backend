@@ -80,6 +80,10 @@ dependencies {
 
     // 테스트용 H2 DB
     testRuntimeOnly("com.h2database:h2")
+
+    //Gson
+    implementation("com.google.code.gson:gson:2.10.1")
+
 }
 
 kotlin {

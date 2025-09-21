@@ -16,8 +16,13 @@ class OAuthUser(
 
     email: String,
     name: String,
+    profileImageUrl: String?,
+    thumbnailImageUrl: String?,
+
+    // TODO : S3업로드에 저장할 정보를 회원 저장할 때 활용
     avatarKey: String? = null,
     avatarVersion: Int? = null,
+
     type: UserType
 ) : User(
     email = email,

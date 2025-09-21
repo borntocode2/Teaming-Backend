@@ -57,4 +57,9 @@ abstract class User(
     fun addRole(vararg role: UserRole) {
         roles.addAll(role)
     }
+
+    fun addRole(role: Role) {
+        val userRole = UserRole(this, role)
+        roles.add(userRole)
+    }
 }
