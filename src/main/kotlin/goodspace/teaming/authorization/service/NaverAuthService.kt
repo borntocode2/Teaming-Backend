@@ -47,7 +47,7 @@ class NaverAuthService (
             val newUser = OAuthUser(
                 identifier = NaverUserInfo.response.id,
                 email = NaverUserInfo.response.email?:"unknown",
-                name = NaverUserInfo.response.nickname?:"unknown",
+                name = NaverUserInfo.response.name?:"unknown",
                 type = UserType.NAVER,
                 thumbnailImageUrl = null,
                 profileImageUrl = null,
