@@ -1,6 +1,6 @@
 package goodspace.teaming.authorization.dto
 
-data class WebOauthRequestDto(
+class AppOauthRequestDto(
     val code: String,
     val redirectUri: String
 )

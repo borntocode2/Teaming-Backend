@@ -2,8 +2,7 @@ package goodspace.teaming.authorization.service
 
 import com.google.gson.Gson
 import goodspace.teaming.authorization.dto.GoogleUserInfoResponseDto
-import goodspace.teaming.authorization.dto.OauthAccessTokenDto
-import goodspace.teaming.authorization.dto.WebOauthRequestDto
+import goodspace.teaming.authorization.dto.AppOauthRequestDto
 import goodspace.teaming.global.entity.user.OAuthUser
 import goodspace.teaming.global.entity.user.Role
 import goodspace.teaming.global.entity.user.UserType
@@ -63,8 +62,8 @@ class GoogleAuthService(
         return TokenResponseDto(accessToken, refreshToken)
     }
 
-    fun getAccessToken(webOauthRequestDto: WebOauthRequestDto): String {
-        val params: Map<String, String> = getTokenParams(webOauthRequestDto.code, webOauthRequestDto.redirectUri)
+    fun getAccessToken(appOauthRequestDto: AppOauthRequestDto): String {
+        val params: Map<String, String> = getTokenParams(appOauthRequestDto.code, appOauthRequestDto.redirectUri)
         val response: ResponseEntity<String> = sendTokenRequest(params)
 
         if (isRequestFailed(response)) {
