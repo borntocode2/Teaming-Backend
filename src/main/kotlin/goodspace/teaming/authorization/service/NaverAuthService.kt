@@ -118,7 +118,7 @@ class NaverAuthService (
 
         val entity = HttpEntity<Void>(headers)
         val response = restTemplate.exchange(
-            "https://nid.naver.com/v1/nid/me",
+            "https://openapi.naver.com/v1/nid/me",
             HttpMethod.GET,
             entity,
             NaverUserInfoResponseDto::class.java
