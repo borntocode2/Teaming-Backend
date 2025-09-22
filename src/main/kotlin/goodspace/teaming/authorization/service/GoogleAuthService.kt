@@ -77,7 +77,6 @@ class GoogleAuthService(
     private fun getTokenParams(code: String, redirectUri: String): Map<String, String> {
         return java.util.Map.of<String, String>(
             "code", code,
-            "scope", SCOPE,
             "client_id", googleClientId,
             "client_secret", googleClientSecret,
             "redirect_uri", redirectUri,
