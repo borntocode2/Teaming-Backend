@@ -25,7 +25,8 @@ abstract class User(
 
     var avatarKey: String? = null,
 
-    var avatarVersion: Int? = null,
+    @Column(nullable = false)
+    var avatarVersion: Int = 0,
 
     @Enumerated(STRING)
     @Column(nullable = false)
@@ -39,7 +40,7 @@ abstract class User(
     private val refreshToken: RefreshToken = RefreshToken()
 
     @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
-    private val roles = mutableListOf<UserRole>()
+    private val userRoles = mutableListOf<UserRole>()
 
     @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
     val userRooms = mutableListOf<UserRoom>()
@@ -50,16 +51,19 @@ abstract class User(
             refreshToken.tokenValue = value
         }
 
+    val roles: List<Role>
+        get() = userRoles.map { it.role }
+
     fun addUserRoom(userRoom: UserRoom) {
         userRooms.add(userRoom)
     }
 
     fun addRole(vararg role: UserRole) {
-        roles.addAll(role)
+        userRoles.addAll(role)
     }
 
     fun addRole(role: Role) {
         val userRole = UserRole(this, role)
-        roles.add(userRole)
+        userRoles.add(userRole)
     }
 }

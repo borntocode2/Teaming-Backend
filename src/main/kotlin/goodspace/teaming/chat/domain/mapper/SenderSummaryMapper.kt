@@ -17,7 +17,8 @@ class SenderSummaryMapper(
                 key = user.avatarKey,
                 version = user.avatarVersion,
                 size = size
-            )
+            ),
+            avatarVersion = user.avatarVersion
         )
     }
 }
