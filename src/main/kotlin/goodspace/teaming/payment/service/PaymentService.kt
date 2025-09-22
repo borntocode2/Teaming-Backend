@@ -22,7 +22,7 @@ class PaymentService(
     private val paymentRepository: PaymentRepository
 
 ){
-    fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): ResponseEntity<String> {
+    fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): PaymentApproveRespondDto {
         if (paymentVerifyRespondDto.authResultCode != "0000"){
             throw RuntimeException("카드사인증 인증 실패: ${paymentVerifyRespondDto.authResultCode} in requestApprove Service Layer")
         }
@@ -32,7 +32,7 @@ class PaymentService(
         return approvePayment(paymentVerifyRespondDto.tid, amount)
     }
 
-    private fun approvePayment(tid: String, amount: String): ResponseEntity<String> {
+    private fun approvePayment(tid: String, amount: String): PaymentApproveRespondDto {
         val url = "${nicepayProperties.approveUrl}/$tid"
         val request = PaymentApproveRequestDto(
             amount = amount
@@ -48,12 +48,7 @@ class PaymentService(
             .bodyToMono(PaymentApproveRespondDto::class.java)
             .block() ?: throw RuntimeException("결제 승인 응답이 올바르지 않습니다.")
 
-        if (paymentApproveRespondDto.resultCode == "0000"){
-            //TODO: 유저-결제-기프티콘 저장로직
-            return ResponseEntity(HttpStatus.OK)
-        }else{
-            return ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
-        }
+        return paymentApproveRespondDto
     }
 
     @Transactional
@@ -67,5 +62,14 @@ class PaymentService(
         val encoded = Base64.getEncoder().encodeToString(credentials.toByteArray())
 
         return "Basic $encoded"
+    }
+
+    fun  mapResultCodeToHttpStatus(resultCode: String): ResponseEntity<HttpStatus> {
+        if (resultCode == "0000" || resultCode == "3001") {
+            return ResponseEntity(HttpStatus.OK)
+        }
+        else{
+            return ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }
