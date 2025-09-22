@@ -26,9 +26,9 @@ class GoogleAuthService(
     private val userRepository: UserRepository,
     private val toKenProvider: TokenProvider,
 
-    @Value("\${keys.google.client-id}")
+    @Value("\${keys.google.client-id-app}")
     private var googleClientId: String,
-    @Value("\${keys.google.client-secret}")
+    @Value("\${keys.google.client-secret-app}")
     private var googleClientSecret: String,
     ) {
 
