@@ -29,8 +29,7 @@ class GoogleAuthService(
     @Value("\${keys.google.client-id}")
     private var googleClientId: String,
     @Value("\${keys.google.client-secret}")
-    private var googleClientSecret: String
-
+    private var googleClientSecret: String,
     ) {
 
     @Transactional
