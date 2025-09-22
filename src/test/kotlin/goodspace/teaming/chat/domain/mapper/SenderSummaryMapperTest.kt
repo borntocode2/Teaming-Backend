@@ -97,7 +97,7 @@ class SenderSummaryMapperTest {
 
             // then
             assertThat(result.avatarUrl).isNull()
-            verify { urlProvider.publicUrl(null, null, DEFAULT_SIZE) }
+            verify { urlProvider.publicUrl(null, 0, DEFAULT_SIZE) }
             confirmVerified(urlProvider)
         }
     }
