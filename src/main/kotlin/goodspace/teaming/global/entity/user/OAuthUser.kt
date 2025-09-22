@@ -21,7 +21,7 @@ class OAuthUser(
 
     // TODO : S3업로드에 저장할 정보를 회원 저장할 때 활용
     avatarKey: String? = null,
-    avatarVersion: Int? = null,
+    avatarVersion: Int = 0,
 
     type: UserType
 ) : User(
