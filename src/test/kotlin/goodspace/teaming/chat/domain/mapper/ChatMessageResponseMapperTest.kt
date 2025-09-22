@@ -40,7 +40,8 @@ class ChatMessageResponseMapperTest {
         every { senderSummaryMapper.map(any(), any()) } returns SenderSummaryResponseDto(
             id = DEFAULT_USER_ID,
             name = "Sender Name",
-            avatarUrl = "https://cdn/avatar.png"
+            avatarUrl = "https://cdn/avatar.png",
+            avatarVersion = 1
         )
     }
 

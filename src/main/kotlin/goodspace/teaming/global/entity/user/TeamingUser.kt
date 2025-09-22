@@ -16,7 +16,7 @@ class TeamingUser(
     email: String,
     name: String,
     avatarKey: String? = null,
-    avatarVersion: Int? = null,
+    avatarVersion: Int = 0,
 ) : User(
     email = email,
     name = name,

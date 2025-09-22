@@ -25,7 +25,8 @@ abstract class User(
 
     var avatarKey: String? = null,
 
-    var avatarVersion: Int? = null,
+    @Column(nullable = false)
+    var avatarVersion: Int = 0,
 
     @Enumerated(STRING)
     @Column(nullable = false)

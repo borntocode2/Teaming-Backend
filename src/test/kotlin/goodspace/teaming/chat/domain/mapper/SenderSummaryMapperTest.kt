@@ -77,25 +77,6 @@ class SenderSummaryMapperTest {
             verify { urlProvider.publicUrl(DEFAULT_AVATAR_KEY, DEFAULT_AVATAR_VERSION, CUSTOM_SIZE) }
             confirmVerified(urlProvider)
         }
-
-        @Test
-        fun `아바타 버전이 없으면 version에는 null을 전달한다`() {
-            // given
-            val user = createUser(
-                id = DEFAULT_USER_ID,
-                name = DEFAULT_USER_NAME,
-                avatarKey = DEFAULT_AVATAR_KEY,
-                avatarVersion = null
-            )
-
-            // when
-            val result = mapper.map(user)
-
-            // then
-            assertThat(result.avatarUrl).isEqualTo(DEFAULT_PUBLIC_URL)
-            verify { urlProvider.publicUrl(DEFAULT_AVATAR_KEY, null, DEFAULT_SIZE) }
-            confirmVerified(urlProvider)
-        }
     }
 
     @Nested
@@ -108,8 +89,7 @@ class SenderSummaryMapperTest {
             val user = createUser(
                 id = DEFAULT_USER_ID,
                 name = DEFAULT_USER_NAME,
-                avatarKey = null,
-                avatarVersion = null
+                avatarKey = null
             )
 
             // when
@@ -126,7 +106,7 @@ class SenderSummaryMapperTest {
         id: Long,
         name: String,
         avatarKey: String?,
-        avatarVersion: Int?
+        avatarVersion: Int = 0
     ): User {
         val user = TeamingUserFixture.A.getInstance()
         user.name = name
