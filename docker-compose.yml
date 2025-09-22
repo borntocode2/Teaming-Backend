@@ -20,7 +20,10 @@ services:
       start_period: 10s
     volumes:
       - db_data:/var/lib/mysql
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 10
 
   app:
     build: .
@@ -34,7 +37,10 @@ services:
       - "8080:8080"
     volumes:
       - ${IMAGES_DIR:-./images}:/app/images
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 10
 
 volumes:
   db_data:
