@@ -6,6 +6,7 @@ import goodspace.teaming.payment.dto.PaymentVerifyRequestDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 import goodspace.teaming.payment.dto.toEntity
 import goodspace.teaming.payment.service.PaymentService
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.util.MultiValueMap
@@ -52,7 +53,7 @@ class PaymentController(
     }
 
     @PostMapping("/request")
-    fun requestPayment(@RequestParam params: MultiValueMap<String, String>): ResponseEntity<String> {
+    fun requestPayment(@RequestParam params: MultiValueMap<String, String>): ResponseEntity<HttpStatus> {
         val dto = PaymentVerifyRespondDto(
             authResultCode = params["authResultCode"]?.firstOrNull() ?: "",
             authResultMsg = params["authResultMsg"]?.firstOrNull() ?: "",
@@ -65,6 +66,9 @@ class PaymentController(
             signature = params["signature"]?.firstOrNull() ?: ""
         )
 
-        return ResponseEntity.ok("결제 승인 완료")
+        val paymentApproveRespondDto: PaymentApproveRespondDto = paymentService.requestApprove(dto)
+        paymentService.savePaymentResult(paymentApproveRespondDto.toEntity())
+
+        return paymentService.mapResultCodeToHttpStatus(paymentApproveRespondDto.resultCode)
     }
 }
