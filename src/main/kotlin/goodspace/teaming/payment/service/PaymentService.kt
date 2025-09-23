@@ -8,8 +8,11 @@ import goodspace.teaming.payment.dto.PaymentApproveRespondDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 import goodspace.teaming.payment.repository.PaymentRepository
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @Service
@@ -17,14 +20,15 @@ class PaymentService(
     private val nicepayProperties: NicepayProperties,
     private val webClient: WebClient.Builder,
     private val paymentRepository: PaymentRepository
-){
 
+){
     fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): PaymentApproveRespondDto {
         if (paymentVerifyRespondDto.authResultCode != "0000"){
-            throw RuntimeException("결제 인증 실패: ${paymentVerifyRespondDto.authResultCode} in requestApprove Service Layer")
+            throw RuntimeException("카드사인증 인증 실패: ${paymentVerifyRespondDto.authResultCode} in requestApprove Service Layer")
         }
 
         val amount = paymentVerifyRespondDto.amount
+
         return approvePayment(paymentVerifyRespondDto.tid, amount)
     }
 
@@ -34,7 +38,7 @@ class PaymentService(
             amount = amount
         )
 
-        return webClient.build()
+        val paymentApproveRespondDto = webClient.build()
             .post()
             .uri(url)
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -43,8 +47,11 @@ class PaymentService(
             .retrieve()
             .bodyToMono(PaymentApproveRespondDto::class.java)
             .block() ?: throw RuntimeException("결제 승인 응답이 올바르지 않습니다.")
+
+        return paymentApproveRespondDto
     }
 
+    @Transactional
     fun savePaymentResult(paymentApproveRespond: PaymentApproveRespond): String {
         paymentRepository.save(paymentApproveRespond)
         return paymentApproveRespond.tid
@@ -55,5 +62,14 @@ class PaymentService(
         val encoded = Base64.getEncoder().encodeToString(credentials.toByteArray())
 
         return "Basic $encoded"
+    }
+
+    fun  mapResultCodeToHttpStatus(resultCode: String): ResponseEntity<HttpStatus> {
+        if (resultCode == "0000" || resultCode == "3001") {
+            return ResponseEntity(HttpStatus.OK)
+        }
+        else{
+            return ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }

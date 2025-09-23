@@ -1,9 +1,13 @@
 package goodspace.teaming.payment.controller
 
+import goodspace.teaming.email.dto.EmailVerifyRequestDto
 import goodspace.teaming.payment.dto.PaymentApproveRespondDto
+import goodspace.teaming.payment.dto.PaymentVerifyRequestDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 import goodspace.teaming.payment.dto.toEntity
 import goodspace.teaming.payment.service.PaymentService
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
@@ -12,9 +16,44 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/payment")
 class PaymentController(
     private val paymentService: PaymentService
-){
+) {
+
+    @GetMapping(value = ["/html"], produces = [MediaType.TEXT_HTML_VALUE])
+    fun showPaymentPage(
+        @RequestBody paymentVerifyRequestDto: PaymentVerifyRequestDto,
+    ): String {
+        return """<!DOCTYPE html>
+                <html lang="en">
+                <head>
+                <meta charset="UTF-8">
+                <title>NicePay 결제</title>
+                <script src="https://pay.nicepay.co.kr/v1/js/"></script>
+                </head>
+                <body onload="serverAuth()">
+
+                <script>
+                    function serverAuth() {
+                    AUTHNICE.requestPay({
+                    clientId: 'S2_fb903ce81792411ab6c459ec3a2a82c6',
+                    method: 'card',
+                    appScheme: `nicepaysample://`,
+                    orderId: '${paymentVerifyRequestDto.orderId}',
+                    amount: ${paymentVerifyRequestDto.amount},
+                    goodsName: '${paymentVerifyRequestDto.goodsName},}',
+                    returnUrl: 'http://13.125.193.243:8080/payment/request',
+                        fnError: function (result) {
+                        alert('개발자확인용 : ' + result.errorMsg);
+                        }
+                    });
+                }   
+                </script>
+
+                </body>
+                </html>"""
+    }
+
     @PostMapping("/request")
-    fun requestPayment(@RequestParam params: MultiValueMap<String, String>): ResponseEntity<String> {
+    fun requestPayment(@RequestParam params: MultiValueMap<String, String>): ResponseEntity<HttpStatus> {
         val dto = PaymentVerifyRespondDto(
             authResultCode = params["authResultCode"]?.firstOrNull() ?: "",
             authResultMsg = params["authResultMsg"]?.firstOrNull() ?: "",
@@ -28,7 +67,8 @@ class PaymentController(
         )
 
         val paymentApproveRespondDto: PaymentApproveRespondDto = paymentService.requestApprove(dto)
+        paymentService.savePaymentResult(paymentApproveRespondDto.toEntity())
 
-        return ResponseEntity.ok("승인 완료, TID: ${paymentService.savePaymentResult(paymentApproveRespondDto.toEntity())}")
+        return paymentService.mapResultCodeToHttpStatus(paymentApproveRespondDto.resultCode)
     }
 }

@@ -26,11 +26,10 @@ class GoogleAuthService(
     private val userRepository: UserRepository,
     private val toKenProvider: TokenProvider,
 
-    @Value("\${keys.google.client-id}")
+    @Value("\${keys.google.client-id-app}")
     private var googleClientId: String,
-    @Value("\${keys.google.client-secret}")
-    private var googleClientSecret: String
-
+    @Value("\${keys.google.client-secret-app}")
+    private var googleClientSecret: String,
     ) {
 
     @Transactional
@@ -78,7 +77,6 @@ class GoogleAuthService(
     private fun getTokenParams(code: String, redirectUri: String): Map<String, String> {
         return java.util.Map.of<String, String>(
             "code", code,
-            "scope", SCOPE,
             "client_id", googleClientId,
             "client_secret", googleClientSecret,
             "redirect_uri", redirectUri,

@@ -79,7 +79,6 @@ class NaverAuthService (
     private fun getTokenParams(code: String, redirectUri: String): Map<String, String> {
         return java.util.Map.of<String, String>(
             "code", code,
-            "scope", SCOPE,
             "client_id", naverClientId,
             "client_secret", naverClientSecret,
             "redirect_uri", redirectUri,
