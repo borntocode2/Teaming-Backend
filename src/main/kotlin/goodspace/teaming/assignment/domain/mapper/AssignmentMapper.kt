@@ -31,7 +31,8 @@ class AssignmentMapper(
             assignedMemberIds = assignment.assignedMemberIds,
             due = assignment.due,
             status = assignment.status,
-            submissions = assignment.submissions.toDto()
+            submissions = assignment.submissions.toDto(),
+            punished = assignment.punished
         )
     }
 
