@@ -2,9 +2,9 @@ package goodspace.teaming.util
 
 import goodspace.teaming.fixture.*
 import goodspace.teaming.global.entity.email.EmailVerification
-import goodspace.teaming.global.entity.room.Room
-import goodspace.teaming.global.entity.room.RoomType
+import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.TeamingUser
+import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.entity.user.UserType
 import org.springframework.test.util.ReflectionTestUtils
 import java.time.LocalDateTime
@@ -67,4 +67,24 @@ fun createRoom(
     ReflectionTestUtils.setField(room, "success", success)
 
     return room
+}
+
+fun createUserRoom(
+    user: User,
+    room: Room,
+    roomRole: RoomRole = USER_ROOM_ROLE,
+    lastReadMessageId: Long? = USER_ROOM_LAST_READ_MESSAGE_ID,
+    paymentStatus: PaymentStatus = USER_ROOM_PAYMENT_STATUS,
+    id: Long = USER_ROOM_ID
+): UserRoom {
+    val userRoom = UserRoom(
+        user = user,
+        room = room,
+        roomRole = roomRole,
+        lastReadMessageId = lastReadMessageId,
+        paymentStatus = paymentStatus
+    )
+    ReflectionTestUtils.setField(userRoom, "id", id)
+
+    return userRoom
 }

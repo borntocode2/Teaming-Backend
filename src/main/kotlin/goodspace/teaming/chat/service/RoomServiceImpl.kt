@@ -125,7 +125,7 @@ class RoomServiceImpl(
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
         val room = userRoom.room
 
-        require(room.success) { NOT_SUCCEEDED }
+        check(room.success) { NOT_SUCCEEDED }
 
         room.removeUserRoom(userRoom)
 
