@@ -1,6 +1,7 @@
 package goodspace.teaming.punishment.service
 
 import goodspace.teaming.assignment.repository.AssignmentRepository
+import goodspace.teaming.gifticon.service.GifticonService
 import goodspace.teaming.global.entity.aissgnment.Assignment
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -16,7 +17,7 @@ class PunishmentService(
         val users = room.userRooms.map { it.user }
 
         users.forEach { user ->
-            gifticonService.sendGifticon(user) // 외부 기프티콘 API 호출
+            gifticonService.sendGifticon(user)
         }
 
         assignment.punished = true
