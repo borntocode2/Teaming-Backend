@@ -6,7 +6,7 @@ interface RoomService {
     fun createRoom(
         userId: Long,
         requestDto: RoomCreateRequestDto
-    ): RoomInviteCodeResponseDto
+    ): RoomCreateResponseDto
 
     fun searchRoom(
         inviteCode: String

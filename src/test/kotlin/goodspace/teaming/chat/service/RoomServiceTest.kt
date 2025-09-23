@@ -69,10 +69,10 @@ class RoomServiceTest {
         @Test
         fun `팀장이 되어 새로운 티밍룸을 생성한다`() {
             // given
-            val leader = mockk<User>(relaxed = true)
+            val leader = createUser(id = USER_ID)
             every { userRepository.findById(USER_ID) } returns Optional.of(leader)
 
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            val room = createRoom()
             every { roomMapper.map(any()) } returns room
 
             every { inviteCodeGenerator.generate() } returns UNIQUE_CODE
@@ -95,10 +95,10 @@ class RoomServiceTest {
         @Test
         fun `중복되지 않는 초대코드를 설정한다`() {
             // given
-            val user = mockk<User>(relaxed = true)
+            val user = createUser(id = USER_ID)
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            val room = createRoom()
             every { roomMapper.map(any()) } returns room
 
             // 두 번까지는 중복된 초대코드를 발행하도록 설정
@@ -117,10 +117,10 @@ class RoomServiceTest {
         @Test
         fun `계속해서 중복되지 않은 초대코드 발행에 실패하면 예외를 던진다`() {
             // given
-            val user = mockk<User>(relaxed = true)
+            val user = createUser(id = USER_ID)
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            val room = createRoom()
             every { roomMapper.map(any()) } returns room
 
             every { inviteCodeGenerator.generate() } returns DUPLICATE_CODE
@@ -134,10 +134,10 @@ class RoomServiceTest {
         @Test
         fun `초대 코드를 반환한다`() {
             // given
-            val user = mockk<User>(relaxed = true)
+            val user = createUser(id = USER_ID)
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            val room = createRoom()
             every { roomMapper.map(any()) } returns room
 
             every { inviteCodeGenerator.generate() } returns UNIQUE_CODE

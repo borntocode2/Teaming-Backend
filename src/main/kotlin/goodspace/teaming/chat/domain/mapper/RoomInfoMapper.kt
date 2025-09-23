@@ -30,6 +30,7 @@ class RoomInfoMapper(
 
         return RoomInfoResponseDto(
             roomId = room.id!!,
+            role = userRoom.roomRole,
             unreadCount = unreadCount,
             lastMessage = lastMessageDto,
             title = room.title,
