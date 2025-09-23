@@ -23,7 +23,7 @@ private const val USER_NOT_FOUND = "회원을 조회할 수 없습니다."
 private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
 private const val ALREADY_JOINED = "이미 해방 티밍룸에 소속되어 있습니다."
 private const val WRONG_INVITE_CODE = "부적절한 초대 코드입니다."
-private const val NOT_PAID = "결제되지 않았습니다."
+private const val NOT_SUCCEEDED = "팀플에 성공하기 전까진 나갈 수 없습니다."
 private const val NOT_LEADER = "팀장이 아닙니다."
 
 @Service
@@ -125,7 +125,7 @@ class RoomServiceImpl(
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
         val room = userRoom.room
 
-        require(userRoom.paymentStatus != PaymentStatus.NOT_PAID) { NOT_PAID }
+        require(room.success) { NOT_SUCCEEDED }
 
         room.removeUserRoom(userRoom)
 
