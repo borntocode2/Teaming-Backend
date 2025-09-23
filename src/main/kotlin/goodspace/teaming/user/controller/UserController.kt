@@ -1,19 +1,18 @@
 package goodspace.teaming.user.controller
 
+import goodspace.teaming.authorization.dto.AccessTokenReissueRequestDto
+import goodspace.teaming.authorization.dto.AccessTokenResponseDto
 import goodspace.teaming.global.security.getUserId
 import goodspace.teaming.user.dto.UpdateEmailRequestDto
 import goodspace.teaming.user.dto.UpdateNameRequestDto
 import goodspace.teaming.user.dto.UpdatePasswordRequestDto
 import goodspace.teaming.user.dto.UserInfoResponseDto
+import goodspace.teaming.user.service.TokenManagementService
 import goodspace.teaming.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.security.Principal
 
 private val NO_CONTENT = ResponseEntity.noContent().build<Void>()
@@ -25,7 +24,8 @@ private val NO_CONTENT = ResponseEntity.noContent().build<Void>()
     description = "회원 정보 조회 및 삭제 기능(아바타 수정은 파일 API에서 담당합니다)"
 )
 class UserController(
-    private val userService: UserService
+    private val userService: UserService,
+    private val tokenManagementService: TokenManagementService
 ) {
     @GetMapping
     @Operation(
@@ -84,6 +84,49 @@ class UserController(
         val userId = principal.getUserId()
 
         userService.updateName(userId, requestDto)
+
+        return NO_CONTENT
+    }
+
+    @PostMapping("/access-token")
+    @Operation(
+        summary = "엑세스 토큰 재발급",
+        description = "리프레쉬 토큰을 통해 엑세스 토큰을 재발급합니다."
+    )
+    fun reissueAccessToken(
+        @RequestBody requestDto: AccessTokenReissueRequestDto
+    ): ResponseEntity<AccessTokenResponseDto> {
+        val response = tokenManagementService.reissueAccessToken(requestDto)
+
+        return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/log-out")
+    @Operation(
+        summary = "로그아웃(리프레쉬 토큰 만료)",
+        description = "리프레쉬 토큰을 만료시킵니다. 엑세스 토큰은 클라이언트 단에서 직접 처분해야 합니다."
+    )
+    fun logout(
+        principal: Principal
+    ): ResponseEntity<Void> {
+        val userId = principal.getUserId()
+
+        tokenManagementService.expireRefreshToken(userId)
+
+        return NO_CONTENT
+    }
+
+    @DeleteMapping("/withdraw")
+    @Operation(
+        summary = "회원 탈퇴",
+        description = "회원을 삭제합니다. 결제한 금액을 환불받지 못함을 고지해야 합니다."
+    )
+    fun withdraw(
+        principal: Principal
+    ): ResponseEntity<Void> {
+        val userId = principal.getUserId()
+
+        userService.removeUser(userId)
 
         return NO_CONTENT
     }

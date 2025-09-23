@@ -67,6 +67,11 @@ class UserServiceImpl(
         user.name = requestDto.name
     }
 
+    @Transactional
+    override fun removeUser(userId: Long) {
+        userRepository.deleteById(userId)
+    }
+
     private fun findUser(userId: Long): User {
         return userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }

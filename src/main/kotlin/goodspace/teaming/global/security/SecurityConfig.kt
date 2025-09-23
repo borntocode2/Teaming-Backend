@@ -31,6 +31,7 @@ class SecurityConfig(
                     .requestMatchers("/ws/**").permitAll() // 웹소캣 핸드셰이크
                     .requestMatchers("/landing/**").permitAll() // 랜딩 페이지
                     .requestMatchers("/api/auth/**").permitAll() // 회원가입
+                    .requestMatchers(("/users/me/access-token")).permitAll() // 엑세스 토큰 재발급
                     .requestMatchers("/static/**", "/nicepay-test.html").permitAll()
                     .requestMatchers("/payment/**").permitAll()
                     .anyRequest().authenticated()

@@ -16,6 +16,7 @@ import goodspace.teaming.util.createEmailVerification
 import goodspace.teaming.util.createUser
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -36,7 +37,7 @@ private const val WRONG_PASSWORD = "worngPassword"
 private const val ILLEGAL_PASSWORD = "illegalPassword"
 
 class UserServiceTest {
-    private val userRepository = mockk<UserRepository>()
+    private val userRepository = mockk<UserRepository>(relaxed = true)
     private val emailVerificationRepository = mockk<EmailVerificationRepository>(relaxed = true)
     private val passwordEncoder = mockk<PasswordEncoder>()
     private val passwordValidator = mockk<PasswordValidatorImpl>()
@@ -281,6 +282,22 @@ class UserServiceTest {
             // then
             assertThat(user.name).isNotEqualTo(originalName)
             assertThat(user.name).isEqualTo(NEW_NAME)
+        }
+    }
+
+    @Nested
+    @DisplayName("removeUser")
+    inner class RemoveUser {
+        @Test
+        fun `회원을 제거한다`() {
+            // given
+            val user = createUser()
+
+            // when
+            userService.removeUser(user.id!!)
+
+            // then
+            verify(exactly = 1) { userRepository.deleteById(user.id!!) }
         }
     }
 }
