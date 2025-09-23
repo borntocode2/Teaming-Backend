@@ -21,4 +21,8 @@ interface UserService {
         userId: Long,
         requestDto: UpdateNameRequestDto
     )
+
+    fun removeUser(
+        userId: Long
+    )
 }

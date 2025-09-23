@@ -1,4 +1,4 @@
-package goodspace.teaming.authorization.service
+package goodspace.teaming.user.service
 
 import goodspace.teaming.authorization.dto.AccessTokenReissueRequestDto
 import goodspace.teaming.authorization.dto.AccessTokenResponseDto
@@ -14,12 +14,12 @@ private const val ILLEGAL_TOKEN = "부적절한 토큰입니다."
 private const val EXPIRED_REFRESH_TOKEN = "만료된 리프레쉬 토큰입니다."
 
 @Service
-class TokenManagementService(
+class TokenManagementServiceImpl(
     private val userRepository: UserRepository,
     private val tokenProvider: TokenProvider
-) {
+) : TokenManagementService {
     @Transactional(readOnly = true)
-    fun reissueAccessToken(requestDto: AccessTokenReissueRequestDto): AccessTokenResponseDto {
+    override fun reissueAccessToken(requestDto: AccessTokenReissueRequestDto): AccessTokenResponseDto {
         val refreshToken = requestDto.refreshToken
 
         val userId = tokenProvider.getIdFromToken(refreshToken)
@@ -30,6 +30,13 @@ class TokenManagementService(
         val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles)
 
         return AccessTokenResponseDto(accessToken)
+    }
+
+    @Transactional
+    override fun expireRefreshToken(userId: Long) {
+        val user = findUser(userId)
+
+        user.token = null
     }
 
     private fun assertRefreshToken(user: User, refreshToken: String) {

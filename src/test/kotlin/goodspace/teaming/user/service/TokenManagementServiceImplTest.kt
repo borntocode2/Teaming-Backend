@@ -1,6 +1,7 @@
-package goodspace.teaming.authorization.service
+package goodspace.teaming.user.service
 
 import goodspace.teaming.authorization.dto.AccessTokenReissueRequestDto
+import goodspace.teaming.fixture.REFRESH_TOKEN_VALUE
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.security.TokenProvider
 import goodspace.teaming.global.security.TokenType
@@ -14,15 +15,14 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.*
 
-private const val REFRESH_TOKEN = "refreshToken"
 private const val DIFFERENT_REFRESH_TOKEN = "differentRefreshToken"
 private const val ACCESS_TOKEN = "accessToken"
 
-class TokenManagementServiceTest {
+class TokenManagementServiceImplTest {
     private val userRepository = mockk<UserRepository>()
     private val tokenProvider = mockk<TokenProvider>()
 
-    private val tokenManagementService = TokenManagementService(
+    private val tokenManagementService = TokenManagementServiceImpl(
         userRepository = userRepository,
         tokenProvider = tokenProvider
     )
@@ -34,13 +34,13 @@ class TokenManagementServiceTest {
         fun `엑세스 토큰을 재발급한다`() {
             // given
             val user = createUser()
-            user.token = REFRESH_TOKEN
+            user.token = REFRESH_TOKEN_VALUE
 
-            val requestDto = AccessTokenReissueRequestDto(REFRESH_TOKEN)
+            val requestDto = AccessTokenReissueRequestDto(REFRESH_TOKEN_VALUE)
 
-            every { tokenProvider.getIdFromToken(REFRESH_TOKEN) } returns user.id!!
+            every { tokenProvider.getIdFromToken(REFRESH_TOKEN_VALUE) } returns user.id!!
             every { userRepository.findById(user.id!!) } returns Optional.of(user)
-            every { tokenProvider.validateToken(REFRESH_TOKEN, TokenType.REFRESH) } returns true
+            every { tokenProvider.validateToken(REFRESH_TOKEN_VALUE, TokenType.REFRESH) } returns true
             every { tokenProvider.createToken(user.id!!, TokenType.ACCESS, any()) } returns ACCESS_TOKEN
 
             // when
@@ -54,13 +54,13 @@ class TokenManagementServiceTest {
         fun `리프레쉬 토큰이 부적절하면 예외를 던진다`() {
             // given
             val user = createUser()
-            user.token = REFRESH_TOKEN
+            user.token = REFRESH_TOKEN_VALUE
 
-            val requestDto = AccessTokenReissueRequestDto(REFRESH_TOKEN)
+            val requestDto = AccessTokenReissueRequestDto(REFRESH_TOKEN_VALUE)
 
-            every { tokenProvider.getIdFromToken(REFRESH_TOKEN) } returns user.id!!
+            every { tokenProvider.getIdFromToken(REFRESH_TOKEN_VALUE) } returns user.id!!
             every { userRepository.findById(user.id!!) } returns Optional.of(user)
-            every { tokenProvider.validateToken(REFRESH_TOKEN, TokenType.REFRESH) } returns false
+            every { tokenProvider.validateToken(REFRESH_TOKEN_VALUE, TokenType.REFRESH) } returns false
 
             // when & then
             assertThatThrownBy { tokenManagementService.reissueAccessToken(requestDto) }
@@ -71,7 +71,7 @@ class TokenManagementServiceTest {
         @Test
         fun `회원의 리프레쉬 토큰과 일치하지 않으면 예외를 던진다`() {
             val user = createUser()
-            user.token = REFRESH_TOKEN
+            user.token = REFRESH_TOKEN_VALUE
 
             val requestDto = AccessTokenReissueRequestDto(DIFFERENT_REFRESH_TOKEN)
 
@@ -83,6 +83,25 @@ class TokenManagementServiceTest {
             assertThatThrownBy { tokenManagementService.reissueAccessToken(requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("만료된 리프레쉬 토큰입니다.")
+        }
+    }
+
+    @Nested
+    @DisplayName("expireRefreshToken")
+    inner class ExpireRefreshToken {
+        @Test
+        fun `회원의 리프레쉬 토큰 값을 null로 만든다`() {
+            // given
+            val user = createUser()
+            user.token = REFRESH_TOKEN_VALUE
+
+            every { userRepository.findById(user.id!!) } returns Optional.of(user)
+
+            // when
+            tokenManagementService.expireRefreshToken(user.id!!)
+
+            // then
+            assertThat(user.token).isNull()
         }
     }
 }

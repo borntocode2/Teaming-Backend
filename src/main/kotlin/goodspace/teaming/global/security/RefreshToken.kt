@@ -9,8 +9,7 @@ import org.hibernate.annotations.SQLRestriction
 @SQLDelete(sql = "UPDATE refresh_token SET deleted = true, deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted = false")
 class RefreshToken(
-    @Column(nullable = false)
-    var tokenValue: String = ""
+    var tokenValue: String? = null
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
