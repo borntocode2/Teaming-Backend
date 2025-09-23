@@ -14,6 +14,8 @@ import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
+import goodspace.teaming.util.createRoom
+import goodspace.teaming.util.createUser
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -147,6 +149,28 @@ class RoomServiceTest {
             // then
             assertThat(responseDto.inviteCode).isEqualTo(UNIQUE_CODE)
         }
+
+        @Test
+        fun `티밍룸 타입이 Demo일 경우 결제 상태를 '결제됨'으로 설정한다`() {
+            // given
+            val user = createUser(id = USER_ID)
+            every { userRepository.findById(USER_ID) } returns Optional.of(user)
+
+            val room = createRoom(type = RoomType.DEMO)
+            every { roomMapper.map(any()) } returns room
+
+            every { inviteCodeGenerator.generate() } returns UNIQUE_CODE
+            every { roomRepository.existsByInviteCode(UNIQUE_CODE) } returns false
+            every { roomRepository.saveAndFlush(room) } returns room
+
+            // when
+            roomService.createRoom(USER_ID, getRoomCreateDto())
+
+            // then
+            assertThat(user.userRooms.size).isEqualTo(1)
+            val userRoom = user.userRooms[0]
+            assertThat(userRoom.paymentStatus).isEqualTo(PaymentStatus.PAID)
+        }
     }
 
     @Nested
@@ -255,6 +279,26 @@ class RoomServiceTest {
 
             // then
             assertThat(result).isSameAs(roomDto)
+        }
+
+        @Test
+        fun `티밍룸 타입이 Demo일 경우 결제 상태를 '결제됨'으로 설정한다`() {
+            // given
+            val user = createUser()
+            val room = createRoom(type = RoomType.DEMO)
+            val requestDto = InviteAcceptRequestDto(inviteCode = room.inviteCode!!)
+
+            every { userRepository.findById(user.id!!) } returns Optional.of(user)
+            every { roomRepository.findByInviteCode(room.inviteCode!!) } returns room
+            every { userRoomRepository.existsByRoomAndUser(room, user) } returns false
+
+            // when
+            roomService.acceptInvite(user.id!!, requestDto)
+
+            // then
+            assertThat(user.userRooms.size).isEqualTo(1)
+            val userRoom = user.userRooms[0]
+            assertThat(userRoom.paymentStatus).isEqualTo(PaymentStatus.PAID)
         }
     }
 

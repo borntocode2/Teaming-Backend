@@ -27,7 +27,7 @@ class ChatRestController(
     @PostMapping
     @Operation(
         summary = "방 생성",
-        description = "티밍룸을 생성합니다. 초대 코드를 반환합니다. 초대 링크는 초대 코드를 기반으로 클라이언트 측에서 제작해주시길 바랍니다."
+        description = "티밍룸을 생성합니다. 초대 코드를 반환합니다. 초대 링크는 초대 코드를 기반으로 클라이언트 측에서 제작해주시길 바랍니다. 방의 타입은 DEMO, BASIC. STANDARD, ELITE 중 하나여야 합니다."
     )
     fun createRoom(
         principal: Principal,

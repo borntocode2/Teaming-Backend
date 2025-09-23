@@ -8,6 +8,7 @@ import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
+import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -56,7 +57,10 @@ class RoomServiceImpl(
             room = room,
             roomRole = RoomRole.LEADER
         )
+        user.addUserRoom(userRoom)
         room.addUserRoom(userRoom)
+
+        passPaymentIfDemoRoom(userRoom)
 
         // 초대 코드가 중복될 시 재시도하기 위한 플러쉬
         roomRepository.saveAndFlush(room)
@@ -89,6 +93,8 @@ class RoomServiceImpl(
         user.addUserRoom(userRoom)
         room.addUserRoom(userRoom)
 
+        passPaymentIfDemoRoom(userRoom)
+
         return roomInfoMapper.map(userRoom)
     }
 
@@ -120,10 +126,6 @@ class RoomServiceImpl(
         val room = userRoom.room
 
         require(userRoom.paymentStatus != PaymentStatus.NOT_PAID) { NOT_PAID }
-
-        if (userRoom.paymentStatus == PaymentStatus.PAID) {
-            // TODO: 벌칙 이벤트 발생
-        }
 
         room.removeUserRoom(userRoom)
 
@@ -158,5 +160,13 @@ class RoomServiceImpl(
         }
 
         throw InviteCodeAllocationFailedException()
+    }
+
+    private fun passPaymentIfDemoRoom(userRoom: UserRoom) {
+        val room = userRoom.room
+
+        if (room.type == RoomType.DEMO) {
+            userRoom.paymentStatus = PaymentStatus.PAID
+        }
     }
 }

@@ -2,6 +2,8 @@ package goodspace.teaming.util
 
 import goodspace.teaming.fixture.*
 import goodspace.teaming.global.entity.email.EmailVerification
+import goodspace.teaming.global.entity.room.Room
+import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.UserType
 import org.springframework.test.util.ReflectionTestUtils
@@ -41,4 +43,28 @@ fun createEmailVerification(
     ReflectionTestUtils.setField(emailVerification, "id", id)
 
     return emailVerification
+}
+
+fun createRoom(
+    title: String = ROOM_TITLE,
+    imageKey: String? = ROOM_IMAGE_KEY,
+    imageVersion: Int? = ROOM_IMAGE_VERSION,
+    type: RoomType = ROOM_TYPE,
+    inviteCode: String? = ROOM_INVITE_CODE,
+    memberCount: Int = ROOM_MEMBER_COUNT,
+    id: Long = ROOM_ID,
+    success: Boolean = false
+): Room {
+    val room = Room(
+        title = title,
+        imageKey = imageKey,
+        imageVersion = imageVersion,
+        type = type,
+        inviteCode = inviteCode,
+        memberCount = memberCount
+    )
+    ReflectionTestUtils.setField(room, "id", id)
+    ReflectionTestUtils.setField(room, "success", success)
+
+    return room
 }
