@@ -17,7 +17,7 @@ class AvatarService(
     private val s3: S3PresignSupport,
     @Value("\${app.avatar.prefix:avatars}") private val avatarPrefix: String,
     @Value("\${app.avatar.max-size-mb:5}") private val maxAvatarSizeMb: Long,
-    @Value("\${app.cdn.base-url:}") private val cdnBaseUrl: String, // 비어있으면 presigned GET 사용
+    @Value("\${cdn.base:}") private val cdnBaseUrl: String, // 비어있으면 presigned GET 사용
 ) {
     private val allowedImageTypes = setOf("image/png", "image/jpeg", "image/webp")
     private val maxBytes get() = maxAvatarSizeMb.coerceAtLeast(1) * 1024 * 1024
