@@ -4,13 +4,9 @@ import goodspace.teaming.file.dto.*
 import goodspace.teaming.file.service.AvatarService
 import goodspace.teaming.global.security.getUserId
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.security.Principal
 
 @RestController
