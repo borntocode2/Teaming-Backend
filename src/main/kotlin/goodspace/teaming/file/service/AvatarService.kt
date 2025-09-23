@@ -14,10 +14,9 @@ private const val USER_NOT_FOUND = "회원을 조회할 수 없습니다."
 @Service
 class AvatarService(
     private val userRepository: UserRepository,
-    private val s3: S3PresignSupport,
+    private val s3PresignSupport: S3PresignSupport,
     @Value("\${app.avatar.prefix:avatars}") private val avatarPrefix: String,
-    @Value("\${app.avatar.max-size-mb:5}") private val maxAvatarSizeMb: Long,
-    @Value("\${cdn.base:}") private val cdnBaseUrl: String, // 비어있으면 presigned GET 사용
+    @Value("\${app.avatar.max-size-mb:5}") private val maxAvatarSizeMb: Long
 ) {
     private val allowedImageTypes = setOf("image/png", "image/jpeg", "image/webp")
     private val maxBytes get() = maxAvatarSizeMb.coerceAtLeast(1) * 1024 * 1024
@@ -26,109 +25,82 @@ class AvatarService(
 
     @Transactional(readOnly = true)
     fun intent(userId: Long, requestDto: AvatarUploadIntentRequestDto): AvatarUploadIntentResponseDto {
-        // 1) 용량 검증
         require(requestDto.byteSize in 1..maxBytes) { "아바타 최대 크기는 ${maxAvatarSizeMb}MB 입니다." }
 
-        // 2) Content-Type 정규화 + 화이트리스트
-        val normalized = normalizeContentType(requestDto.contentType)
-        require(normalized in allowedImageTypes) { "지원하지 않는 이미지 형식입니다: $normalized" }
+        val normalizedContentType = normalizeContentType(requestDto.contentType)
+        require(normalizedContentType in allowedImageTypes) { "지원하지 않는 이미지 형식입니다: $normalizedContentType" }
 
-        // 3) 고정 Key (덮어쓰기)
-        val key = keyOf(userId)
-
-        // 4) Presigned PUT 발급 (x-amz-checksum-sha256 요구됨: S3PresignSupport가 강제)
-        val url = s3.presignPut(key, normalized)
-        val headers = mapOf(
-            "Content-Type" to normalized,
+        val objectKey = keyOf(userId)
+        val presignedPutUrl = s3PresignSupport.presignPut(objectKey, normalizedContentType)
+        val requiredHeaders = mapOf(
+            "Content-Type" to normalizedContentType,
             "x-amz-checksum-sha256" to requestDto.checksumSha256Base64
         )
 
         return AvatarUploadIntentResponseDto(
-            key = key,
-            bucket = s3.bucket(),
-            url = url,
-            requiredHeaders = headers
+            key = objectKey,
+            bucket = s3PresignSupport.bucket(),
+            url = presignedPutUrl,
+            requiredHeaders = requiredHeaders
         )
     }
 
     @Transactional
     fun complete(userId: Long, requestDto: AvatarUploadCompleteRequestDto): AvatarUploadCompleteResponseDto {
-        val key = keyOf(userId)
-        require(requestDto.key == key) { "key 불일치: intent에서 발급한 key만 허용됩니다." }
+        val objectKey = keyOf(userId)
+        require(requestDto.key == objectKey) { "key 불일치: intent에서 발급한 key만 허용됩니다." }
 
-        // 1) S3 HEAD로 업로드 검증 (+ checksum/mime)
         val head = try {
-            s3.headWithChecksum(key)
+            s3PresignSupport.headWithChecksum(objectKey)
         } catch (e: S3Exception) {
             throw IllegalArgumentException("S3에 업로드된 아바타 원본이 존재하지 않습니다.", e)
         }
 
-        val size = head.contentLength()
-        require(size in 1L..maxBytes) { "아바타 최대 크기는 ${maxAvatarSizeMb}MB 입니다." }
+        val objectSize = head.contentLength()
+        require(objectSize in 1L..maxBytes) { "아바타 최대 크기는 ${maxAvatarSizeMb}MB 입니다." }
 
-        val mime = head.contentType() ?: guessContentTypeFromKey(key)
-        require(mime in allowedImageTypes) { "지원하지 않는 이미지 형식입니다: $mime" }
-
+        val contentType = head.contentType() ?: guessContentTypeFromKey(objectKey)
+        require(contentType in allowedImageTypes) { "지원하지 않는 이미지 형식입니다: $contentType" }
         require(!head.checksumSHA256().isNullOrBlank()) { "체크섬이 누락되었습니다." }
 
-        // 2) 유저 엔티티 갱신 (avatarVersion++)
         val user = userRepository.findById(userId).orElseThrow()
-        user.avatarKey = key
+        user.avatarKey = objectKey
         user.avatarVersion++
 
-        // 3) 공개 URL 만들기 (CDN 사용 권장; 없으면 presigned GET 사용)
-        val publicUrl = if (cdnBaseUrl.isNotBlank()) {
-            // CDN 캐시 무효화: ?v={avatarVersion}
-            "${cdnBaseUrl.trimEnd('/')}/$key?v=${user.avatarVersion}"
-        } else {
-            // 이미지 인라인 렌더링을 위해 disposition 미지정 presign이 있으면 더 좋지만,
-            // 기존 유틸에 맞춰 attachment로 내려도 무방합니다.
-            val (url, _) = s3.presignGetWithDisposition(
-                key = key,
-                filename = "avatar-$userId",
-                contentType = mime
-            )
-            url
-        }
+        val (presignedGetUrl, _) = s3PresignSupport.presignGetWithDisposition(
+            key = objectKey,
+            filename = "avatar-$userId",
+            contentType = contentType
+        )
 
         return AvatarUploadCompleteResponseDto(
-            avatarKey = key,
+            avatarKey = objectKey,
             avatarVersion = user.avatarVersion,
-            publicUrl = publicUrl
+            publicUrl = presignedGetUrl
         )
     }
 
     @Transactional(readOnly = true)
     fun issueViewUrl(userId: Long): AvatarUrlResponseDto {
         val user = userRepository.findById(userId).orElseThrow()
-        val key = user.avatarKey
-        val version = user.avatarVersion
+        val objectKey = user.avatarKey
 
-        if (key.isNullOrBlank()) {
-            // 기본 이미지 경로: CDN에 기본 이미지가 있다면 해당 경로로 반환
-            // (없다면 정적 리소스 경로나 프론트에서 placeholder 사용)
+        if (objectKey.isNullOrBlank()) {
             return AvatarUrlResponseDto(url = defaultAvatarUrl())
         }
 
-        val url = if (cdnBaseUrl.isNotBlank()) {
-            "${cdnBaseUrl.trimEnd('/')}/$key?v=$version"
-        } else {
-            val (presigned, _) = s3.presignGetWithDisposition(
-                key = key,
-                filename = "avatar-$userId",
-                contentType = null
-            )
-            presigned
-        }
-
-        return AvatarUrlResponseDto(url = url)
+        val (presignedGetUrl, _) = s3PresignSupport.presignGetWithDisposition(
+            key = objectKey,
+            filename = "avatar-$userId",
+            contentType = null
+        )
+        return AvatarUrlResponseDto(url = presignedGetUrl)
     }
 
     @Transactional
     fun delete(userId: Long) {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }
-
         user.avatarKey = null
         user.avatarVersion = 0
     }
@@ -143,7 +115,5 @@ class AvatarService(
         return URLConnection.guessContentTypeFromName(name)?.lowercase() ?: "application/octet-stream"
     }
 
-    private fun defaultAvatarUrl(): String =
-        if (cdnBaseUrl.isNotBlank()) "${cdnBaseUrl.trimEnd('/')}/static/default-avatar.png"
-        else "/static/default-avatar.png"
+    private fun defaultAvatarUrl(): String = "/static/default-avatar.png"
 }
