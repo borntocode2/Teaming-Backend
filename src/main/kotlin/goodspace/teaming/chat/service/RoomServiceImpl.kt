@@ -8,6 +8,7 @@ import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
+import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -22,7 +23,7 @@ private const val USER_NOT_FOUND = "회원을 조회할 수 없습니다."
 private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
 private const val ALREADY_JOINED = "이미 해방 티밍룸에 소속되어 있습니다."
 private const val WRONG_INVITE_CODE = "부적절한 초대 코드입니다."
-private const val NOT_PAID = "결제되지 않았습니다."
+private const val NOT_SUCCEEDED = "팀플에 성공하기 전까진 나갈 수 없습니다."
 private const val NOT_LEADER = "팀장이 아닙니다."
 
 @Service
@@ -56,7 +57,10 @@ class RoomServiceImpl(
             room = room,
             roomRole = RoomRole.LEADER
         )
+        user.addUserRoom(userRoom)
         room.addUserRoom(userRoom)
+
+        passPaymentIfDemoRoom(userRoom)
 
         // 초대 코드가 중복될 시 재시도하기 위한 플러쉬
         roomRepository.saveAndFlush(room)
@@ -89,6 +93,8 @@ class RoomServiceImpl(
         user.addUserRoom(userRoom)
         room.addUserRoom(userRoom)
 
+        passPaymentIfDemoRoom(userRoom)
+
         return roomInfoMapper.map(userRoom)
     }
 
@@ -119,11 +125,7 @@ class RoomServiceImpl(
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
         val room = userRoom.room
 
-        require(userRoom.paymentStatus != PaymentStatus.NOT_PAID) { NOT_PAID }
-
-        if (userRoom.paymentStatus == PaymentStatus.PAID) {
-            // TODO: 벌칙 이벤트 발생
-        }
+        check(room.success) { NOT_SUCCEEDED }
 
         room.removeUserRoom(userRoom)
 
@@ -158,5 +160,13 @@ class RoomServiceImpl(
         }
 
         throw InviteCodeAllocationFailedException()
+    }
+
+    private fun passPaymentIfDemoRoom(userRoom: UserRoom) {
+        val room = userRoom.room
+
+        if (room.type == RoomType.DEMO) {
+            userRoom.paymentStatus = PaymentStatus.PAID
+        }
     }
 }

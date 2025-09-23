@@ -5,6 +5,11 @@ enum class RoomType(
     val price: Int,
     val description: String
 ) {
+    DEMO(
+        "Demo Room",
+        0,
+        "데모 버전을 위한 티밍룸 타입입니다."
+    ),
     BASIC(
         "Basic Room",
         2060,
