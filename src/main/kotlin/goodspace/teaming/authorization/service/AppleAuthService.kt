@@ -67,7 +67,7 @@ class AppleAuthService(
 
         val headers = getHeaders()
         val params = getParams(
-            clientId = webClientId,
+            clientId = appClientId,
             clientSecret = clientSecret,
             code = requestDto.code,
             redirectUri = requestDto.redirectUri
