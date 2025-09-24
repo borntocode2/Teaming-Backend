@@ -24,7 +24,7 @@ class AvatarServiceImpl(
     private val roomRepository: RoomRepository,
     private val presignedUploadUrlProvider: PresignedUploadUrlProvider,
     private val storageUrlProvider: StorageUrlProvider,
-    private val s3PresignedUrlProvider: S3PresignStorageUrlProvider,
+    private val s3PresignedUrlProvider: S3PresignedStorageUrlProvider,
     @Value("\${app.avatar.user-prefix:avatars/users}") private val userAvatarPrefix: String,
     @Value("\${app.avatar.room-prefix:avatars/rooms}") private val roomAvatarPrefix: String,
     @Value("\${app.avatar.max-size-mb:5}") private val maxAvatarSizeMb: Long

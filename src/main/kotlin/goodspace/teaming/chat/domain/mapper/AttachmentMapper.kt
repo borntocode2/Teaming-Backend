@@ -1,11 +1,11 @@
 package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.chat.dto.MessageAttachmentResponseDto
+import goodspace.teaming.file.domain.StorageUrlProvider
 import goodspace.teaming.global.entity.file.AntiVirusScanStatus
 import goodspace.teaming.global.entity.file.Attachment
 import goodspace.teaming.global.entity.file.FileType
 import goodspace.teaming.global.entity.file.TranscodeStatus
-import goodspace.teaming.file.domain.StorageUrlProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
