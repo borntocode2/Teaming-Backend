@@ -331,7 +331,7 @@ class AppleAuthService(
         check(exp != null && exp!! > now - 60) { EXPIRED_ID_TOKEN }
         check(iat != null && iat!! <= now + 60) { FUTURE_ID_TOKEN }
 
-        check(emailVerified) {
+        check(emailVerified ?: false) {
             NOT_VERIFIED_EMAIL
         }
     }
