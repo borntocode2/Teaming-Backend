@@ -37,7 +37,7 @@ class PaymentController(
                     clientId: 'S2_fb903ce81792411ab6c459ec3a2a82c6',
                     method: 'card',
                     appScheme: `nicepaysample://`,
-                    orderId: '${paymentVerifyRequestDto.orderId}',
+                    orderId: '${paymentService.generateUUIDString()}',
                     amount: ${paymentVerifyRequestDto.amount},
                     goodsName: '${paymentVerifyRequestDto.goodsName},}',
                     returnUrl: 'http://13.125.193.243:8080/payment/request',

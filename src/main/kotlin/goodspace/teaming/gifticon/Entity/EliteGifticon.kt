@@ -1,4 +1,9 @@
 package goodspace.teaming.gifticon.Entity
 
-class EliteGifticon {
-}
+import java.time.LocalDateTime
+
+class EliteGifticon (
+    code: String,
+    expirationDate: LocalDateTime,
+    grade: Grade
+): Gifticon(code, expirationDate)
