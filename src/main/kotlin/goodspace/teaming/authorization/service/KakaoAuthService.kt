@@ -48,8 +48,8 @@ class KakaoAuthService (
                 identifier = kakaoUserInfo.id.toString(),
                 email = kakaoUserInfo.kakaoAccount?.email ?: "",
                 name = kakaoUserInfo.kakaoAccount?.name ?: "Unkown",
-                thumbnailImageUrl = kakaoUserInfo.kakaoAccount?.profile?.thumbnailImageUrl ?: "",
-                profileImageUrl = kakaoUserInfo.kakaoAccount?.profile?.profileImageUrl ?: "",
+//                thumbnailImageUrl = kakaoUserInfo.kakaoAccount?.profile?.thumbnailImageUrl ?: "",
+//                profileImageUrl = kakaoUserInfo.kakaoAccount?.profile?.profileImageUrl ?: "",
                 type = UserType.KAKAO
             )
             userRepository.save(newUser)
