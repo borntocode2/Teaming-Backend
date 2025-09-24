@@ -52,10 +52,11 @@ class TeamingAuthService(
         requestDto: TeamingSignInRequestDto
     ): TokenResponseDto {
         val email = requestDto.email
-        val password = passwordEncoder.encode(requestDto.password)
 
-        val user = userRepository.findByEmailAndPassword(email, password)
+        val user = userRepository.findTeamingUserByEmail(email)
             ?: throw IllegalArgumentException(USER_NOT_FOUND)
+
+        require(passwordEncoder.matches(requestDto.password, user.password)) { USER_NOT_FOUND }
 
         val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles)
         val refreshToken = tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles)

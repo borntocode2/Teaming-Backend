@@ -20,6 +20,6 @@ interface UserRepository : JpaRepository<User, Long> {
     @Query("SELECT u FROM TeamingUser u WHERE u.id = :id")
     fun findTeamingUserById(id: Long): TeamingUser?
 
-    @Query("SELECT u FROM TeamingUser u WHERE u.email = :email AND u.password = :password")
-    fun findByEmailAndPassword(email: String, password: String): TeamingUser?
+    @Query("SELECT u FROM TeamingUser u WHERE u.email = :email")
+    fun findTeamingUserByEmail(email: String): TeamingUser?
 }
