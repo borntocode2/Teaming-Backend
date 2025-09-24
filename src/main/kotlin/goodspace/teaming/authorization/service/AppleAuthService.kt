@@ -235,6 +235,9 @@ class AppleAuthService(
 
     private fun getECPrivateKeyFrom(pem: String): ECPrivateKey {
         val trimmedPem = pem
+            .trim()
+            .removeSurrounding("\"")
+            .replaceEscape()
             .replace(PEM_PREFIX_PKCS8, "")
             .replace(PEM_SUFFIX_PKCS8, "")
             .replace(PEM_PREFIX_EC, "")
@@ -246,6 +249,12 @@ class AppleAuthService(
 
         return KeyFactory.getInstance("EC").generatePrivate(keySpec)
                 as ECPrivateKey
+    }
+
+    private fun String.replaceEscape(): String {
+        return this
+            .replace("\\r", "\r")
+            .replace("\\n", "\n")
     }
 
     private fun String.signEs256With(privateKey: ECPrivateKey): ByteArray {
