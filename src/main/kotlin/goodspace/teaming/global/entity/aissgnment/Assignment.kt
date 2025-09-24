@@ -36,6 +36,10 @@ class Assignment(
     @Column(nullable = false)
     @Enumerated(STRING)
     var status: AssignmentStatus = IN_PROGRESS,
+
+    @Column(nullable = false)
+    var punished: Boolean = false
+
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = IDENTITY)

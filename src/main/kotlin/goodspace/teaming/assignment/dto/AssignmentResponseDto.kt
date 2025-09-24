@@ -10,5 +10,6 @@ data class AssignmentResponseDto(
     val assignedMemberIds: List<Long>,
     val due: Instant,
     val status: AssignmentStatus,
-    val submissions: List<SubmissionResponseDto>
+    val submissions: List<SubmissionResponseDto>,
+    val punished: Boolean
 )

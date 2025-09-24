@@ -72,4 +72,8 @@ class PaymentService(
             return ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
+
+    fun generateUUIDString(): String {
+        return UUID.randomUUID().toString().take(10)
+    }
 }
