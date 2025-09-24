@@ -63,7 +63,7 @@ class AppleAuthService(
     private val privateKeyPem: String
 ) {
     fun getAccessIdToken(requestDto: AppleOauthRequestDto): String {
-        val clientSecret = createClientSecret(webClientId)
+        val clientSecret = createClientSecret(appClientId)
 
         val headers = getHeaders()
         val params = getParams(
