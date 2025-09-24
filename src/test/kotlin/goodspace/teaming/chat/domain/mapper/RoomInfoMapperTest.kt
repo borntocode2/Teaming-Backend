@@ -125,8 +125,8 @@ class RoomInfoMapperTest {
     private fun mockRoom(): Room = mockk<Room> {
         every { id } returns ROOM_ID
         every { title } returns TITLE
-        every { imageKey } returns IMAGE_KEY
-        every { imageVersion } returns IMAGE_VERSION
+        every { avatarKey } returns IMAGE_KEY
+        every { avatarVersion } returns IMAGE_VERSION
         every { type } returns ROOM_TYPE
         every { memberCount } returns MEMBER_COUNT
         every { success } returns SUCCESS

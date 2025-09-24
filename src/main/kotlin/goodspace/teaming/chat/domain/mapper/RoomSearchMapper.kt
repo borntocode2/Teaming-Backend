@@ -11,8 +11,8 @@ class RoomSearchMapper(
     fun map(room: Room): RoomSearchResponseDto {
         return RoomSearchResponseDto(
             title = room.title,
-            imageKey = room.imageKey,
-            imageVersion = room.imageVersion,
+            imageKey = room.avatarKey,
+            imageVersion = room.avatarVersion,
             type = roomTypeMapper.map(room.type),
             currentMemberCount = room.currentMemberCount(),
             maxMemberCount = room.memberCount

@@ -19,9 +19,9 @@ class Room(
     @Column(nullable = false)
     var title: String,
 
-    var imageKey: String? = null,
+    var avatarKey: String? = null,
 
-    var imageVersion: Int? = null,
+    var avatarVersion: Int? = null,
 
     @Enumerated(STRING)
     @Column(nullable = false)
