@@ -177,8 +177,8 @@ class TeamingAuthServiceTest {
             val user = createUser(password = ENCODED_PASSWORD)
             val requestDto = TeamingSignInRequestDto(user.email, RAW_PASSWORD)
 
-            every { passwordEncoder.encode(RAW_PASSWORD) } returns ENCODED_PASSWORD
-            every { userRepository.findByEmailAndPassword(user.email, ENCODED_PASSWORD) } returns user
+            every { userRepository.findTeamingUserByEmail(user.email) } returns user
+            every { passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD) } returns true
             every { tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles) } returns ACCESS_TOKEN
             every { tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles) } returns REFRESH_TOKEN
 
@@ -197,8 +197,8 @@ class TeamingAuthServiceTest {
             user.token = EXISTS_TOKEN
             val requestDto = TeamingSignInRequestDto(user.email, RAW_PASSWORD)
 
-            every { passwordEncoder.encode(RAW_PASSWORD) } returns ENCODED_PASSWORD
-            every { userRepository.findByEmailAndPassword(user.email, ENCODED_PASSWORD) } returns user
+            every { userRepository.findTeamingUserByEmail(user.email) } returns user
+            every { passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD) } returns true
             every { tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles) } returns ACCESS_TOKEN
             every { tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles) } returns REFRESH_TOKEN
 
@@ -216,8 +216,8 @@ class TeamingAuthServiceTest {
             val user = createUser(password = ENCODED_PASSWORD)
             val requestDto = TeamingSignInRequestDto(user.email, WRONG_PASSWORD)
 
-            every { passwordEncoder.encode(WRONG_PASSWORD) } returns WRONG_PASSWORD
-            every { userRepository.findByEmailAndPassword(user.email, WRONG_PASSWORD) } returns null
+            every { userRepository.findTeamingUserByEmail(user.email) } returns user
+            every { passwordEncoder.matches(WRONG_PASSWORD, ENCODED_PASSWORD) } returns false
 
             // when & then
             assertThatThrownBy { teamingAuthService.signIn(requestDto) }
