@@ -4,6 +4,7 @@ import goodspace.teaming.gifticon.Entity.*
 import goodspace.teaming.gifticon.repository.GifticonRepository
 import goodspace.teaming.global.entity.user.User
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Service
@@ -14,6 +15,7 @@ class GifticonService (
         // TODO: 유저 방 등급 조회 ->  -> 방 등급에 따른 기프티콘 return. etc.유저에게 기프티콘리스트 필드가 있어야할 듯.
     }
 
+    @Transactional
     fun saveGifticon(code: String, expiration: String, grade: Grade) {
         if (grade==Grade.BASIC){
             gifticonRepository.save(BasicGifticon(
