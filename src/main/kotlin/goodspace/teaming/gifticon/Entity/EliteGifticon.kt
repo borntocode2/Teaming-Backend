@@ -10,4 +10,4 @@ class EliteGifticon (
     code: String,
     expirationDate: LocalDateTime,
     grade: Grade
-): Gifticon(code, expirationDate)
+): Gifticon(code, expirationDate, grade)

@@ -1,5 +1,6 @@
 package goodspace.teaming.global.entity.user
 
+import goodspace.teaming.gifticon.Entity.Gifticon
 import goodspace.teaming.global.entity.BaseEntity
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.security.RefreshToken
@@ -53,6 +54,14 @@ abstract class User(
 
     val roles: List<Role>
         get() = userRoles.map { it.role }
+
+    @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
+    val gifticonList: MutableList<Gifticon> = mutableListOf()
+
+    fun addGifticon(gifticon: Gifticon) {
+        gifticon.user = this  // 양방향 관계 설정
+        gifticonList.add(gifticon)
+    }
 
     fun addUserRoom(userRoom: UserRoom) {
         userRooms.add(userRoom)
