@@ -8,12 +8,15 @@ import goodspace.teaming.global.repository.UserRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
 class AdminUserInitializer(
     private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder,
+
     @Value("\${admin.email1:test1@test.com}")
     private val email1: String,
     @Value("\${admin.password1:test1}")
@@ -44,7 +47,7 @@ class AdminUserInitializer(
     ): User {
         val user = TeamingUser(
             email = email,
-            password = password,
+            password = passwordEncoder.encode(password),
             name = name
         )
 

@@ -48,8 +48,8 @@ class NaverAuthService (
                 email = NaverUserInfo.response.email?:"unknown",
                 name = NaverUserInfo.response.name?:"unknown",
                 type = UserType.NAVER,
-                thumbnailImageUrl = null,
-                profileImageUrl = null,
+//                thumbnailImageUrl = null,
+//                profileImageUrl = null,
             )
             userRepository.save(newUser)
         }

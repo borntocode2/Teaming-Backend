@@ -2,7 +2,7 @@ package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.fixture.TeamingUserFixture
 import goodspace.teaming.global.entity.user.User
-import goodspace.teaming.global.storage.StorageUrlProvider
+import goodspace.teaming.file.domain.StorageUrlProvider
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk

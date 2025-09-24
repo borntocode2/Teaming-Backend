@@ -32,7 +32,7 @@ class ChatRestController(
     fun createRoom(
         principal: Principal,
         @RequestBody requestDto: RoomCreateRequestDto
-    ): ResponseEntity<RoomInviteCodeResponseDto> {
+    ): ResponseEntity<RoomCreateResponseDto> {
         val userId = principal.getUserId()
 
         val response = roomService.createRoom(userId, requestDto)

@@ -17,6 +17,9 @@ interface UserRepository : JpaRepository<User, Long> {
         @Param("userType") userType: UserType
     ): OAuthUser?
 
-    @Query("SELECT u FROM TeamingUser u where u.id = :id")
+    @Query("SELECT u FROM TeamingUser u WHERE u.id = :id")
     fun findTeamingUserById(id: Long): TeamingUser?
+
+    @Query("SELECT u FROM TeamingUser u WHERE u.email = :email")
+    fun findTeamingUserByEmail(email: String): TeamingUser?
 }

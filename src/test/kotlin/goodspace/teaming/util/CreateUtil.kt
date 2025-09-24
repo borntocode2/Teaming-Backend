@@ -57,8 +57,8 @@ fun createRoom(
 ): Room {
     val room = Room(
         title = title,
-        imageKey = imageKey,
-        imageVersion = imageVersion,
+        avatarKey = imageKey,
+        avatarVersion = imageVersion,
         type = type,
         inviteCode = inviteCode,
         memberCount = memberCount

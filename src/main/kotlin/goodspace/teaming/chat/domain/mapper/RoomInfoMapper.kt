@@ -30,11 +30,12 @@ class RoomInfoMapper(
 
         return RoomInfoResponseDto(
             roomId = room.id!!,
+            role = userRoom.roomRole,
             unreadCount = unreadCount,
             lastMessage = lastMessageDto,
             title = room.title,
-            imageKey = room.imageKey,
-            imageVersion = room.imageVersion,
+            imageKey = room.avatarKey,
+            imageVersion = room.avatarVersion,
             type = room.type,
             memberCount = room.memberCount,
             success = room.success,

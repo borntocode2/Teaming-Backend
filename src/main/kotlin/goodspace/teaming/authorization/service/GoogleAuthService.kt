@@ -45,8 +45,8 @@ class GoogleAuthService(
                 identifier = googleUserInfo.id,
                 email = googleUserInfo.email,
                 name = googleUserInfo.name ?: "unknown",
-                thumbnailImageUrl = null,
-                profileImageUrl = googleUserInfo.pictureUrl,
+//                thumbnailImageUrl = null,
+//                profileImageUrl = googleUserInfo.pictureUrl,
                 type = UserType.GOOGLE
             )
             userRepository.save(newUser)
