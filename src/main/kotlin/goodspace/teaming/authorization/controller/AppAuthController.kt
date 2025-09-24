@@ -67,12 +67,10 @@ class AppAuthController (
     @PostMapping("/apple")
     @Operation(
         summary = "애플 소셜 로그인(앱)",
-        description = "애플을 통해 사용자를 인증하고 JWT를 발급합니다"
+        description = "애플이 발급한 AccessIdToken을 통해 사용자를 인증하고 JWT를 발급힙니다."
     )
-    fun appleAppAuthorization(@RequestBody requestDto: AppleOauthRequestDto): ResponseEntity<TokenResponseDto?>? {
-        val accessToken = appleAuthService.getAccessIdToken(requestDto)
-
-        val tokenResponseDto = appleAuthService.signInOrSignUp(AppleSignInRequestDto(accessToken, requestDto.name))
+    fun appleLogin(@RequestBody appleSignInRequestDto: AppleSignInRequestDto): ResponseEntity<TokenResponseDto> {
+        val tokenResponseDto = appleAuthService.signInOrSignUp(appleSignInRequestDto)
 
         return ResponseEntity.ok(tokenResponseDto)
     }
