@@ -43,6 +43,7 @@ class S3PresignedStorageUrlProvider(
                 cfg.putHeader("Content-Type", contentType)
                 cfg.putHeader("x-amz-checksum-sha256", checksumBase64)
             }
+            .checksumSHA256(checksumBase64)
             .build()
 
         val presignReq = PutObjectPresignRequest.builder()
