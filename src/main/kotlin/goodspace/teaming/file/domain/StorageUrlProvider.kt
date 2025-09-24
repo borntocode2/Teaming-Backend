@@ -1,4 +1,4 @@
-package goodspace.teaming.global.storage
+package goodspace.teaming.file.domain
 
 interface StorageUrlProvider {
     /** 이미지/미리보기 등 브라우저가 바로 볼 리소스용 URL */

@@ -20,7 +20,13 @@ import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.s3.model.S3Exception
 import java.net.URLConnection
 import java.time.LocalDate
-import java.util.*
+import java.util.UUID
+
+private const val MSG_NOT_ROOM_MEMBER = "해당 방 소속이 아닙니다."
+private const val MSG_ORIGINAL_MISSING = "원본 파일이 존재하지 않습니다."
+private const val MSG_SIZE_INVALID = "파일 크기가 적절하지 않습니다."
+private const val MSG_CHECKSUM_MISSING = "체크섬이 누락되었습니다."
+private const val MSG_KEY_SCOPE_INVALID = "Key에 방 정보와 회원 정보가 누락되었습니다."
 
 @Service
 class S3FileUploadService(
@@ -32,6 +38,7 @@ class S3FileUploadService(
     @Value("\${cloud.aws.uploads.prefix:chat}")
     private val prefix: String,
 ) : FileUploadService {
+
     @Transactional(readOnly = true)
     override fun intent(
         userId: Long,
@@ -57,19 +64,23 @@ class S3FileUploadService(
         requestDto: FileUploadCompleteRequestDto
     ): FileUploadCompleteResponseDto {
         val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException("해당 방 소속이 아닙니다.")
+            ?: throw IllegalArgumentException(MSG_NOT_ROOM_MEMBER)
+
         requireKeyBelongsToRoomAndUser(requestDto.key, roomId, userId)
 
         val head = try {
             s3.headWithChecksum(requestDto.key)
-        } catch (exception: S3Exception) {
-            throw IllegalArgumentException("원본 파일이 존재하지 않습니다.", exception)
+        } catch (e: S3Exception) {
+            throw IllegalArgumentException(MSG_ORIGINAL_MISSING, e)
         }
 
-        validation.validateStoredSize(head.contentLength())
+        val sizeRange = FileConstants.MIN_OBJECT_BYTES..(FileConstants.MAX_UPLOAD_SIZE_MB * FileConstants.BYTES_PER_MB)
+        if (head.contentLength() !in sizeRange) throw IllegalArgumentException(MSG_SIZE_INVALID)
+
         val mime = head.contentType() ?: guessContentTypeFromKey(requestDto.key)
         validation.validateAllowedContentType(mime)
-        require(!head.checksumSHA256().isNullOrBlank()) { "체크섬이 누락되었습니다." }
+
+        require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING }
 
         val storedName = requestDto.key.substringAfterLast('/')
         val file = fileRepository.save(
@@ -87,7 +98,6 @@ class S3FileUploadService(
             )
         )
 
-        // 후처리 이벤트
         eventPublisher.publishEvent(
             FileUploadedEvent(
                 fileId = file.id!!,
@@ -102,7 +112,8 @@ class S3FileUploadService(
 
     private fun buildObjectKey(roomId: Long, userId: Long, originalName: String): String {
         val today = LocalDate.now().format(FileConstants.DATE_FMT)
-        val safe = originalName.replace(Regex("""[^A-Za-z0-9._-]"""), "_").take(FileConstants.SAFE_NAME_MAX_LENGTH)
+        val safe = originalName.replace(Regex("""[^A-Za-z0-9._-]"""), "_")
+            .take(FileConstants.SAFE_NAME_MAX_LENGTH)
         val uuid = UUID.randomUUID()
         return "$prefix/$roomId/$userId/$today/${uuid}_$safe"
     }
@@ -114,7 +125,7 @@ class S3FileUploadService(
         URLConnection.guessContentTypeFromName(key.substringAfterLast('/')) ?: "application/octet-stream"
 
     private fun requireKeyBelongsToRoomAndUser(key: String, roomId: Long, userId: Long) {
-        require(key.startsWith("$prefix/$roomId/$userId/")) { "Key에 방 정보와 회원 정보가 누락되었습니다." }
+        require(key.startsWith("$prefix/$roomId/$userId/")) { MSG_KEY_SCOPE_INVALID }
     }
 
     private fun String.toFileType(): FileType = when {

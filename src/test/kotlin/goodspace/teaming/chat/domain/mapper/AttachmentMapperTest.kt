@@ -7,7 +7,7 @@ import goodspace.teaming.global.entity.file.*
 import goodspace.teaming.global.entity.room.Message
 import goodspace.teaming.global.entity.room.MessageType
 import goodspace.teaming.global.entity.user.User
-import goodspace.teaming.global.storage.StorageUrlProvider
+import goodspace.teaming.file.domain.StorageUrlProvider
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat

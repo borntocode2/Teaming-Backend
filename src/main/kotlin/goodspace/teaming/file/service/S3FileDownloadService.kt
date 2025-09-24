@@ -8,34 +8,37 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.s3.model.S3Exception
 
+private const val MSG_FILE_NOT_FOUND = "파일을 찾을 수 없습니다."
+private const val MSG_NOT_ROOM_MEMBER = "해당 방 소속이 아닙니다."
+private const val MSG_ORIGINAL_MISSING = "원본 파일이 존재하지 않습니다."
+
 @Service
 class S3FileDownloadService(
     private val fileRepository: FileRepository,
     private val userRoomRepository: UserRoomRepository,
     private val s3: S3PresignSupport
 ) : FileDownloadService {
-    @Transactional(readOnly = true)
-    override fun issueDownloadUrl(
-        userId: Long,
-        fileId: Long
-    ): DownloadUrlResponseDto {
-        val file = fileRepository.findById(fileId)
-            .orElseThrow { IllegalArgumentException("파일을 찾을 수 없습니다.") }
 
-        require(userRoomRepository.existsByRoomIdAndUserId(file.room.id!!, userId)) { "해당 방 소속이 아닙니다." }
+    @Transactional(readOnly = true)
+    override fun issueDownloadUrl(userId: Long, fileId: Long): DownloadUrlResponseDto {
+        val file = fileRepository.findById(fileId)
+            .orElseThrow { IllegalArgumentException(MSG_FILE_NOT_FOUND) }
+
+        require(userRoomRepository.existsByRoomIdAndUserId(file.room.id!!, userId)) { MSG_NOT_ROOM_MEMBER }
 
         val head = try {
             s3.headWithChecksum(file.storageKey)
-        } catch (exception: S3Exception) {
-            throw IllegalArgumentException("원본 파일이 존재하지 않습니다.", exception)
+        } catch (e: S3Exception) {
+            throw IllegalArgumentException(MSG_ORIGINAL_MISSING, e)
         }
 
         val filename = file.name.ifBlank { file.storageKey.substringAfterLast('/') }
-        val (url, exp) = s3.presignGetWithDisposition(
+        val (url, expiresAt) = s3.presignGetWithDisposition(
             key = file.storageKey,
             filename = filename,
             contentType = head.contentType()
         )
-        return DownloadUrlResponseDto(url = url, expiresAtEpochSeconds = exp)
+
+        return DownloadUrlResponseDto(url = url, expiresAtEpochSeconds = expiresAt)
     }
 }
