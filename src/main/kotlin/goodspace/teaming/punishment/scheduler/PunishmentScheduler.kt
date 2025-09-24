@@ -14,7 +14,7 @@ class PunishmentScheduler (
     private val assignmentRepository: AssignmentRepository,
     private val punishmentService: PunishmentService
 ) {
-    @Scheduled(fixedRate = 3600000) // 60분마다 실행
+    @Scheduled(fixedRate = 100000) //TODO: 60분마다 실행
     fun checkAssignments() {
         val now = Instant.now()
         val expiredAssignments = assignmentRepository

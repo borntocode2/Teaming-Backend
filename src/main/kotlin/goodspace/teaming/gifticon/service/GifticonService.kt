@@ -5,7 +5,9 @@ import goodspace.teaming.gifticon.repository.GifticonRepository
 import goodspace.teaming.global.entity.user.User
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Service
 class GifticonService (
@@ -48,6 +50,9 @@ class GifticonService (
 
     fun mapExpirationToLocalDateTime(expiration: String): LocalDateTime {
         checkExpiration(expiration)
-        return LocalDateTime.parse(expiration)
+        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+        val date = LocalDate.parse(expiration, formatter)
+
+        return date.atStartOfDay()
     }
 }
