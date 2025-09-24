@@ -33,6 +33,9 @@ class S3PresignedStorageUrlProvider(
         contentType: String,
         checksumBase64: String
     ): PresignedUploadUrlProvider.PresignedPut {
+        // Base64를 Hex로 변환
+        val checksumHex = base64ToHex(checksumBase64)
+
         val putReq = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
@@ -43,7 +46,7 @@ class S3PresignedStorageUrlProvider(
                 cfg.putHeader("Content-Type", contentType)
                 cfg.putHeader("x-amz-checksum-sha256", checksumBase64)
             }
-            .checksumSHA256(checksumBase64)
+            .checksumSHA256(checksumHex)
             .build()
 
         val presignReq = PutObjectPresignRequest.builder()
@@ -56,6 +59,7 @@ class S3PresignedStorageUrlProvider(
             "Content-Type" to contentType,
             "x-amz-checksum-sha256" to checksumBase64
         )
+
         return PresignedUploadUrlProvider.PresignedPut(url, headers)
     }
 
@@ -108,5 +112,10 @@ class S3PresignedStorageUrlProvider(
         }
 
         s3Client.copyObject(builder.build())
+    }
+
+    private fun base64ToHex(base64: String): String {
+        val decoded = java.util.Base64.getDecoder().decode(base64)
+        return decoded.joinToString("") { "%02x".format(it) }
     }
 }
