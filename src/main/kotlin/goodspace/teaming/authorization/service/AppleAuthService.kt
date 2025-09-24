@@ -70,7 +70,8 @@ class AppleAuthService(
             clientId = webClientId,
             clientSecret = clientSecret,
             code = requestDto.code,
-            redirectUri = requestDto.redirectUri
+            redirectUri = requestDto.redirectUri,
+            codeVerifier = requestDto.codeVerifier
         )
 
         val response = sendAccessTokenRequest(headers, params)
@@ -137,7 +138,8 @@ class AppleAuthService(
         clientId: String,
         clientSecret: String,
         code: String,
-        redirectUri: String
+        redirectUri: String,
+        codeVerifier: String?
     ): LinkedMultiValueMap<String, String> {
         val params = LinkedMultiValueMap<String, String>()
 
@@ -146,6 +148,9 @@ class AppleAuthService(
         params.add("client_secret", clientSecret)
         params.add("code", code)
         params.add("redirect_uri", redirectUri)
+        if (!codeVerifier.isNullOrBlank()) {
+            params.add("code_verifier", codeVerifier)
+        }
 
         return params
     }
