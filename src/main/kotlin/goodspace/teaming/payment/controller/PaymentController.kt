@@ -34,7 +34,7 @@ class PaymentController(
                     AUTHNICE.requestPay({
                     clientId: 'S2_fb903ce81792411ab6c459ec3a2a82c6',
                     method: 'card',
-                    appScheme: `nicepaysample://`,
+                    appScheme: `teaming://`,
                     orderId: '${paymentService.generateUUIDString()}',
                     amount: ${amount},
                     goodsName: 'Room Create',
