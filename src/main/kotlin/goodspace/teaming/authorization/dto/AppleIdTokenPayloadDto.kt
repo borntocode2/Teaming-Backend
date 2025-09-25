@@ -10,9 +10,7 @@ data class AppleIdTokenPayloadDto(
     var exp: Long? = null,
     var email: String? = null,
     @SerializedName("email_verified")
-    private var _emailVerified: String? = null,
+    var emailVerified: Boolean? = null,
     @SerializedName("is_private_email")
     var isPrivateEmail: Boolean? = null
-) {
-    val emailVerified: Boolean = _emailVerified == "true"
-}
+)

@@ -17,6 +17,7 @@ private const val MSG_UNSUPPORTED_IMAGE_TYPE = "지원하지 않는 이미지 �
 private const val MSG_INVALID_UPLOAD_KEY = "업로드 키가 올바르지 않습니다."
 private const val MSG_OBJECT_NOT_FOUND = "원본 객체를 찾을 수 없습니다."
 private const val MSG_CHECKSUM_MISSING = "체크섬이 누락되었습니다."
+private const val MSG_INVALID_IMAGE = "유효한 이미지 파일이 아닙니다."
 
 @Service
 class AvatarServiceImpl(
@@ -46,8 +47,10 @@ class AvatarServiceImpl(
     ): AvatarUploadIntentResponseDto {
         require(request.byteSize in 1..maxBytes) { MSG_IMAGE_TOO_LARGE }
 
-        val normalizedContentType = normalizeContentType(request.contentType)
-        require(normalizedContentType in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $normalizedContentType" }
+        // ⬇서명에는 원문 그대로 사용, 허용여부 판단은 소문자 기준
+        val clientCtRaw = request.contentType.trim()
+        val ctForAllowCheck = clientCtRaw.lowercase()
+        require(ctForAllowCheck in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $clientCtRaw" }
 
         when (ownerType) {
             AvatarOwnerType.USER -> userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
@@ -57,7 +60,7 @@ class AvatarServiceImpl(
         val objectKey = keyOf(ownerType, ownerId)
         val presigned = presignedUploadUrlProvider.putUploadUrl(
             key = objectKey,
-            contentType = normalizedContentType,
+            contentType = clientCtRaw, // ⬅원문 그대로 서명
             checksumBase64 = request.checksumSha256Base64
         )
 
@@ -65,7 +68,7 @@ class AvatarServiceImpl(
             key = objectKey,
             bucket = s3PresignedUrlProvider.bucket(),
             url = presigned.url,
-            requiredHeaders = presigned.requiredHeaders
+            requiredHeaders = presigned.requiredHeaders // 여기에 Content-Type(원문) 포함되도록 Provider에서 내려주세요
         )
     }
 
@@ -86,25 +89,35 @@ class AvatarServiceImpl(
 
         val objectSize = head.contentLength()
         require(objectSize in 1L..maxBytes) { MSG_IMAGE_TOO_LARGE }
-
-        val contentType = head.contentType() ?: guessContentTypeFromKey(objectKey)
-        require(contentType in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $contentType" }
         require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING }
+
+        // ⬇매직바이트로 서버가 타입을 판정(최소 앞 1KB만 내려받아 검사)
+        val headBytes = s3PresignedUrlProvider.getRangeBytes(objectKey, 0, 1023)
+        val sniffed = detectImageTypeByMagicBytes(headBytes)
+        val serverCt = sniffed ?: guessContentTypeFromKey(objectKey)
+        require(serverCt in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $serverCt" }
+
+        // ⬇최종 키에 "메타데이터 교체(copy-in-place)"로 서버 판정 Content-Type/헤더를 강제
+        s3PresignedUrlProvider.rewriteObjectMetadata(
+            key = objectKey,
+            contentType = serverCt,
+            cacheControl = "public, max-age=31536000, immutable",
+            contentDisposition = "inline; filename=\"avatar.${extOf(serverCt)}\""
+        )
 
         val (version, publicUrl) = when (ownerType) {
             AvatarOwnerType.USER -> {
                 val user = userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
                 user.avatarKey = objectKey
-                user.avatarVersion++
+                user.avatarVersion += 1
                 val url = storageUrlProvider.publicUrl(objectKey, version = user.avatarVersion)
                 user.avatarVersion to (url ?: "/static/default-avatar.png")
             }
             AvatarOwnerType.ROOM -> {
                 val room = roomRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
-                val current = room.avatarVersion ?: 0
                 room.avatarKey = objectKey
-                room.avatarVersion = current + 1
-                val url = storageUrlProvider.publicUrl(objectKey, version = room.avatarVersion)
+                room.avatarVersion = (room.avatarVersion ?: 0) + 1
+                val url = storageUrlProvider.publicUrl(objectKey, version = room.avatarVersion!!)
                 room.avatarVersion!! to (url ?: "/static/default-avatar.png")
             }
         }
@@ -128,7 +141,6 @@ class AvatarServiceImpl(
                 room.avatarKey to (room.avatarVersion ?: 0)
             }
         }
-
         val url = storageUrlProvider.publicUrl(key, version = version) ?: "/static/default-avatar.png"
         return AvatarUrlResponseDto(url)
     }
@@ -149,13 +161,34 @@ class AvatarServiceImpl(
         }
     }
 
-    private fun normalizeContentType(contentType: String): String {
-        val ct = contentType.trim().lowercase()
-        return if (ct.isNotBlank()) ct else "application/octet-stream"
-    }
-
     private fun guessContentTypeFromKey(key: String): String {
         val name = key.substringAfterLast('/')
         return URLConnection.guessContentTypeFromName(name)?.lowercase() ?: "application/octet-stream"
+    }
+
+    private fun detectImageTypeByMagicBytes(bytes: ByteArray): String? {
+        if (bytes.size >= 8 &&
+            bytes[0] == 0x89.toByte() && bytes[1] == 0x50.toByte() && bytes[2] == 0x4E.toByte() &&
+            bytes[3] == 0x47.toByte() && bytes[4] == 0x0D.toByte() && bytes[5] == 0x0A.toByte() &&
+            bytes[6] == 0x1A.toByte() && bytes[7] == 0x0A.toByte()
+        ) return "image/png"
+
+        if (bytes.size >= 3 &&
+            bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte() && bytes[2] == 0xFF.toByte()
+        ) return "image/jpeg"
+
+        if (bytes.size >= 12) {
+            val riff = String(bytes.copyOfRange(0, 4))
+            val webp = String(bytes.copyOfRange(8, 12))
+            if (riff == "RIFF" && webp == "WEBP") return "image/webp"
+        }
+        return null
+    }
+
+    private fun extOf(contentType: String) = when (contentType.lowercase()) {
+        "image/png" -> "png"
+        "image/jpeg" -> "jpg"
+        "image/webp" -> "webp"
+        else -> "bin"
     }
 }

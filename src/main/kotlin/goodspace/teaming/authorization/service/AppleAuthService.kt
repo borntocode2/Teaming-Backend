@@ -26,6 +26,7 @@ import kotlin.math.min
 
 private const val ACCESS_TOKEN_REQUEST_URL = "https://appleid.apple.com/auth/token"
 private const val AUDIENCE = "https://appleid.apple.com"
+private const val EXPO_TEST_AUD = "host.exp.Exponent"
 
 private const val PEM_PREFIX_PKCS8 = "-----BEGIN PRIVATE KEY-----"
 private const val PEM_SUFFIX_PKCS8 = "-----END PRIVATE KEY-----"
@@ -63,14 +64,15 @@ class AppleAuthService(
     private val privateKeyPem: String
 ) {
     fun getAccessIdToken(requestDto: AppleOauthRequestDto): String {
-        val clientSecret = createClientSecret(appClientId)
+        val clientSecret = createClientSecret(webClientId)
 
         val headers = getHeaders()
         val params = getParams(
             clientId = webClientId,
             clientSecret = clientSecret,
             code = requestDto.code,
-            redirectUri = requestDto.redirectUri
+            redirectUri = requestDto.redirectUri,
+            codeVerifier = requestDto.codeVerifier
         )
 
         val response = sendAccessTokenRequest(headers, params)
@@ -137,7 +139,8 @@ class AppleAuthService(
         clientId: String,
         clientSecret: String,
         code: String,
-        redirectUri: String
+        redirectUri: String,
+        codeVerifier: String?
     ): LinkedMultiValueMap<String, String> {
         val params = LinkedMultiValueMap<String, String>()
 
@@ -146,6 +149,9 @@ class AppleAuthService(
         params.add("client_secret", clientSecret)
         params.add("code", code)
         params.add("redirect_uri", redirectUri)
+        if (!codeVerifier.isNullOrBlank()) {
+            params.add("code_verifier", codeVerifier)
+        }
 
         return params
     }
@@ -319,13 +325,13 @@ class AppleAuthService(
 
     private fun AppleIdTokenPayloadDto.validate() {
         check(AUDIENCE == iss) { INVALID_ISS }
-        check(webClientId == aud || appClientId == aud) { INVALID_AUD }
+        check(webClientId == aud || appClientId == aud || EXPO_TEST_AUD == aud) { INVALID_AUD }
 
         val now = Instant.now().epochSecond
         check(exp != null && exp!! > now - 60) { EXPIRED_ID_TOKEN }
         check(iat != null && iat!! <= now + 60) { FUTURE_ID_TOKEN }
 
-        check(emailVerified) {
+        check(emailVerified ?: false) {
             NOT_VERIFIED_EMAIL
         }
     }
