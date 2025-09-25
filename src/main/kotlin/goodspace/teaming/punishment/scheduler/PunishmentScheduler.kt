@@ -15,6 +15,7 @@ class PunishmentScheduler (
     private val punishmentService: PunishmentService
 ) {
     @Scheduled(fixedRate = 100000) //TODO: 60분마다 실행
+    @Transactional
     fun checkAssignments() {
         println("PunishmentScheduler 실행됨 at ${Instant.now()}")
         val now = Instant.now()
