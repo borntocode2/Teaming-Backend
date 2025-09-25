@@ -2,6 +2,8 @@ package goodspace.teaming.global.entity.user
 
 import goodspace.teaming.gifticon.Entity.Gifticon
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.aissgnment.AssignedMember
+import goodspace.teaming.global.entity.aissgnment.Assignment
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.security.RefreshToken
 import jakarta.persistence.*
@@ -45,6 +47,12 @@ abstract class User(
 
     @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
     val userRooms = mutableListOf<UserRoom>()
+
+    @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
+    val assignedMembers = mutableListOf<AssignedMember>()
+
+    val assignments: List<Assignment>
+        get() = assignedMembers.map { it.assignment }
 
     var token: String? = refreshToken.tokenValue
         set(value) {

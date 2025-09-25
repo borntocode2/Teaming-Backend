@@ -2,6 +2,7 @@ package goodspace.teaming.assignment.controller
 
 import goodspace.teaming.assignment.dto.SubmissionRequestDto
 import goodspace.teaming.assignment.dto.AssignmentCreateRequestDto
+import goodspace.teaming.assignment.dto.AssignmentPreviewResponseDto
 import goodspace.teaming.assignment.dto.AssignmentResponseDto
 import goodspace.teaming.assignment.service.AssignmentService
 import goodspace.teaming.global.security.getUserId
@@ -20,30 +21,45 @@ import java.security.Principal
 private val NO_CONTENT = ResponseEntity.noContent().build<Void>()
 
 @RestController
-@RequestMapping("/rooms/{roomId}/assignment")
+@RequestMapping("/rooms")
 @Tag(
     name = "과제 API"
 )
 class AssignmentController(
     private val assignmentService: AssignmentService
 ) {
-    @GetMapping
+    @GetMapping("/assignments")
     @Operation(
-        summary = "과제 조회",
-        description = "해당 방의 모든 과제를 조회합니다."
+        summary = "할당된 과제 조회",
+        description = "해당 사용자에게 할당된 과제 중, 아직 마감되지 않은 과제를 모두 반환합니다."
     )
-    fun getAssignments(
+    fun getEveryAssignedAssignment(
+        principal: Principal
+    ): ResponseEntity<List<AssignmentPreviewResponseDto>> {
+        val userId = principal.getUserId()
+
+        val response = assignmentService.getAssignedAssignments(userId)
+
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{roomId}/assignments")
+    @Operation(
+        summary = "티밍룸 과제 조회",
+        description = "해당 티밍룸에 존재하는 모든 과제를 조회합니다."
+    )
+    fun getAssignmentsInRoom(
         principal: Principal,
         @PathVariable roomId: Long
     ): ResponseEntity<List<AssignmentResponseDto>> {
         val userId = principal.getUserId()
 
-        val response = assignmentService.get(userId, roomId)
+        val response = assignmentService.getAssignmentsInRoom(userId, roomId)
 
         return ResponseEntity.ok(response)
     }
 
-    @PostMapping
+    @PostMapping("/{roomId}/assignments")
     @Operation(
         summary = "과제 생성",
         description = "새로운 과제를 생성합니다."
@@ -60,7 +76,7 @@ class AssignmentController(
         return NO_CONTENT
     }
 
-    @PostMapping("/submit")
+    @PostMapping("/{roomId}/assignments/submit")
     @Operation(
         summary = "과제 제출",
         description = "과제를 제출합니다. 과제가 완수됩니다."
@@ -77,7 +93,7 @@ class AssignmentController(
         return NO_CONTENT
     }
 
-    @DeleteMapping("/{assignmentId}")
+    @DeleteMapping("/{roomId}/assignments/{assignmentId}")
     @Operation(
         summary = "과제 취소",
         description = "과제를 취소합니다. 아직 완료하지 않은 과제에 한해서만 호출 가능합니다. 팀장만 호출할 수 있습니다."
