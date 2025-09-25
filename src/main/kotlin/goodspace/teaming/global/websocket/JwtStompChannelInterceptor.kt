@@ -109,11 +109,13 @@ class JwtStompChannelInterceptor(
         accessor: StompHeaderAccessor,
         headerName: String
     ): String {
-        val rawToken = accessor.getFirstNativeHeader(headerName).orEmpty()
-        return rawToken
-            .removePrefix("Bearer ")
-            .ifEmpty { rawToken.removePrefix("bearer ") }
-            .trim()
+        val raw = accessor.getFirstNativeHeader(headerName).orEmpty().trim()
+
+        return if (raw.startsWith("Bearer ", ignoreCase = true)) {
+            raw.substring(7).trim() // "Bearer " 제거
+        } else {
+            raw
+        }
     }
 
     private fun validateToken(token: String) {
