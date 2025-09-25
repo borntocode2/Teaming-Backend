@@ -19,7 +19,12 @@ class StompConfig(
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+        // 네이티브 WebSocket (RN/모바일 용)
         registry.addEndpoint("/ws")
+            .setAllowedOriginPatterns("*")
+
+        // SockJS (웹 브라우저 용)
+        registry.addEndpoint("/ws-sockjs")
             .setAllowedOriginPatterns("*")
             .withSockJS()
     }
