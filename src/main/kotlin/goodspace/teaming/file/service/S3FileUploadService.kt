@@ -25,7 +25,6 @@ import java.util.UUID
 private const val MSG_NOT_ROOM_MEMBER = "해당 방 소속이 아닙니다."
 private const val MSG_ORIGINAL_MISSING = "원본 파일이 존재하지 않습니다."
 private const val MSG_SIZE_INVALID = "파일 크기가 적절하지 않습니다."
-private const val MSG_CHECKSUM_MISSING = "체크섬이 누락되었습니다."
 private const val MSG_KEY_SCOPE_INVALID = "Key에 방 정보와 회원 정보가 누락되었습니다."
 
 @Service
@@ -35,8 +34,7 @@ class S3FileUploadService(
     private val fileRepository: FileRepository,
     private val s3: S3PresignSupport,
     private val eventPublisher: ApplicationEventPublisher,
-    @Value("\${cloud.aws.uploads.prefix:chat}")
-    private val prefix: String,
+    @Value("\${cloud.aws.uploads.prefix:chat}") private val prefix: String,
 ) : FileUploadService {
 
     @Transactional(readOnly = true)
@@ -52,7 +50,7 @@ class S3FileUploadService(
         validation.validateAllowedContentType(normalizedType)
 
         val key = buildObjectKey(roomId, userId, requestDto.fileName)
-        val url = s3.presignPut(key, normalizedType)
+        val url = s3.presignPut(key, normalizedType) // ← 체크섬 없이 발급
 
         return FileUploadIntentResponseDto(key = key, url = url)
     }
@@ -69,7 +67,7 @@ class S3FileUploadService(
         requireKeyBelongsToRoomAndUser(requestDto.key, roomId, userId)
 
         val head = try {
-            s3.headWithChecksum(requestDto.key)
+            s3.head(requestDto.key) // ← 일반 HEAD
         } catch (e: S3Exception) {
             throw IllegalArgumentException(MSG_ORIGINAL_MISSING, e)
         }
@@ -80,7 +78,7 @@ class S3FileUploadService(
         val mime = head.contentType() ?: guessContentTypeFromKey(requestDto.key)
         validation.validateAllowedContentType(mime)
 
-        require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING }
+        // require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING } // ← 제거
 
         val storedName = requestDto.key.substringAfterLast('/')
         val file = fileRepository.save(
@@ -93,7 +91,6 @@ class S3FileUploadService(
                 byteSize = head.contentLength(),
                 storageKey = requestDto.key,
                 storageBucket = s3.bucket(),
-                checksumSha256 = head.checksumSHA256(),
                 antiVirusScanStatus = AntiVirusScanStatus.PASSED
             )
         )

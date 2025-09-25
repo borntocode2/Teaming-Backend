@@ -4,8 +4,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.ChecksumAlgorithm
-import software.amazon.awssdk.services.s3.model.ChecksumMode
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse
@@ -25,28 +23,19 @@ class S3PresignedStorageUrlProvider(
     private fun ttl(): Duration = Duration.ofMinutes(presignMinutes.coerceAtLeast(1))
 
     /**
-     * 클라이언트가 보낸 Content-Type "원문 그대로"를 서명에 사용한다.
-     * requiredHeaders에도 동일 문자열을 내려서 클라이언트가 그대로 보내도록 유도.
+     * (체크섬 비활성화 버전)
+     * - contentType만 서명에 포함
+     * - checksumBase64 파라미터는 무시
      */
     override fun putUploadUrl(
         key: String,
         contentType: String,
-        checksumBase64: String
     ): PresignedUploadUrlProvider.PresignedPut {
-        // Base64를 Hex로 변환
-        val checksumHex = base64ToHex(checksumBase64)
-
         val putReq = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
-            .contentType(contentType)                        // ← 원문 그대로
-            .checksumAlgorithm(ChecksumAlgorithm.SHA256)     // x-amz-checksum-sha256 사용
-            .overrideConfiguration { cfg ->
-                // 실제 업로드 시 반드시 포함돼야 하는 헤더들(서명에 포함됨)
-                cfg.putHeader("Content-Type", contentType)
-                cfg.putHeader("x-amz-checksum-sha256", checksumBase64)
-            }
-            .checksumSHA256(checksumHex)
+            .contentType(contentType)
+            .overrideConfiguration { it.putHeader("Content-Type", contentType) }
             .build()
 
         val presignReq = PutObjectPresignRequest.builder()
@@ -55,24 +44,18 @@ class S3PresignedStorageUrlProvider(
             .build()
 
         val url = s3Presigner.presignPutObject(presignReq).url().toString()
-        val headers = mapOf(
-            "Content-Type" to contentType,
-            "x-amz-checksum-sha256" to checksumBase64
-        )
+        val headers = mapOf("Content-Type" to contentType)
 
         return PresignedUploadUrlProvider.PresignedPut(url, headers)
     }
 
-    /** 체크섬 포함 HEAD 조회 */
-    fun headWithChecksum(key: String): HeadObjectResponse =
-        s3Client.headObject { it.bucket(bucket).key(key).checksumMode(ChecksumMode.ENABLED) }
+    /** (체크섬 비활성화) 일반 HEAD */
+    fun head(key: String): HeadObjectResponse =
+        s3Client.headObject { it.bucket(bucket).key(key) }
 
     fun bucket(): String = bucket
 
-    /**
-     * 객체 앞부분을 Range GET으로 가져온다 (매직바이트 스니핑용).
-     * 예: getRangeBytes(key, 0, 1023)
-     */
+    /** Range GET (매직바이트 판별용) */
     fun getRangeBytes(key: String, startInclusive: Int, endInclusive: Int): ByteArray {
         val req = GetObjectRequest.builder()
             .bucket(bucket)
@@ -85,11 +68,7 @@ class S3PresignedStorageUrlProvider(
         }
     }
 
-    /**
-     * 같은 키로 copy-in-place 하면서 메타데이터를 교체한다.
-     * - 서버가 판정한 안전한 Content-Type으로 강제
-     * - 캐시 정책/디스포지션도 함께 세팅 가능
-     */
+    /** in-place copy로 메타데이터 교체 */
     fun rewriteObjectMetadata(
         key: String,
         contentType: String,
@@ -100,22 +79,13 @@ class S3PresignedStorageUrlProvider(
             .sourceBucket(bucket)
             .sourceKey(key)
             .destinationBucket(bucket)
-            .destinationKey(key) // in-place copy
+            .destinationKey(key)
             .metadataDirective(MetadataDirective.REPLACE)
             .contentType(contentType)
 
-        if (!cacheControl.isNullOrBlank()) {
-            builder.cacheControl(cacheControl)
-        }
-        if (!contentDisposition.isNullOrBlank()) {
-            builder.contentDisposition(contentDisposition)
-        }
+        if (!cacheControl.isNullOrBlank()) builder.cacheControl(cacheControl)
+        if (!contentDisposition.isNullOrBlank()) builder.contentDisposition(contentDisposition)
 
         s3Client.copyObject(builder.build())
-    }
-
-    private fun base64ToHex(base64: String): String {
-        val decoded = java.util.Base64.getDecoder().decode(base64)
-        return decoded.joinToString("") { "%02x".format(it) }
     }
 }
