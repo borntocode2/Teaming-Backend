@@ -16,8 +16,6 @@ private const val MSG_IMAGE_TOO_LARGE = "이미지 크기가 너무 큽니다."
 private const val MSG_UNSUPPORTED_IMAGE_TYPE = "지원하지 않는 이미지 형식입니다."
 private const val MSG_INVALID_UPLOAD_KEY = "업로드 키가 올바르지 않습니다."
 private const val MSG_OBJECT_NOT_FOUND = "원본 객체를 찾을 수 없습니다."
-private const val MSG_CHECKSUM_MISSING = "체크섬이 누락되었습니다."
-private const val MSG_INVALID_IMAGE = "유효한 이미지 파일이 아닙니다."
 
 @Service
 class AvatarServiceImpl(
@@ -47,7 +45,6 @@ class AvatarServiceImpl(
     ): AvatarUploadIntentResponseDto {
         require(request.byteSize in 1..maxBytes) { MSG_IMAGE_TOO_LARGE }
 
-        // ⬇서명에는 원문 그대로 사용, 허용여부 판단은 소문자 기준
         val clientCtRaw = request.contentType.trim()
         val ctForAllowCheck = clientCtRaw.lowercase()
         require(ctForAllowCheck in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $clientCtRaw" }
@@ -60,15 +57,14 @@ class AvatarServiceImpl(
         val objectKey = keyOf(ownerType, ownerId)
         val presigned = presignedUploadUrlProvider.putUploadUrl(
             key = objectKey,
-            contentType = clientCtRaw, // ⬅원문 그대로 서명
-            checksumBase64 = request.checksumSha256Base64
+            contentType = clientCtRaw
         )
 
         return AvatarUploadIntentResponseDto(
             key = objectKey,
             bucket = s3PresignedUrlProvider.bucket(),
             url = presigned.url,
-            requiredHeaders = presigned.requiredHeaders // 여기에 Content-Type(원문) 포함되도록 Provider에서 내려주세요
+            requiredHeaders = presigned.requiredHeaders // Content-Type만 포함됨
         )
     }
 
@@ -82,22 +78,22 @@ class AvatarServiceImpl(
         require(request.key == objectKey) { MSG_INVALID_UPLOAD_KEY }
 
         val head = try {
-            s3PresignedUrlProvider.headWithChecksum(objectKey)
+            s3PresignedUrlProvider.head(objectKey) // ← 체크섬 모드 아님
         } catch (e: S3Exception) {
             throw IllegalArgumentException(MSG_OBJECT_NOT_FOUND, e)
         }
 
         val objectSize = head.contentLength()
         require(objectSize in 1L..maxBytes) { MSG_IMAGE_TOO_LARGE }
-        require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING }
+        // require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING }  // ← 제거
 
-        // ⬇매직바이트로 서버가 타입을 판정(최소 앞 1KB만 내려받아 검사)
+        // 매직바이트로 서버가 타입 판정
         val headBytes = s3PresignedUrlProvider.getRangeBytes(objectKey, 0, 1023)
         val sniffed = detectImageTypeByMagicBytes(headBytes)
         val serverCt = sniffed ?: guessContentTypeFromKey(objectKey)
         require(serverCt in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $serverCt" }
 
-        // ⬇최종 키에 "메타데이터 교체(copy-in-place)"로 서버 판정 Content-Type/헤더를 강제
+        // 최종 메타데이터 교체
         s3PresignedUrlProvider.rewriteObjectMetadata(
             key = objectKey,
             contentType = serverCt,
@@ -149,18 +145,21 @@ class AvatarServiceImpl(
     override fun delete(ownerType: AvatarOwnerType, ownerId: Long) {
         when (ownerType) {
             AvatarOwnerType.USER -> {
-                val user = userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
+                val user = userRepository.findById(ownerId)
+                    .orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
                 user.avatarKey = null
                 user.avatarVersion = 0
             }
             AvatarOwnerType.ROOM -> {
-                val room = roomRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+                val room = roomRepository.findById(ownerId)
+                    .orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
                 room.avatarKey = null
                 room.avatarVersion = 0
             }
         }
     }
 
+    // --- 이하 유틸 그대로 ---
     private fun guessContentTypeFromKey(key: String): String {
         val name = key.substringAfterLast('/')
         return URLConnection.guessContentTypeFromName(name)?.lowercase() ?: "application/octet-stream"

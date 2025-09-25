@@ -2,7 +2,9 @@ package goodspace.teaming.assignment.service
 
 import goodspace.teaming.assignment.domain.mapper.AssignedMemberMapper
 import goodspace.teaming.assignment.domain.mapper.AssignmentMapper
+import goodspace.teaming.assignment.domain.mapper.AssignmentPreviewMapper
 import goodspace.teaming.assignment.dto.AssignmentCreateRequestDto
+import goodspace.teaming.assignment.dto.AssignmentPreviewResponseDto
 import goodspace.teaming.assignment.dto.AssignmentResponseDto
 import goodspace.teaming.assignment.dto.SubmissionRequestDto
 import goodspace.teaming.global.entity.aissgnment.Assignment
@@ -20,8 +22,10 @@ import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 private const val USER_ROOM_NOT_FOUND = "해당 티밍룸에 소속되어있지 않습니다."
+private const val USER_NOT_FOUND = "해당 회원을 조회할 수 없습니다."
 private const val INACCESSIBLE = "해당 티밍룸에 접근할 수 없습니다."
 private const val MEMBER_FOR_ASSIGNED_NOT_FOUND = "과제를 할당할 회원을 조회할 수 없습니다."
 private const val FILE_NOT_FOUND = "파일을 찾을 수 없습니다."
@@ -37,6 +41,7 @@ class AssignmentServiceImpl(
     private val userRepository: UserRepository,
     private val assignmentMapper: AssignmentMapper,
     private val assignedMemberMapper: AssignedMemberMapper,
+    private val assignmentPreviewMapper: AssignmentPreviewMapper,
     private val fileRepository: FileRepository
 ) : AssignmentService {
     @Transactional
@@ -62,7 +67,17 @@ class AssignmentServiceImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun get(
+    override fun getAssignedAssignments(userId: Long): List<AssignmentPreviewResponseDto> {
+        val user = findUser(userId)
+        val referenceTime = Instant.now()
+
+        return user.assignments
+            .filter { it.due.isBefore(referenceTime) }
+            .map { assignmentPreviewMapper.map(it) }
+    }
+
+    @Transactional(readOnly = true)
+    override fun getAssignmentsInRoom(
         userId: Long,
         roomId: Long
     ): List<AssignmentResponseDto> {
@@ -125,6 +140,11 @@ class AssignmentServiceImpl(
     private fun findUserRoom(userId: Long, roomId: Long): UserRoom {
         return userRoomRepository.findByRoomIdAndUserId(roomId, userId)
             ?: throw IllegalArgumentException(USER_ROOM_NOT_FOUND)
+    }
+
+    private fun findUser(userId: Long): User {
+        return userRepository.findById(userId)
+            .orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }
     }
 
     private fun assertPayment(userRoom: UserRoom) {

@@ -27,7 +27,7 @@ class S3FileDownloadService(
         require(userRoomRepository.existsByRoomIdAndUserId(file.room.id!!, userId)) { MSG_NOT_ROOM_MEMBER }
 
         val head = try {
-            s3.headWithChecksum(file.storageKey)
+            s3.head(file.storageKey) // ← 변경: 일반 HEAD
         } catch (e: S3Exception) {
             throw IllegalArgumentException(MSG_ORIGINAL_MISSING, e)
         }

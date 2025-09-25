@@ -1,8 +1,8 @@
 package goodspace.teaming.chat.domain.mapper
 
+import goodspace.teaming.file.domain.CdnStorageUrlProvider
 import goodspace.teaming.fixture.TeamingUserFixture
 import goodspace.teaming.global.entity.user.User
-import goodspace.teaming.file.domain.StorageUrlProvider
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
@@ -23,7 +23,7 @@ private const val DEFAULT_SIZE = 64
 private const val CUSTOM_SIZE = 128
 
 class SenderSummaryMapperTest {
-    private val urlProvider = mockk<StorageUrlProvider>()
+    private val urlProvider = mockk<CdnStorageUrlProvider>()
     private val mapper = SenderSummaryMapper(urlProvider)
 
     @BeforeEach

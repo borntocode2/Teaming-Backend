@@ -40,8 +40,7 @@ class File(
     @Column(nullable = false)
     var storageBucket: String,
 
-    @Column(nullable = false)
-    var checksumSha256: String,
+    var checksumSha256: String? = null,
 
     var width: Int? = null,
 
