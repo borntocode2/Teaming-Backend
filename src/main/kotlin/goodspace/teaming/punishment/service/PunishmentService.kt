@@ -14,10 +14,11 @@ class PunishmentService(
     @Transactional
     fun applyPunishment(assignment: Assignment) {
         val room = assignment.room
+        val roomType = assignment.room.type
         val users = room.userRooms.map { it.user }
 
         users.forEach { user ->
-            gifticonService.sendGifticon(user)
+            gifticonService.sendGifticon(user, roomType)
         }
 
         assignment.punished = true
