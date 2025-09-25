@@ -4,6 +4,7 @@ import goodspace.teaming.chat.service.RoomAccessAuthorizer
 import goodspace.teaming.global.security.TokenProvider
 import goodspace.teaming.global.security.TokenType
 import goodspace.teaming.global.security.getUserId
+import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.simp.stomp.StompCommand
@@ -20,6 +21,8 @@ class JwtStompChannelInterceptor(
     private val tokenProvider: TokenProvider,
     private val roomAccessAuthorizer: RoomAccessAuthorizer
 ) : ChannelInterceptor {
+    private val log = LoggerFactory.getLogger(JwtStompChannelInterceptor::class.java)
+
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = StompHeaderAccessor.wrap(message)
 
@@ -28,6 +31,8 @@ class JwtStompChannelInterceptor(
             validateToken(token)
 
             setAuthenticationOnAccessor(accessor, token)
+
+            log.info("웹소켓 CONNECT userId=${accessor.user?.getUserId()}")
         }
 
         if (accessor.command == StompCommand.SUBSCRIBE) {
@@ -40,6 +45,7 @@ class JwtStompChannelInterceptor(
                     ?: throw IllegalStateException("인증 정보 없음")
 
                 roomAccessAuthorizer.assertMemberOf(roomId, userId)
+                log.info("웹소켓 SUBSCRIBE userId=$userId roomId=$roomId")
             }
         }
 
@@ -53,6 +59,7 @@ class JwtStompChannelInterceptor(
                     ?: throw IllegalStateException("인증 정보 없음")
 
                 roomAccessAuthorizer.assertMemberOf(roomId, userId)
+                log.info("웹소켓 SEND userId=$userId roomId=$roomId payload=${message.payload}")
             }
         }
 

@@ -28,7 +28,9 @@ class SecurityConfig(
                 auth.requestMatchers("/swagger-ui/**").permitAll() // swagger
                     .requestMatchers("/v3/api-docs/**").permitAll() // SpringDoc
                     .requestMatchers("/email/**").permitAll()
-                    .requestMatchers("/ws/**").permitAll() // 웹소캣 핸드셰이크
+                    .requestMatchers("/ws/**").permitAll() // 웹소캣 핸드셰이크 1
+                    .requestMatchers(("/ws-sockjs/**")).permitAll() // 웹소캣 핸드셰이크 2
+                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // 프리플라이트 허용
                     .requestMatchers("/landing/**").permitAll() // 랜딩 페이지
                     .requestMatchers("/api/auth/**").permitAll() // 회원가입
                     .requestMatchers(("/users/me/access-token")).permitAll() // 엑세스 토큰 재발급
