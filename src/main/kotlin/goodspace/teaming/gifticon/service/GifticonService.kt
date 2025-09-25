@@ -4,6 +4,7 @@ import goodspace.teaming.gifticon.Entity.*
 import goodspace.teaming.gifticon.repository.GifticonRepository
 import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -12,7 +13,8 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class GifticonService (
-    private val gifticonRepository: GifticonRepository
+    private val gifticonRepository: GifticonRepository,
+    private val userRepository: UserRepository
 ){
     @Transactional
     fun sendGifticon(user: User, roomType: RoomType){
@@ -49,6 +51,14 @@ class GifticonService (
             ))
         }
         else{throw IllegalArgumentException("${grade}는 적절한 기프티콘 등급이 아닙니다.")}
+    }
+
+    @Transactional(readOnly = true)
+    fun getGifticonsByUserId(userId: Long): List<Gifticon> {
+        val user = userRepository.findById(userId)
+            .orElseThrow { IllegalArgumentException("해당 회원을 찾을 수 없습니다.") }
+
+        return user.gifticonList
     }
 
     fun checkExpiration(expiration: String) {
