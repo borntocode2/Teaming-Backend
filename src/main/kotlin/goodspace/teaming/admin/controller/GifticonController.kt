@@ -2,6 +2,7 @@ package goodspace.teaming.admin.controller
 
 import goodspace.teaming.gifticon.Entity.Gifticon
 import goodspace.teaming.gifticon.dto.GifticonRequestDto
+import goodspace.teaming.gifticon.dto.GifticonResponseDto
 import goodspace.teaming.gifticon.service.GifticonService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -37,10 +38,13 @@ class GifticonController(
         summary = "기프티콘 조회",
         description = "기프티콘 코드, 기프티콘 만료기한 ex)\"20250925\", 기프티콘 등급(\"BASIC\"\",STANDARD\",\"ELITE\")"
     )
-    fun getGifticon(@RequestParam userId: Long): ResponseEntity<List<Gifticon>>{
+    fun getGifticon(@RequestParam userId: Long): ResponseEntity<List<GifticonResponseDto>>{
         val gifticons = gifticonService.getGifticonsByUserId(userId)
 
-        return ResponseEntity.ok(gifticons)
+        val dtos: List<GifticonResponseDto> = gifticonService.getGifticonsByUserId(userId)
+
+
+        return ResponseEntity.ok(dtos)
     }
 
 }

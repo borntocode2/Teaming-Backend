@@ -1,6 +1,7 @@
 package goodspace.teaming.gifticon.service
 
 import goodspace.teaming.gifticon.Entity.*
+import goodspace.teaming.gifticon.dto.GifticonResponseDto
 import goodspace.teaming.gifticon.repository.GifticonRepository
 import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.user.User
@@ -54,11 +55,18 @@ class GifticonService (
     }
 
     @Transactional(readOnly = true)
-    fun getGifticonsByUserId(userId: Long): List<Gifticon> {
+    fun getGifticonsByUserId(userId: Long): List<GifticonResponseDto> {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("해당 회원을 찾을 수 없습니다.") }
 
-        return user.gifticonList
+        return user.gifticonList.map {
+            gifticon ->
+            GifticonResponseDto(
+                code = gifticon.code,
+                grade = gifticon.grade,
+                expirationDateStr = mapLocalDateTimeToExpiration(gifticon.expirationDate)
+            )
+        }
     }
 
     fun checkExpiration(expiration: String) {
@@ -73,6 +81,11 @@ class GifticonService (
         val date = LocalDate.parse(expiration, formatter)
 
         return date.atStartOfDay()
+    }
+
+    fun mapLocalDateTimeToExpiration(dateTime: LocalDateTime): String {
+        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+        return dateTime.toLocalDate().format(formatter)
     }
 
     private fun mapRoomTypeToGrade(roomType: RoomType): Grade? {
