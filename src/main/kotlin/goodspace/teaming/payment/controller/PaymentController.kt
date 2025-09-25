@@ -2,7 +2,6 @@ package goodspace.teaming.payment.controller
 
 import goodspace.teaming.email.dto.EmailVerifyRequestDto
 import goodspace.teaming.payment.dto.PaymentApproveRespondDto
-import goodspace.teaming.payment.dto.PaymentVerifyRequestDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 import goodspace.teaming.payment.dto.toEntity
 import goodspace.teaming.payment.service.PaymentService
@@ -19,8 +18,7 @@ class PaymentController(
 ) {
 
     @GetMapping(value = ["/html"], produces = [MediaType.TEXT_HTML_VALUE])
-    fun showPaymentPage(
-        @RequestBody paymentVerifyRequestDto: PaymentVerifyRequestDto,
+    fun showPaymentPage(@RequestParam amount: Long
     ): String {
         return """<!DOCTYPE html>
                 <html lang="en">
@@ -38,8 +36,8 @@ class PaymentController(
                     method: 'card',
                     appScheme: `nicepaysample://`,
                     orderId: '${paymentService.generateUUIDString()}',
-                    amount: ${paymentVerifyRequestDto.amount},
-                    goodsName: '${paymentVerifyRequestDto.goodsName},}',
+                    amount: ${amount},
+                    goodsName: 'Room Create',
                     returnUrl: 'http://13.125.193.243:8080/payment/request',
                         fnError: function (result) {
                         alert('개발자확인용 : ' + result.errorMsg);
