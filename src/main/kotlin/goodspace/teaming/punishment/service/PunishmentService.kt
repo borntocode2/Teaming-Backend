@@ -3,6 +3,7 @@ package goodspace.teaming.punishment.service
 import goodspace.teaming.assignment.repository.AssignmentRepository
 import goodspace.teaming.gifticon.service.GifticonService
 import goodspace.teaming.global.entity.aissgnment.Assignment
+import goodspace.teaming.global.entity.aissgnment.AssignmentStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,6 +23,7 @@ class PunishmentService(
         }
 
         assignment.punished = true
+        assignment.status = AssignmentStatus.COMPLETE
 
         assignmentRepository.save(assignment)
     }
