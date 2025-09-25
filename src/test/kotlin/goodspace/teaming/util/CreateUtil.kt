@@ -1,12 +1,15 @@
 package goodspace.teaming.util
 
 import goodspace.teaming.fixture.*
+import goodspace.teaming.global.entity.aissgnment.Assignment
+import goodspace.teaming.global.entity.aissgnment.AssignmentStatus
 import goodspace.teaming.global.entity.email.EmailVerification
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.entity.user.UserType
 import org.springframework.test.util.ReflectionTestUtils
+import java.time.Instant
 import java.time.LocalDateTime
 
 fun createUser(
@@ -87,4 +90,26 @@ fun createUserRoom(
     ReflectionTestUtils.setField(userRoom, "id", id)
 
     return userRoom
+}
+
+fun createAssignment(
+    room: Room,
+    title: String = ASSIGNMENT_TITLE,
+    description: String = ASSIGNMENT_DESCRIPTION,
+    due: Instant = ASSIGNMENT_DUE,
+    status: AssignmentStatus = ASSIGNMENT_STATUS,
+    punished: Boolean = ASSIGNMENT_PUNISHED,
+    id: Long = ASSIGNMENT_ID
+): Assignment {
+    val assignment = Assignment(
+        room = room,
+        title = title,
+        description = description,
+        due = due,
+        status = status,
+        punished = punished
+    )
+    ReflectionTestUtils.setField(assignment, "id", id)
+
+    return assignment
 }

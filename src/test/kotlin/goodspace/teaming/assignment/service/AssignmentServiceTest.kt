@@ -2,7 +2,9 @@ package goodspace.teaming.assignment.service
 
 import goodspace.teaming.assignment.domain.mapper.AssignedMemberMapper
 import goodspace.teaming.assignment.domain.mapper.AssignmentMapper
+import goodspace.teaming.assignment.domain.mapper.AssignmentPreviewMapper
 import goodspace.teaming.assignment.dto.AssignmentCreateRequestDto
+import goodspace.teaming.assignment.dto.AssignmentPreviewResponseDto
 import goodspace.teaming.assignment.dto.AssignmentResponseDto
 import goodspace.teaming.assignment.dto.SubmissionRequestDto
 import goodspace.teaming.fixture.*
@@ -34,12 +36,15 @@ class AssignmentServiceTest {
     private val userRepository = mockk<UserRepository>(relaxed = true)
     private val assignmentMapper = mockk<AssignmentMapper>(relaxed = true)
     private val assignedMemberMapper = mockk<AssignedMemberMapper>(relaxed = true)
+    private val assignmentPreviewMapper = mockk<AssignmentPreviewMapper>()
     private val fileRepository = mockk<FileRepository>(relaxed = true)
+
     private val assignmentService = AssignmentServiceImpl(
         userRoomRepository = userRoomRepository,
         userRepository = userRepository,
         assignmentMapper = assignmentMapper,
         assignedMemberMapper = assignedMemberMapper,
+        assignmentPreviewMapper = assignmentPreviewMapper,
         fileRepository = fileRepository
     )
 
@@ -129,8 +134,38 @@ class AssignmentServiceTest {
     }
 
     @Nested
-    @DisplayName("get")
-    inner class Get {
+    @DisplayName("getAssignedAssignments")
+    inner class GetAssignedAssignments {
+        @Test
+        fun `해당 회원에게 할당되었으면서 제출 기한이 지나지 않은 과제들을 반환한다`() {
+            // given
+            val user = mockk<User>()
+            every { userRepository.findById(USER_ID) } returns Optional.of(user)
+
+            val notClosedAssignment = mockk<Assignment>()
+            val closedAssignment = mockk<Assignment>()
+
+            every { user.assignments } returns listOf(notClosedAssignment, closedAssignment)
+            every { notClosedAssignment.due.isBefore(any()) } returns true
+            every { closedAssignment.due.isBefore(any()) } returns false
+
+            val expectedDto = mockk<AssignmentPreviewResponseDto>()
+            val notExpectedDto = mockk<AssignmentPreviewResponseDto>()
+
+            every { assignmentPreviewMapper.map(notClosedAssignment) } returns expectedDto
+            every { assignmentPreviewMapper.map(closedAssignment) } returns notExpectedDto
+
+            // when
+            val response = assignmentService.getAssignedAssignments(USER_ID)
+
+            // then
+            assertThat(response).containsExactly(expectedDto)
+        }
+    }
+
+    @Nested
+    @DisplayName("getAssignmentsInRoom")
+    inner class GetAssignmentsInRoom {
         @Test
         fun `해당 티밍룸의 모든 과제를 반환한다`() {
             // given
@@ -160,7 +195,7 @@ class AssignmentServiceTest {
             every { assignmentMapper.map(assignment2) } returns assignmentDto2
 
             // when
-            val result = assignmentService.get(user.id!!, room.id!!)
+            val result = assignmentService.getAssignmentsInRoom(user.id!!, room.id!!)
 
             // then
             assertThat(result).containsExactlyInAnyOrder(assignmentDto1, assignmentDto2)
@@ -181,7 +216,7 @@ class AssignmentServiceTest {
             every { userRoomRepository.findByRoomIdAndUserId(room.id!!, user.id!!) } returns notPaidUserRoom
 
             // when & then
-            assertThatThrownBy { assignmentService.get(user.id!!, room.id!!) }
+            assertThatThrownBy { assignmentService.getAssignmentsInRoom(user.id!!, room.id!!) }
                 .isInstanceOf(IllegalStateException::class.java)
         }
     }
@@ -585,7 +620,8 @@ class AssignmentServiceTest {
             assignedMemberIds = assignedMemberIds,
             due = due,
             status = status,
-            submissions = listOf()
+            submissions = listOf(),
+            punished = punished
         )
     }
 }
