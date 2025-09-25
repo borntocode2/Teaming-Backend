@@ -72,7 +72,7 @@ class AssignmentServiceImpl(
         val referenceTime = Instant.now()
 
         return user.assignments
-            .filter { it.due.isBefore(referenceTime) }
+            .filter { it.due.isAfter(referenceTime) }
             .map { assignmentPreviewMapper.map(it) }
     }
 
