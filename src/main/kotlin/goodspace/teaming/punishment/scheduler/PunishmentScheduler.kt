@@ -16,9 +16,13 @@ class PunishmentScheduler (
 ) {
     @Scheduled(fixedRate = 100000) //TODO: 60분마다 실행
     fun checkAssignments() {
+        println("PunishmentScheduler 실행됨 at ${Instant.now()}")
         val now = Instant.now()
+        println("Scheduler now = $now")
         val expiredAssignments = assignmentRepository
             .findByDueBeforeAndStatusNotAndPunishedFalse(now, AssignmentStatus.COMPLETE)
+
+        println("expiredAssignments.size = ${expiredAssignments.size}")
 
         expiredAssignments.forEach { assignment ->
             punishmentService.applyPunishment(assignment)
