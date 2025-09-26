@@ -41,6 +41,7 @@ class RoomInfoMapper(
             avatarVersion = room.avatarVersion,
             type = room.type,
             memberCount = room.memberCount,
+            paymentStatus = userRoom.paymentStatus,
             success = room.success,
             members = members.map { roomMemberMapper.map(it) }
         )
