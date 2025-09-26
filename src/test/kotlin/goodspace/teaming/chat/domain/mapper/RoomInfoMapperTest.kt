@@ -2,6 +2,7 @@ package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.chat.dto.LastMessagePreviewResponseDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
+import goodspace.teaming.chat.dto.RoomTypeResponseDto
 import goodspace.teaming.chat.dto.SenderSummaryResponseDto
 import goodspace.teaming.file.domain.CdnStorageUrlProvider
 import goodspace.teaming.fixture.MESSAGE_CONTENT
@@ -35,16 +36,25 @@ class RoomInfoMapperTest {
     private lateinit var messageRepository: MessageRepository
     private lateinit var lastMessagePreviewMapper: LastMessagePreviewMapper
     private lateinit var roomMemberMapper: RoomMemberMapper
-    private lateinit var roomInfoMapper: RoomInfoMapper
+    private lateinit var roomTypeMapper: RoomTypeMapper
     private lateinit var storageUrlProvider: CdnStorageUrlProvider
+
+    private lateinit var roomInfoMapper: RoomInfoMapper
 
     @BeforeEach
     fun setUp() {
         messageRepository = mockk(relaxed = true)
         lastMessagePreviewMapper = mockk(relaxed = true)
         roomMemberMapper = mockk(relaxed = true)
+        roomTypeMapper = mockk(relaxed = true)
         storageUrlProvider = mockk(relaxed = true)
-        roomInfoMapper = RoomInfoMapper(messageRepository, lastMessagePreviewMapper, roomMemberMapper, storageUrlProvider)
+        roomInfoMapper = RoomInfoMapper(
+            messageRepository,
+            lastMessagePreviewMapper,
+            roomMemberMapper,
+            roomTypeMapper,
+            storageUrlProvider
+        )
     }
 
     @Test
@@ -55,16 +65,22 @@ class RoomInfoMapperTest {
         val userRoom = createUserRoom(user, room, lastReadMessageId = LAST_READ_MESSAGE_ID)
 
         val message = mockk<Message>()
-        val previewDto = createLastMessagePreviewResponseDto()
+        val expectedPreviewDto = createLastMessagePreviewResponseDto()
+        val expectedRoomTypeDto = mockk<RoomTypeResponseDto>()
 
         every {
-            messageRepository.countUnreadInRoom(room = room, user = user, lastReadMessageId = userRoom.lastReadMessageId)
+            messageRepository.countUnreadInRoom(
+                room = room,
+                user = user,
+                lastReadMessageId = userRoom.lastReadMessageId
+            )
         } returns UNREAD_COUNT
 
         every { messageRepository.findLatestMessageId(room) } returns LATEST_MESSAGE_ID
         every { messageRepository.findById(LATEST_MESSAGE_ID) } returns Optional.of(message)
         every { storageUrlProvider.publicUrl(room.avatarKey, room.avatarVersion) } returns AVATAR_URL
-        every { lastMessagePreviewMapper.map(message) } returns previewDto
+        every { lastMessagePreviewMapper.map(message) } returns expectedPreviewDto
+        every { roomTypeMapper.map(room.type) } returns expectedRoomTypeDto
 
         // when
         val result: RoomInfoResponseDto = roomInfoMapper.map(userRoom)
@@ -72,11 +88,11 @@ class RoomInfoMapperTest {
         // then
         assertThat(result.roomId).isEqualTo(room.id)
         assertThat(result.unreadCount).isEqualTo(UNREAD_COUNT)
-        assertThat(result.lastMessage).isEqualTo(previewDto)
+        assertThat(result.lastMessage).isEqualTo(expectedPreviewDto)
         assertThat(result.title).isEqualTo(room.title)
         assertThat(result.avatarUrl).isEqualTo(AVATAR_URL)
         assertThat(result.avatarVersion).isEqualTo(room.avatarVersion)
-        assertThat(result.type).isEqualTo(room.type)
+        assertThat(result.type).isEqualTo(expectedRoomTypeDto)
         assertThat(result.memberCount).isEqualTo(room.memberCount)
         assertThat(result.success).isEqualTo(room.success)
     }
@@ -107,11 +123,13 @@ class RoomInfoMapperTest {
         val room = createRoom()
         val user = createUser()
         val userRoom = createUserRoom(user, room, lastReadMessageId = null)
+        val expectedRoomTypeDto = mockk<RoomTypeResponseDto>()
 
         every { messageRepository.countUnreadInRoom(room, user, null) } returns UNREAD_COUNT
         every { messageRepository.findLatestMessageId(room) } returns null
         every { messageRepository.findById(LAST_READ_MESSAGE_ID) } returns Optional.empty()
         every { storageUrlProvider.publicUrl(room.avatarKey, room.avatarVersion) } returns AVATAR_URL
+        every { roomTypeMapper.map(room.type) } returns expectedRoomTypeDto
 
         // when
         val result = roomInfoMapper.map(userRoom)
@@ -123,7 +141,7 @@ class RoomInfoMapperTest {
         assertThat(result.title).isEqualTo(room.title)
         assertThat(result.avatarUrl).isEqualTo(AVATAR_URL)
         assertThat(result.avatarVersion).isEqualTo(room.avatarVersion)
-        assertThat(result.type).isEqualTo(room.type)
+        assertThat(result.type).isEqualTo(expectedRoomTypeDto)
         assertThat(result.memberCount).isEqualTo(room.memberCount)
         assertThat(result.success).isEqualTo(room.success)
     }
