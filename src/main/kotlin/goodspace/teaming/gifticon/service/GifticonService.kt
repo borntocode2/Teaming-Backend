@@ -55,9 +55,9 @@ class GifticonService (
     }
 
     @Transactional(readOnly = true)
-    fun getGifticonsByUserId(userId: Long): List<GifticonResponseDto> {
-        val user = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("해당 회원을 찾을 수 없습니다.") }
+    fun getGifticonsByUserEmail(email: String): List<GifticonResponseDto> {
+        val user = userRepository.findByEmail(email)
+            ?: throw IllegalArgumentException("해당 회원을 찾을 수 없습니다.")
 
         return user.gifticonList.map {
             gifticon ->
