@@ -1,5 +1,9 @@
 package goodspace.teaming.payment.service
 
+import goodspace.teaming.global.entity.room.PaymentStatus
+import goodspace.teaming.global.entity.room.UserRoom
+import goodspace.teaming.global.repository.UserRepository
+import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.web.reactive.function.client.WebClient
 import goodspace.teaming.payment.config.NicepayProperties
 import goodspace.teaming.payment.domain.PaymentApproveRespond
@@ -7,6 +11,7 @@ import goodspace.teaming.payment.dto.PaymentApproveRequestDto
 import goodspace.teaming.payment.dto.PaymentApproveRespondDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 import goodspace.teaming.payment.repository.PaymentRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -19,8 +24,8 @@ import java.util.*
 class PaymentService(
     private val nicepayProperties: NicepayProperties,
     private val webClient: WebClient.Builder,
-    private val paymentRepository: PaymentRepository
-
+    private val paymentRepository: PaymentRepository,
+    private val userRoomRepository: UserRoomRepository
 ){
     fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): PaymentApproveRespondDto {
         if (paymentVerifyRespondDto.authResultCode != "0000"){
@@ -28,11 +33,11 @@ class PaymentService(
         }
 
         val amount = paymentVerifyRespondDto.amount
-
-        return approvePayment(paymentVerifyRespondDto.tid, amount)
+        val (userId, roomId) = paymentVerifyRespondDto.mallReserved.split(":")
+        return approvePayment(paymentVerifyRespondDto.tid, amount, userId, roomId)
     }
 
-    private fun approvePayment(tid: String, amount: String): PaymentApproveRespondDto {
+    fun approvePayment(tid: String, amount: String, userId: String, roomId: String): PaymentApproveRespondDto {
         val url = "${nicepayProperties.approveUrl}/$tid"
         val request = PaymentApproveRequestDto(
             amount = amount
@@ -48,6 +53,10 @@ class PaymentService(
             .bodyToMono(PaymentApproveRespondDto::class.java)
             .block() ?: throw RuntimeException("결제 승인 응답이 올바르지 않습니다.")
 
+
+        if (paymentApproveRespondDto.resultCode == "0000" || paymentApproveRespondDto.resultCode == "3001") {
+            saveUserRoomInfo(userId, roomId)
+        }
         return paymentApproveRespondDto
     }
 
@@ -55,6 +64,14 @@ class PaymentService(
     fun savePaymentResult(paymentApproveRespond: PaymentApproveRespond): String {
         paymentRepository.save(paymentApproveRespond)
         return paymentApproveRespond.tid
+    }
+    @Transactional
+    fun saveUserRoomInfo(userId: String, roomId: String){
+       val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId.toLong(), userId.toLong())
+           ?: throw IllegalArgumentException("결제를 요청한 유저의 방을 찾을 수 없습니다.")
+
+        userRoom.paymentStatus = PaymentStatus.PAID
+        userRoomRepository.save(userRoom)
     }
 
     private fun getAuthHeader(): String{

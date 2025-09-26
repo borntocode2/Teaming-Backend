@@ -9,7 +9,7 @@ class PaymentVerifyRespondDto (
     val amount: String,
     val mallReserved: String,
     val authToken: String,
-    val signature: String
+    val signature: String,
 ){
     fun PaymentVerifyRespondDto.toApproveRequestDto(): PaymentApproveRequestDto{
         return PaymentApproveRequestDto(
