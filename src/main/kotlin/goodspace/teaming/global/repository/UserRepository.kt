@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param
 
 interface UserRepository : JpaRepository<User, Long> {
     fun existsByEmail(email: String): Boolean
+    fun findByEmail(email: String): User?
 
     @Query("SELECT u FROM OAuthUser u WHERE u.identifier = :identifier AND u.type = :userType")
     fun findByIdentifierAndUserType(

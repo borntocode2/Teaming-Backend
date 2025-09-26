@@ -36,12 +36,10 @@ class GifticonController(
     @GetMapping
     @Operation(
         summary = "기프티콘 조회",
-        description = "기프티콘 코드, 기프티콘 만료기한 ex)\"20250925\", 기프티콘 등급(\"BASIC\"\",STANDARD\",\"ELITE\")"
+        description = "유저 이메일로 해당 유저의 기프티콘을 조회합니다."
     )
-    fun getGifticon(@RequestParam userId: Long): ResponseEntity<List<GifticonResponseDto>>{
-        val gifticons = gifticonService.getGifticonsByUserId(userId)
-
-        val dtos: List<GifticonResponseDto> = gifticonService.getGifticonsByUserId(userId)
+    fun getGifticon(@RequestParam email: String): ResponseEntity<List<GifticonResponseDto>>{
+        val dtos: List<GifticonResponseDto> = gifticonService.getGifticonsByUserEmail(email)
 
 
         return ResponseEntity.ok(dtos)
