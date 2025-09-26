@@ -1,11 +1,14 @@
 package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.chat.dto.RoomMemberResponseDto
+import goodspace.teaming.file.domain.CdnStorageUrlProvider
 import goodspace.teaming.global.entity.room.UserRoom
 import org.springframework.stereotype.Component
 
 @Component
-class RoomMemberMapper {
+class RoomMemberMapper(
+    private val urlProvider: CdnStorageUrlProvider
+) {
     fun map(userRoom: UserRoom): RoomMemberResponseDto {
         val user = userRoom.user
 
@@ -13,7 +16,7 @@ class RoomMemberMapper {
             memberId = user.id!!,
             lastReadMessageId = userRoom.lastReadMessageId,
             name = user.name,
-            avatarKey = user.avatarKey,
+            avatarUrl = urlProvider.publicUrl(user.avatarKey, user.avatarVersion),
             avatarVersion = user.avatarVersion,
             roomRole = userRoom.roomRole
         )

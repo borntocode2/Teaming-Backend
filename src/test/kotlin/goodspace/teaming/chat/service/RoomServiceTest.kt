@@ -503,7 +503,7 @@ class RoomServiceTest {
         description = DESCRIPTION,
         memberCount = MEMBER_COUNT,
         roomType = ROOM_TYPE,
-        imageKey = null,
-        imageVersion = null
+        avatarKey = null,
+        avatarVersion = null
     )
 }

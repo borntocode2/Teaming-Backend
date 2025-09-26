@@ -54,8 +54,8 @@ class RoomSearchMapperTest {
 
         // then
         assertEquals(TITLE, result.title)
-        assertEquals(IMAGE_KEY, result.imageKey)
-        assertEquals(IMAGE_VERSION, result.imageVersion)
+        assertEquals(IMAGE_KEY, result.avatarUrl)
+        assertEquals(IMAGE_VERSION, result.avatarVersion)
         assertEquals(ROOM_TYPE_DTO, result.type)
         assertEquals(CURRENT_MEMBER_COUNT, result.currentMemberCount)
         assertEquals(MAX_MEMBER_COUNT, result.maxMemberCount)

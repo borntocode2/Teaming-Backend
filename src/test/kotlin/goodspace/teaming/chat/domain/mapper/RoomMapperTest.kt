@@ -33,8 +33,8 @@ class RoomMapperTest {
         assertThat(room.title).isEqualTo(dto.title)
         assertThat(room.type).isEqualTo(dto.roomType)
         assertThat(room.memberCount).isEqualTo(dto.memberCount)
-        assertThat(room.avatarKey).isEqualTo(dto.imageKey)
-        assertThat(room.avatarVersion).isEqualTo(dto.imageVersion)
+        assertThat(room.avatarKey).isEqualTo(dto.avatarKey)
+        assertThat(room.avatarVersion).isEqualTo(dto.avatarVersion)
     }
 
     @Test
@@ -66,8 +66,8 @@ class RoomMapperTest {
             description = description,
             memberCount = memberCount,
             roomType = roomType,
-            imageKey = imageKey,
-            imageVersion = imageVersion
+            avatarKey = imageKey,
+            avatarVersion = imageVersion
         )
     }
 }

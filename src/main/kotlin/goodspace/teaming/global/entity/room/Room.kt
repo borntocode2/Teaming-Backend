@@ -21,7 +21,7 @@ class Room(
 
     var avatarKey: String? = null,
 
-    var avatarVersion: Int? = null,
+    var avatarVersion: Int = 0,
 
     @Enumerated(STRING)
     @Column(nullable = false)
