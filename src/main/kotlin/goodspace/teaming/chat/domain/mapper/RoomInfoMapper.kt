@@ -11,6 +11,7 @@ class RoomInfoMapper(
     private val messageRepository: MessageRepository,
     private val lastMessagePreviewMapper: LastMessagePreviewMapper,
     private val roomMemberMapper: RoomMemberMapper,
+    private val roomTypeMapper: RoomTypeMapper,
     private val storageUrlProvider: CdnStorageUrlProvider
 )  {
     fun map(userRoom: UserRoom): RoomInfoResponseDto {
@@ -39,7 +40,7 @@ class RoomInfoMapper(
             title = room.title,
             avatarUrl = storageUrlProvider.publicUrl(room.avatarKey, room.avatarVersion),
             avatarVersion = room.avatarVersion,
-            type = room.type,
+            type = roomTypeMapper.map(room.type),
             memberCount = room.memberCount,
             paymentStatus = userRoom.paymentStatus,
             success = room.success,
