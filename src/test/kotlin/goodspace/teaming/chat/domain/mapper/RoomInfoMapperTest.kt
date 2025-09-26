@@ -29,6 +29,7 @@ private const val LAST_READ_MESSAGE_ID = 777L
 private const val UNREAD_COUNT = 7L
 private const val SUCCESS = false
 private const val AVATAR_URL = "avatarUrl"
+private const val LATEST_MESSAGE_ID = 92039103L
 
 class RoomInfoMapperTest {
     private lateinit var messageRepository: MessageRepository
@@ -60,7 +61,8 @@ class RoomInfoMapperTest {
             messageRepository.countUnreadInRoom(room = room, user = user, lastReadMessageId = userRoom.lastReadMessageId)
         } returns UNREAD_COUNT
 
-        every { messageRepository.findById(userRoom.lastReadMessageId!!) } returns Optional.of(message)
+        every { messageRepository.findLatestMessageId(room) } returns LATEST_MESSAGE_ID
+        every { messageRepository.findById(LATEST_MESSAGE_ID) } returns Optional.of(message)
         every { storageUrlProvider.publicUrl(room.avatarKey, room.avatarVersion) } returns AVATAR_URL
         every { lastMessagePreviewMapper.map(message) } returns previewDto
 
@@ -80,7 +82,7 @@ class RoomInfoMapperTest {
     }
 
     @Test
-    fun `lastReadMessageId가 null이면, 마지막 메시지에 대한 DTO는 null이 된다`() {
+    fun `lastMessageId가 null이면, 마지막 메시지에 대한 DTO는 null이 된다`() {
         // given
         val room = mockRoom()
         val user = mockk<User>(relaxed = true)
@@ -89,6 +91,8 @@ class RoomInfoMapperTest {
             every { this@mockk.user } returns user
             every { this@mockk.lastReadMessageId } returns null
         }
+
+        every { messageRepository.findLatestMessageId(room) } returns null
 
         // when
         val result = roomInfoMapper.map(userRoom)
@@ -105,6 +109,7 @@ class RoomInfoMapperTest {
         val userRoom = createUserRoom(user, room, lastReadMessageId = null)
 
         every { messageRepository.countUnreadInRoom(room, user, null) } returns UNREAD_COUNT
+        every { messageRepository.findLatestMessageId(room) } returns null
         every { messageRepository.findById(LAST_READ_MESSAGE_ID) } returns Optional.empty()
         every { storageUrlProvider.publicUrl(room.avatarKey, room.avatarVersion) } returns AVATAR_URL
 

@@ -22,7 +22,9 @@ class RoomInfoMapper(
             lastReadMessageId = lastReadMessageId
         )
 
-        val lastMessageDto = lastReadMessageId
+        val lastMessageId = messageRepository.findLatestMessageId(userRoom.room)
+
+        val lastMessageDto = lastMessageId
             ?.let { messageRepository.findById(it).orElse(null) }
             ?.let { lastMessagePreviewMapper.map(it) }
 
