@@ -51,7 +51,7 @@ fun createEmailVerification(
 fun createRoom(
     title: String = ROOM_TITLE,
     imageKey: String? = ROOM_IMAGE_KEY,
-    imageVersion: Int? = ROOM_IMAGE_VERSION,
+    imageVersion: Int = ROOM_IMAGE_VERSION,
     type: RoomType = ROOM_TYPE,
     inviteCode: String? = ROOM_INVITE_CODE,
     memberCount: Int = ROOM_MEMBER_COUNT,

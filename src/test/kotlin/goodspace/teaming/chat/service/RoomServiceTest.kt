@@ -504,6 +504,6 @@ class RoomServiceTest {
         memberCount = MEMBER_COUNT,
         roomType = ROOM_TYPE,
         avatarKey = null,
-        avatarVersion = null
+        avatarVersion = 0
     )
 }

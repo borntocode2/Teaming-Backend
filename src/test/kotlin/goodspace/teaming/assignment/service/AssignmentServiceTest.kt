@@ -146,8 +146,8 @@ class AssignmentServiceTest {
             val closedAssignment = mockk<Assignment>()
 
             every { user.assignments } returns listOf(notClosedAssignment, closedAssignment)
-            every { notClosedAssignment.due.isBefore(any()) } returns true
-            every { closedAssignment.due.isBefore(any()) } returns false
+            every { notClosedAssignment.due.isAfter(any()) } returns true
+            every { closedAssignment.due.isAfter(any()) } returns false
 
             val expectedDto = mockk<AssignmentPreviewResponseDto>()
             val notExpectedDto = mockk<AssignmentPreviewResponseDto>()
