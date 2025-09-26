@@ -70,9 +70,8 @@ class AvatarController(
     @Operation(
         summary = "아바타 보기용 URL 발급",
         description = """
-            현재 사용자의 아바타를 표시하기 위한 URL을 발급합니다.
-            구성에 따라 Presigned GET 또는 CDN URL이 반환됩니다.
-            기본 아바타가 없으면 서버의 기본 경로(`/static/default-avatar.png`)가 반환됩니다.
+            현재 사용자의 아바타를 표시하기 위한 CDN URL을 발급합니다.
+            기본 아바타가 없으면 null을 반환합니다.
         """
     )
     fun issueViewUrl(

@@ -57,7 +57,7 @@ class RoomMemberMapperTest {
         // then
         assertThat(result.memberId).isEqualTo(USER_ID)
         assertThat(result.name).isEqualTo(USER_NAME)
-        assertThat(result.avatarKey).isEqualTo(USER_AVATAR_KEY)
+        assertThat(result.avatarUrl).isEqualTo(USER_AVATAR_KEY)
         assertThat(result.avatarVersion).isEqualTo(USER_AVATAR_VERSION)
         assertThat(result.roomRole).isEqualTo(ROOM_ROLE)
         assertThat(result.lastReadMessageId).isEqualTo(LAST_READ_MESSAGE_ID)

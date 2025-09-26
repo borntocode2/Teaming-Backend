@@ -137,7 +137,7 @@ class AvatarServiceImpl(
                 room.avatarKey to (room.avatarVersion ?: 0)
             }
         }
-        val url = storageUrlProvider.publicUrl(key, version = version) ?: "/static/default-avatar.png"
+        val url = storageUrlProvider.publicUrl(key, version = version)
         return AvatarUrlResponseDto(url)
     }
 
