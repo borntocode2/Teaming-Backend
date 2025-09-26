@@ -1,6 +1,7 @@
 package goodspace.teaming.payment.controller
 
 import goodspace.teaming.email.dto.EmailVerifyRequestDto
+import goodspace.teaming.global.security.getUserId
 import goodspace.teaming.payment.dto.PaymentApproveRespondDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 import goodspace.teaming.payment.dto.toEntity
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
+import java.security.Principal
 
 @RestController
 @RequestMapping("/payment")
@@ -18,8 +20,11 @@ class PaymentController(
 ) {
 
     @GetMapping(value = ["/html"], produces = [MediaType.TEXT_HTML_VALUE])
-    fun showPaymentPage(@RequestParam amount: Long
+    fun showPaymentPage(@RequestParam amount: Long, principal: Principal, @RequestParam roomId: Long
     ): String {
+        val userId = principal.getUserId()
+        val userPayInfo = "$userId:$roomId"
+
         return """<!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -37,6 +42,7 @@ class PaymentController(
                     appScheme: `teaming://`,
                     orderId: '${paymentService.generateUUIDString()}',
                     amount: ${amount},
+                    mallReserved: '${userPayInfo}'
                     goodsName: 'Room Create',
                     returnUrl: 'http://13.125.193.243:8080/payment/request',
                         fnError: function (result) {
@@ -66,6 +72,8 @@ class PaymentController(
 
         val paymentApproveRespondDto: PaymentApproveRespondDto = paymentService.requestApprove(dto)
         paymentService.savePaymentResult(paymentApproveRespondDto.toEntity())
+
+
 
         return paymentService.mapResultCodeToHttpStatus(paymentApproveRespondDto.resultCode)
     }
