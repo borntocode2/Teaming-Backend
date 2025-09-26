@@ -1,6 +1,5 @@
 package goodspace.teaming.file.controller
 
-import goodspace.teaming.file.domain.AvatarOwnerType
 import goodspace.teaming.file.dto.*
 import goodspace.teaming.file.service.AvatarService
 import goodspace.teaming.global.security.getUserId
@@ -41,7 +40,9 @@ class AvatarController(
         @RequestBody requestDto: AvatarUploadIntentRequestDto
     ): ResponseEntity<AvatarUploadIntentResponseDto> {
         val userId = principal.getUserId()
-        val res = avatarService.intent(AvatarOwnerType.USER, userId, requestDto)
+
+        val res = avatarService.intent(userId, requestDto)
+
         return ResponseEntity.ok(res)
     }
 
@@ -62,7 +63,9 @@ class AvatarController(
         @RequestBody requestDto: AvatarUploadCompleteRequestDto
     ): ResponseEntity<AvatarUploadCompleteResponseDto> {
         val userId = principal.getUserId()
-        val res = avatarService.complete(AvatarOwnerType.USER, userId, requestDto)
+
+        val res = avatarService.complete(userId, requestDto)
+
         return ResponseEntity.ok(res)
     }
 
@@ -75,10 +78,13 @@ class AvatarController(
         """
     )
     fun issueViewUrl(
-        principal: Principal
+        principal: Principal,
+        @RequestBody ownerTypeDto: AvatarOwnerTypeDto
     ): ResponseEntity<AvatarUrlResponseDto> {
         val userId = principal.getUserId()
-        val res = avatarService.issueViewUrl(AvatarOwnerType.USER, userId)
+
+        val res = avatarService.issueViewUrl(userId, ownerTypeDto)
+
         return ResponseEntity.ok(res)
     }
 
@@ -91,10 +97,13 @@ class AvatarController(
         """
     )
     fun delete(
-        principal: Principal
+        principal: Principal,
+        @RequestBody ownerTypeDto: AvatarOwnerTypeDto
     ): ResponseEntity<Void> {
         val userId = principal.getUserId()
-        avatarService.delete(AvatarOwnerType.USER, userId)
+
+        avatarService.delete(userId, ownerTypeDto)
+
         return ResponseEntity.noContent().build()
     }
 }

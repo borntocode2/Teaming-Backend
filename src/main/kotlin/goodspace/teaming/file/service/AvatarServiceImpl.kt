@@ -28,7 +28,6 @@ class AvatarServiceImpl(
     @Value("\${app.avatar.room-prefix:avatars/rooms}") private val roomAvatarPrefix: String,
     @Value("\${app.avatar.max-size-mb:5}") private val maxAvatarSizeMb: Long
 ) : AvatarService {
-
     private val allowedImageTypes = setOf("image/png", "image/jpeg", "image/webp")
     private val maxBytes get() = maxAvatarSizeMb.coerceAtLeast(1) * 1024 * 1024
 
@@ -39,13 +38,13 @@ class AvatarServiceImpl(
 
     @Transactional(readOnly = true)
     override fun intent(
-        ownerType: AvatarOwnerType,
         ownerId: Long,
-        request: AvatarUploadIntentRequestDto
+        requestDto: AvatarUploadIntentRequestDto
     ): AvatarUploadIntentResponseDto {
-        require(request.byteSize in 1..maxBytes) { MSG_IMAGE_TOO_LARGE }
+        val ownerType = requestDto.ownerType
+        require(requestDto.byteSize in 1..maxBytes) { MSG_IMAGE_TOO_LARGE }
 
-        val clientCtRaw = request.contentType.trim()
+        val clientCtRaw = requestDto.contentType.trim()
         val ctForAllowCheck = clientCtRaw.lowercase()
         require(ctForAllowCheck in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $clientCtRaw" }
 
@@ -70,12 +69,13 @@ class AvatarServiceImpl(
 
     @Transactional
     override fun complete(
-        ownerType: AvatarOwnerType,
         ownerId: Long,
-        request: AvatarUploadCompleteRequestDto
+        requestDto: AvatarUploadCompleteRequestDto
     ): AvatarUploadCompleteResponseDto {
+        val ownerType = requestDto.ownerType
+
         val objectKey = keyOf(ownerType, ownerId)
-        require(request.key == objectKey) { MSG_INVALID_UPLOAD_KEY }
+        require(requestDto.key == objectKey) { MSG_INVALID_UPLOAD_KEY }
 
         val head = try {
             s3PresignedUrlProvider.head(objectKey) // ← 체크섬 모드 아님
@@ -105,16 +105,16 @@ class AvatarServiceImpl(
             AvatarOwnerType.USER -> {
                 val user = userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
                 user.avatarKey = objectKey
-                user.avatarVersion += 1
+                user.avatarVersion++
                 val url = storageUrlProvider.publicUrl(objectKey, version = user.avatarVersion)
                 user.avatarVersion to (url ?: "/static/default-avatar.png")
             }
             AvatarOwnerType.ROOM -> {
                 val room = roomRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
                 room.avatarKey = objectKey
-                room.avatarVersion = (room.avatarVersion ?: 0) + 1
-                val url = storageUrlProvider.publicUrl(objectKey, version = room.avatarVersion!!)
-                room.avatarVersion!! to (url ?: "/static/default-avatar.png")
+                room.avatarVersion++
+                val url = storageUrlProvider.publicUrl(objectKey, version = room.avatarVersion)
+                room.avatarVersion to (url ?: "/static/default-avatar.png")
             }
         }
 
@@ -126,7 +126,9 @@ class AvatarServiceImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun issueViewUrl(ownerType: AvatarOwnerType, ownerId: Long): AvatarUrlResponseDto {
+    override fun issueViewUrl(ownerId: Long, ownerTypeDto: AvatarOwnerTypeDto): AvatarUrlResponseDto {
+        val ownerType = ownerTypeDto.ownerType
+
         val (key, version) = when (ownerType) {
             AvatarOwnerType.USER -> {
                 val user = userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
@@ -134,15 +136,18 @@ class AvatarServiceImpl(
             }
             AvatarOwnerType.ROOM -> {
                 val room = roomRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
-                room.avatarKey to (room.avatarVersion ?: 0)
+                room.avatarKey to (room.avatarVersion)
             }
         }
         val url = storageUrlProvider.publicUrl(key, version = version)
+
         return AvatarUrlResponseDto(url)
     }
 
     @Transactional
-    override fun delete(ownerType: AvatarOwnerType, ownerId: Long) {
+    override fun delete(ownerId: Long, ownerTypeDto: AvatarOwnerTypeDto) {
+        val ownerType = ownerTypeDto.ownerType
+
         when (ownerType) {
             AvatarOwnerType.USER -> {
                 val user = userRepository.findById(ownerId)
