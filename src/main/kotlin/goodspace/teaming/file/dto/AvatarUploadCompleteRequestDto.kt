@@ -6,5 +6,6 @@ data class AvatarUploadCompleteRequestDto(
     val key: String,
     val width: Int? = null,
     val height: Int? = null,
-    val ownerType: AvatarOwnerType
+    val ownerType: AvatarOwnerType,
+    val roomId: Long? = null
 )

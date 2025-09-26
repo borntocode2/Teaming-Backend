@@ -5,5 +5,6 @@ import goodspace.teaming.file.domain.AvatarOwnerType
 data class AvatarUploadIntentRequestDto(
     val contentType: String,
     val byteSize: Long,
-    val ownerType: AvatarOwnerType
+    val ownerType: AvatarOwnerType,
+    val roomId: Long? = null
 )

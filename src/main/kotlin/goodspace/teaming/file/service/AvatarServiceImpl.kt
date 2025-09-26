@@ -31,14 +31,14 @@ class AvatarServiceImpl(
     private val allowedImageTypes = setOf("image/png", "image/jpeg", "image/webp")
     private val maxBytes get() = maxAvatarSizeMb.coerceAtLeast(1) * 1024 * 1024
 
-    private fun keyOf(ownerType: AvatarOwnerType, ownerId: Long): String = when (ownerType) {
-        AvatarOwnerType.USER -> "$userAvatarPrefix/$ownerId/avatar"
-        AvatarOwnerType.ROOM -> "$roomAvatarPrefix/$ownerId/avatar"
+    private fun keyOf(ownerType: AvatarOwnerType, userId: Long, roomId: Long?): String = when (ownerType) {
+        AvatarOwnerType.USER -> "$userAvatarPrefix/$userId/avatar"
+        AvatarOwnerType.ROOM -> "$roomAvatarPrefix/$roomId/avatar"
     }
 
     @Transactional(readOnly = true)
     override fun intent(
-        ownerId: Long,
+        userId: Long,
         requestDto: AvatarUploadIntentRequestDto
     ): AvatarUploadIntentResponseDto {
         val ownerType = requestDto.ownerType
@@ -49,11 +49,11 @@ class AvatarServiceImpl(
         require(ctForAllowCheck in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $clientCtRaw" }
 
         when (ownerType) {
-            AvatarOwnerType.USER -> userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
-            AvatarOwnerType.ROOM -> roomRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+            AvatarOwnerType.USER -> userRepository.findById(userId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
+            AvatarOwnerType.ROOM -> roomRepository.findById(requestDto.roomId!!).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
         }
 
-        val objectKey = keyOf(ownerType, ownerId)
+        val objectKey = keyOf(ownerType, userId, requestDto.roomId)
         val presigned = presignedUploadUrlProvider.putUploadUrl(
             key = objectKey,
             contentType = clientCtRaw
@@ -63,29 +63,28 @@ class AvatarServiceImpl(
             key = objectKey,
             bucket = s3PresignedUrlProvider.bucket(),
             url = presigned.url,
-            requiredHeaders = presigned.requiredHeaders // Content-Type만 포함됨
+            requiredHeaders = presigned.requiredHeaders
         )
     }
 
     @Transactional
     override fun complete(
-        ownerId: Long,
+        userId: Long,
         requestDto: AvatarUploadCompleteRequestDto
     ): AvatarUploadCompleteResponseDto {
         val ownerType = requestDto.ownerType
 
-        val objectKey = keyOf(ownerType, ownerId)
+        val objectKey = keyOf(ownerType, userId, requestDto.roomId)
         require(requestDto.key == objectKey) { MSG_INVALID_UPLOAD_KEY }
 
         val head = try {
-            s3PresignedUrlProvider.head(objectKey) // ← 체크섬 모드 아님
+            s3PresignedUrlProvider.head(objectKey)
         } catch (e: S3Exception) {
             throw IllegalArgumentException(MSG_OBJECT_NOT_FOUND, e)
         }
 
         val objectSize = head.contentLength()
         require(objectSize in 1L..maxBytes) { MSG_IMAGE_TOO_LARGE }
-        // require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING }  // ← 제거
 
         // 매직바이트로 서버가 타입 판정
         val headBytes = s3PresignedUrlProvider.getRangeBytes(objectKey, 0, 1023)
@@ -103,14 +102,14 @@ class AvatarServiceImpl(
 
         val (version, publicUrl) = when (ownerType) {
             AvatarOwnerType.USER -> {
-                val user = userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
+                val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
                 user.avatarKey = objectKey
                 user.avatarVersion++
                 val url = storageUrlProvider.publicUrl(objectKey, version = user.avatarVersion)
                 user.avatarVersion to (url ?: "/static/default-avatar.png")
             }
             AvatarOwnerType.ROOM -> {
-                val room = roomRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+                val room = roomRepository.findById(requestDto.roomId!!).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
                 room.avatarKey = objectKey
                 room.avatarVersion++
                 val url = storageUrlProvider.publicUrl(objectKey, version = room.avatarVersion)
@@ -126,16 +125,16 @@ class AvatarServiceImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun issueViewUrl(ownerId: Long, ownerTypeDto: AvatarOwnerTypeDto): AvatarUrlResponseDto {
+    override fun issueViewUrl(userId: Long, ownerTypeDto: AvatarOwnerTypeDto): AvatarUrlResponseDto {
         val ownerType = ownerTypeDto.ownerType
 
         val (key, version) = when (ownerType) {
             AvatarOwnerType.USER -> {
-                val user = userRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
+                val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
                 user.avatarKey to user.avatarVersion
             }
             AvatarOwnerType.ROOM -> {
-                val room = roomRepository.findById(ownerId).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+                val room = roomRepository.findById(ownerTypeDto.roomId!!).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
                 room.avatarKey to (room.avatarVersion)
             }
         }
@@ -145,18 +144,18 @@ class AvatarServiceImpl(
     }
 
     @Transactional
-    override fun delete(ownerId: Long, ownerTypeDto: AvatarOwnerTypeDto) {
+    override fun delete(userId: Long, ownerTypeDto: AvatarOwnerTypeDto) {
         val ownerType = ownerTypeDto.ownerType
 
         when (ownerType) {
             AvatarOwnerType.USER -> {
-                val user = userRepository.findById(ownerId)
+                val user = userRepository.findById(userId)
                     .orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
                 user.avatarKey = null
                 user.avatarVersion = 0
             }
             AvatarOwnerType.ROOM -> {
-                val room = roomRepository.findById(ownerId)
+                val room = roomRepository.findById(ownerTypeDto.roomId!!)
                     .orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
                 room.avatarKey = null
                 room.avatarVersion = 0

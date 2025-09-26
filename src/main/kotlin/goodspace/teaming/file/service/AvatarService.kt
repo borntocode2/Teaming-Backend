@@ -4,22 +4,22 @@ import goodspace.teaming.file.dto.*
 
 interface AvatarService {
     fun intent(
-        ownerId: Long,
+        userId: Long,
         requestDto: AvatarUploadIntentRequestDto
     ): AvatarUploadIntentResponseDto
 
     fun complete(
-        ownerId: Long,
+        userId: Long,
         requestDto: AvatarUploadCompleteRequestDto
     ): AvatarUploadCompleteResponseDto
 
     fun issueViewUrl(
-        ownerId: Long,
+        userId: Long,
         ownerTypeDto: AvatarOwnerTypeDto
     ): AvatarUrlResponseDto
 
     fun delete(
-        ownerId: Long,
+        userId: Long,
         ownerTypeDto: AvatarOwnerTypeDto
     )
 }
