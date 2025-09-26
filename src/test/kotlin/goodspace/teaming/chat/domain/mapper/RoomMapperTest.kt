@@ -33,8 +33,8 @@ class RoomMapperTest {
         assertThat(room.title).isEqualTo(dto.title)
         assertThat(room.type).isEqualTo(dto.roomType)
         assertThat(room.memberCount).isEqualTo(dto.memberCount)
-        assertThat(room.avatarKey).isEqualTo(dto.imageKey)
-        assertThat(room.avatarVersion).isEqualTo(dto.imageVersion)
+        assertThat(room.avatarKey).isEqualTo(dto.avatarKey)
+        assertThat(room.avatarVersion).isEqualTo(dto.avatarVersion)
     }
 
     @Test
@@ -42,7 +42,6 @@ class RoomMapperTest {
         // given
         val dto = createDto(
             imageKey = null,
-            imageVersion = null
         )
 
         // when
@@ -50,7 +49,6 @@ class RoomMapperTest {
 
         // then
         assertThat(room.avatarKey).isNull()
-        assertThat(room.avatarVersion).isNull()
     }
 
     private fun createDto(
@@ -59,15 +57,15 @@ class RoomMapperTest {
         memberCount: Int = 10,
         roomType: RoomType = RoomType.BASIC,
         imageKey: String? = "default/key",
-        imageVersion: Int? = 1
+        imageVersion: Int = 1
     ): RoomCreateRequestDto {
         return RoomCreateRequestDto(
             title = title,
             description = description,
             memberCount = memberCount,
             roomType = roomType,
-            imageKey = imageKey,
-            imageVersion = imageVersion
+            avatarKey = imageKey,
+            avatarVersion = imageVersion
         )
     }
 }

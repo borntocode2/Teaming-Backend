@@ -17,6 +17,7 @@ import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
+import goodspace.teaming.util.createRoom
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -146,8 +147,8 @@ class AssignmentServiceTest {
             val closedAssignment = mockk<Assignment>()
 
             every { user.assignments } returns listOf(notClosedAssignment, closedAssignment)
-            every { notClosedAssignment.due.isBefore(any()) } returns true
-            every { closedAssignment.due.isBefore(any()) } returns false
+            every { notClosedAssignment.due.isAfter(any()) } returns true
+            every { closedAssignment.due.isAfter(any()) } returns false
 
             val expectedDto = mockk<AssignmentPreviewResponseDto>()
             val notExpectedDto = mockk<AssignmentPreviewResponseDto>()
@@ -522,26 +523,6 @@ class AssignmentServiceTest {
         ReflectionTestUtils.setField(user, "id", id)
 
         return user
-    }
-
-    private fun createRoom(
-        title: String = ROOM_TITLE,
-        type: RoomType = ROOM_TYPE,
-        inviteCode: String? = ROOM_INVITE_CODE,
-        memberCount: Int = ROOM_MEMBER_COUNT,
-        success: Boolean = ROOM_SUCCESS,
-        id: Long = ROOM_ID
-    ): Room {
-        val room = Room(
-            title = title,
-            type = type,
-            inviteCode = inviteCode,
-            memberCount = memberCount
-        )
-        room.success = success
-        ReflectionTestUtils.setField(room, "id", id)
-
-        return room
     }
 
     private fun createUserRoom(

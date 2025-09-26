@@ -26,6 +26,12 @@ interface RoomService {
         userId: Long
     ): List<RoomInfoResponseDto>
 
+    fun updateRoom(
+        userId: Long,
+        roomId: Long,
+        requestDto: RoomUpdateRequestDto
+    )
+
     fun leaveRoom(
         userId: Long,
         roomId: Long

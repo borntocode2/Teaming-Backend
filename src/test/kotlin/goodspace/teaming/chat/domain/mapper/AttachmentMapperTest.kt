@@ -1,13 +1,13 @@
 package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.fixture.FileFixture
-import goodspace.teaming.fixture.RoomFixture
 import goodspace.teaming.fixture.TeamingUserFixture
 import goodspace.teaming.global.entity.file.*
 import goodspace.teaming.global.entity.room.Message
 import goodspace.teaming.global.entity.room.MessageType
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.file.domain.StorageUrlProvider
+import goodspace.teaming.util.createRoom
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -140,7 +140,7 @@ class AttachmentMapperTest {
     }
 
     private fun getFileFromFixture(fixture: FileFixture, user: User): File {
-        val room = RoomFixture.DEFAULT.getInstance()
+        val room = createRoom()
 
         val file = fixture.getInstanceWith(room, user)
         ReflectionTestUtils.setField(file, "id", DEFAULT_REFLECTION_ID)

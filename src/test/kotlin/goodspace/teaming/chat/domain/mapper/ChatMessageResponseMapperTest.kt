@@ -4,7 +4,6 @@ import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.chat.dto.MessageAttachmentResponseDto
 import goodspace.teaming.chat.dto.SenderSummaryResponseDto
 import goodspace.teaming.fixture.FileFixture
-import goodspace.teaming.fixture.RoomFixture
 import goodspace.teaming.fixture.TeamingUserFixture
 import goodspace.teaming.global.entity.file.Attachment
 import goodspace.teaming.global.entity.file.File
@@ -13,6 +12,7 @@ import goodspace.teaming.global.entity.room.MessageType
 import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.util.createRoom
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -162,9 +162,7 @@ class ChatMessageResponseMapperTest {
     }
 
     private fun createRoom(): Room {
-        return RoomFixture.DEFAULT.getInstance().also {
-            ReflectionTestUtils.setField(it, "id", DEFAULT_ROOM_ID)
-        }
+        return createRoom(id = DEFAULT_ROOM_ID)
     }
 
     private fun createUser(): TeamingUser {

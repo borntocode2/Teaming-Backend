@@ -183,8 +183,7 @@ class RoomServiceTest {
             @Test
             fun `초대코드로 방을 조회하고 DTO로 매핑하여 반환한다`() {
                 // given
-                val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
-                    .apply { inviteCode = INVITE_CODE }
+                val room = createRoom(inviteCode = INVITE_CODE)
                 val dto = mockk<RoomSearchResponseDto>()
 
                 every { roomRepository.findByInviteCode(INVITE_CODE) } returns room
@@ -216,7 +215,7 @@ class RoomServiceTest {
         fun `초대를 수락하여 방의 멤버로 합류한다`() {
             // given
             val user = mockk<User>(relaxed = true)
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT).apply { inviteCode = INVITE_CODE }
+            val room = createRoom(inviteCode = INVITE_CODE)
 
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
             every { roomRepository.findByInviteCode(INVITE_CODE) } returns room
@@ -250,8 +249,7 @@ class RoomServiceTest {
         fun `이미 멤버인 사용자가 초대를 수락하면 예외를 던진다`() {
             // given: 이미 멤버인 상황
             val user = mockk<User>(relaxed = true)
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
-                .apply { inviteCode = INVITE_CODE }
+            val room = createRoom(inviteCode = INVITE_CODE)
 
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
             every { roomRepository.findByInviteCode(INVITE_CODE) } returns room
@@ -267,7 +265,7 @@ class RoomServiceTest {
         fun `초대 수락에 성공하면 해당 티밍룸에 대한 DTO를 반환한다`() {
             // given
             val user = mockk<User>(relaxed = true)
-            val room = Room(title = "제목", type = RoomType.BASIC, memberCount = 5).apply { inviteCode = INVITE_CODE }
+            val room = createRoom(INVITE_CODE)
             val roomDto = mockk<RoomInfoResponseDto>(relaxed = true)
 
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
@@ -310,7 +308,7 @@ class RoomServiceTest {
         fun `방의 초대 코드를 반환한다`() {
             // given
             val user = mockk<User>(relaxed = true)
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT).apply { inviteCode = INVITE_CODE }
+            val room = createRoom(inviteCode = INVITE_CODE)
             val userRoom = UserRoom(
                 user = user,
                 room = room,
@@ -330,7 +328,7 @@ class RoomServiceTest {
         fun `팀장이 아니라면 예외가 발생한다`() {
             // given
             val user = mockk<User>(relaxed = true)
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT)
+            val room = createRoom()
             val userRoom = UserRoom(
                 user = user,
                 room = room,
@@ -341,7 +339,7 @@ class RoomServiceTest {
 
             // when & then
             assertThatThrownBy { roomService.getInviteCode(USER_ID, ROOM_ID) }
-                .isInstanceOf(IllegalArgumentException::class.java)
+                .isInstanceOf(IllegalStateException::class.java)
         }
     }
 
@@ -457,7 +455,7 @@ class RoomServiceTest {
         @Test
         fun `티밍룸의 상태를 '팀플 성공'으로 만든다`() {
             // given
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT).apply { success = false }
+            val room = createRoom(success = false)
             val user = mockk<User>(relaxed = true)
             val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.LEADER)
 
@@ -481,7 +479,7 @@ class RoomServiceTest {
         @Test
         fun `팀장이 아니면 예외를 던진다`() {
             // given
-            val room = Room(title = TITLE, type = ROOM_TYPE, memberCount = MEMBER_COUNT).apply { success = false }
+            val room = createRoom(success = false)
             val user = mockk<User>(relaxed = true)
             val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.MEMBER)
 
@@ -503,7 +501,7 @@ class RoomServiceTest {
         description = DESCRIPTION,
         memberCount = MEMBER_COUNT,
         roomType = ROOM_TYPE,
-        imageKey = null,
-        imageVersion = null
+        avatarKey = null,
+        avatarVersion = 0
     )
 }

@@ -1,6 +1,5 @@
 package goodspace.teaming.file.controller
 
-import goodspace.teaming.file.domain.AvatarOwnerType
 import goodspace.teaming.file.dto.*
 import goodspace.teaming.file.service.AvatarService
 import goodspace.teaming.global.security.getUserId
@@ -41,7 +40,9 @@ class AvatarController(
         @RequestBody requestDto: AvatarUploadIntentRequestDto
     ): ResponseEntity<AvatarUploadIntentResponseDto> {
         val userId = principal.getUserId()
-        val res = avatarService.intent(AvatarOwnerType.USER, userId, requestDto)
+
+        val res = avatarService.intent(userId, requestDto)
+
         return ResponseEntity.ok(res)
     }
 
@@ -62,7 +63,9 @@ class AvatarController(
         @RequestBody requestDto: AvatarUploadCompleteRequestDto
     ): ResponseEntity<AvatarUploadCompleteResponseDto> {
         val userId = principal.getUserId()
-        val res = avatarService.complete(AvatarOwnerType.USER, userId, requestDto)
+
+        val res = avatarService.complete(userId, requestDto)
+
         return ResponseEntity.ok(res)
     }
 
@@ -70,16 +73,18 @@ class AvatarController(
     @Operation(
         summary = "아바타 보기용 URL 발급",
         description = """
-            현재 사용자의 아바타를 표시하기 위한 URL을 발급합니다.
-            구성에 따라 Presigned GET 또는 CDN URL이 반환됩니다.
-            기본 아바타가 없으면 서버의 기본 경로(`/static/default-avatar.png`)가 반환됩니다.
+            현재 사용자의 아바타를 표시하기 위한 CDN URL을 발급합니다.
+            기본 아바타가 없으면 null을 반환합니다.
         """
     )
     fun issueViewUrl(
-        principal: Principal
+        principal: Principal,
+        @RequestBody ownerTypeDto: AvatarOwnerTypeDto
     ): ResponseEntity<AvatarUrlResponseDto> {
         val userId = principal.getUserId()
-        val res = avatarService.issueViewUrl(AvatarOwnerType.USER, userId)
+
+        val res = avatarService.issueViewUrl(userId, ownerTypeDto)
+
         return ResponseEntity.ok(res)
     }
 
@@ -92,10 +97,13 @@ class AvatarController(
         """
     )
     fun delete(
-        principal: Principal
+        principal: Principal,
+        @RequestBody ownerTypeDto: AvatarOwnerTypeDto
     ): ResponseEntity<Void> {
         val userId = principal.getUserId()
-        avatarService.delete(AvatarOwnerType.USER, userId)
+
+        avatarService.delete(userId, ownerTypeDto)
+
         return ResponseEntity.noContent().build()
     }
 }

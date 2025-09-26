@@ -6,7 +6,7 @@ data class RoomMemberResponseDto(
     val memberId: Long,
     val lastReadMessageId: Long?,
     val name: String,
-    val avatarKey: String?,
+    val avatarUrl: String?,
     val avatarVersion: Int?,
     val roomRole: RoomRole
 )

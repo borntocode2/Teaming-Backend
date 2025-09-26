@@ -1,4 +1,4 @@
-package goodspace.teaming.chat.controller
+package goodspace.teaming.chat.domain.controller
 
 import goodspace.teaming.chat.dto.ChatSendRequestDto
 import goodspace.teaming.chat.service.MessageService

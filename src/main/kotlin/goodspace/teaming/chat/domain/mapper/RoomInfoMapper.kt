@@ -1,6 +1,7 @@
 package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
+import goodspace.teaming.file.domain.CdnStorageUrlProvider
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.MessageRepository
 import org.springframework.stereotype.Component
@@ -9,7 +10,8 @@ import org.springframework.stereotype.Component
 class RoomInfoMapper(
     private val messageRepository: MessageRepository,
     private val lastMessagePreviewMapper: LastMessagePreviewMapper,
-    private val roomMemberMapper: RoomMemberMapper
+    private val roomMemberMapper: RoomMemberMapper,
+    private val storageUrlProvider: CdnStorageUrlProvider
 )  {
     fun map(userRoom: UserRoom): RoomInfoResponseDto {
         val lastReadMessageId = userRoom.lastReadMessageId
@@ -20,10 +22,11 @@ class RoomInfoMapper(
             lastReadMessageId = lastReadMessageId
         )
 
-        val lastMessageDto = lastReadMessageId
-            ?.let(messageRepository::findById)
-            ?.map { lastMessagePreviewMapper.map(it) }
-            ?.orElse(null)
+        val lastMessageId = messageRepository.findLatestMessageId(userRoom.room)
+
+        val lastMessageDto = lastMessageId
+            ?.let { messageRepository.findById(it).orElse(null) }
+            ?.let { lastMessagePreviewMapper.map(it) }
 
         val room = userRoom.room
         val members = room.userRooms
@@ -34,8 +37,8 @@ class RoomInfoMapper(
             unreadCount = unreadCount,
             lastMessage = lastMessageDto,
             title = room.title,
-            imageKey = room.avatarKey,
-            imageVersion = room.avatarVersion,
+            avatarUrl = storageUrlProvider.publicUrl(room.avatarKey, room.avatarVersion),
+            avatarVersion = room.avatarVersion,
             type = room.type,
             memberCount = room.memberCount,
             success = room.success,

@@ -55,6 +55,23 @@ class ChatRestController(
         return ResponseEntity.ok(response)
     }
 
+    @PutMapping("/{roomId}")
+    @Operation(
+        summary = "방 수정",
+        description = "방의 정보를 새롭게 덮어써 수정합니다. Avatar 수정은 아바타 API를 사용해야 합니다. 팀장만 호출할 수 있습니다."
+    )
+    fun updateRoom(
+        principal: Principal,
+        @PathVariable roomId: Long,
+        @RequestBody requestDto: RoomUpdateRequestDto
+    ): ResponseEntity<Void> {
+        val userId = principal.getUserId()
+
+        roomService.updateRoom(userId, roomId, requestDto)
+
+        return NO_CONTENT
+    }
+
     @GetMapping("/search")
     @Operation(
         summary = "방 검색",

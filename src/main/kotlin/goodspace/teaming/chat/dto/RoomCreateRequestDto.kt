@@ -7,6 +7,6 @@ data class RoomCreateRequestDto(
     val description: String,
     val memberCount: Int,
     val roomType: RoomType,
-    val imageKey: String?,
-    val imageVersion: Int?
+    val avatarKey: String?,
+    val avatarVersion: Int = 0
 )
