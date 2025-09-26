@@ -23,9 +23,8 @@ class RoomInfoMapper(
         )
 
         val lastMessageDto = lastReadMessageId
-            ?.let(messageRepository::findById)
-            ?.map { lastMessagePreviewMapper.map(it) }
-            ?.orElse(null)
+            ?.let { messageRepository.findById(it).orElse(null) }
+            ?.let { lastMessagePreviewMapper.map(it) }
 
         val room = userRoom.room
         val members = room.userRooms

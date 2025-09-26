@@ -2,19 +2,21 @@ package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.chat.dto.RoomSearchResponseDto
 import goodspace.teaming.chat.dto.RoomTypeResponseDto
+import goodspace.teaming.file.domain.CdnStorageUrlProvider
 import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.room.UserRoom
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 private const val TITLE = "Study Group"
-private const val IMAGE_KEY = "room-image-key"
-private const val IMAGE_VERSION = 3
+private const val AVATAR_KEY = "room-image-key"
+private const val AVATAR_VERSION = 3
+private const val AVATAR_URL = "avatarUrl"
 private const val MAX_MEMBER_COUNT = 10
 private const val CURRENT_MEMBER_COUNT = 3
 
@@ -26,14 +28,15 @@ private val ROOM_TYPE_DTO = RoomTypeResponseDto(
 )
 
 class RoomSearchMapperTest {
-
     private lateinit var roomTypeMapper: RoomTypeMapper
+    private lateinit var urlProvider: CdnStorageUrlProvider
     private lateinit var roomSearchMapper: RoomSearchMapper
 
     @BeforeEach
     fun setUp() {
         roomTypeMapper = mockk()
-        roomSearchMapper = RoomSearchMapper(roomTypeMapper)
+        urlProvider = mockk(relaxed = true)
+        roomSearchMapper = RoomSearchMapper(roomTypeMapper, urlProvider)
     }
 
     @Test
@@ -41,24 +44,25 @@ class RoomSearchMapperTest {
         // given
         val room = createRoomWithMembers(
             title = TITLE,
-            imageKey = IMAGE_KEY,
-            imageVersion = IMAGE_VERSION,
+            avatarKey = AVATAR_KEY,
+            avatarVersion = AVATAR_VERSION,
             type = ROOM_TYPE,
             maxMemberCount = MAX_MEMBER_COUNT,
             currentCount = CURRENT_MEMBER_COUNT
         )
         every { roomTypeMapper.map(ROOM_TYPE) } returns ROOM_TYPE_DTO
+        every { urlProvider.publicUrl(room.avatarKey, room.avatarVersion) } returns AVATAR_URL
 
         // when
         val result: RoomSearchResponseDto = roomSearchMapper.map(room)
 
         // then
-        assertEquals(TITLE, result.title)
-        assertEquals(IMAGE_KEY, result.avatarUrl)
-        assertEquals(IMAGE_VERSION, result.avatarVersion)
-        assertEquals(ROOM_TYPE_DTO, result.type)
-        assertEquals(CURRENT_MEMBER_COUNT, result.currentMemberCount)
-        assertEquals(MAX_MEMBER_COUNT, result.maxMemberCount)
+        assertThat(result.title).isEqualTo(room.title)
+        assertThat(result.avatarUrl).isEqualTo(AVATAR_URL)
+        assertThat(result.avatarVersion).isEqualTo(room.avatarVersion)
+        assertThat(result.type).isEqualTo(ROOM_TYPE_DTO)
+        assertThat(result.currentMemberCount).isEqualTo(room.currentMemberCount())
+        assertThat(result.maxMemberCount).isEqualTo(room.memberCount)
     }
 
     @Test
@@ -76,16 +80,16 @@ class RoomSearchMapperTest {
 
     private fun createRoomWithMembers(
         title: String = TITLE,
-        imageKey: String? = IMAGE_KEY,
-        imageVersion: Int? = IMAGE_VERSION,
+        avatarKey: String? = AVATAR_KEY,
+        avatarVersion: Int = AVATAR_VERSION,
         type: RoomType = ROOM_TYPE,
         maxMemberCount: Int = MAX_MEMBER_COUNT,
         currentCount: Int = CURRENT_MEMBER_COUNT
     ): Room {
         val room = Room(
             title = title,
-            avatarKey = imageKey,
-            avatarVersion = imageVersion,
+            avatarKey = avatarKey,
+            avatarVersion = avatarVersion,
             type = type,
             memberCount = maxMemberCount
         )
