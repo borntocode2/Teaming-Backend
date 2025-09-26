@@ -42,7 +42,7 @@ class PaymentController(
                     appScheme: `teaming://`,
                     orderId: '${paymentService.generateUUIDString()}',
                     amount: ${amount},
-                    mallReserved: '${userPayInfo}'
+                    mallReserved: '${userPayInfo}',
                     goodsName: 'Room Create',
                     returnUrl: 'http://13.125.193.243:8080/payment/request',
                         fnError: function (result) {
