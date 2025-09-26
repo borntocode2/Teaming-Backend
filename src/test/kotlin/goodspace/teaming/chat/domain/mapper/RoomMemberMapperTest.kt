@@ -2,11 +2,10 @@ package goodspace.teaming.chat.domain.mapper
 
 import goodspace.teaming.chat.dto.RoomMemberResponseDto
 import goodspace.teaming.file.domain.CdnStorageUrlProvider
-import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.room.RoomRole
-import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.TeamingUser
+import goodspace.teaming.util.createRoom
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -20,10 +19,6 @@ private const val USER_AVATAR_VERSION = 1
 private const val USER_EMAIL = "USER@EMAIL"
 private const val USER_PASSWORD = "USER_PASSWORD"
 private const val USER_ID = 10L
-private const val ROOM_ID = 20L
-private const val ROOM_TITLE = "ROOM_TITLE"
-private const val MEMBER_COUNT = 10
-private val ROOM_TYPE = RoomType.STANDARD
 private const val USER_ROOM_ID = 30L
 private val ROOM_ROLE = RoomRole.MEMBER
 private const val LAST_READ_MESSAGE_ID = 40L
@@ -69,16 +64,5 @@ class RoomMemberMapperTest {
         assertThat(result.roomRole).isEqualTo(ROOM_ROLE)
         assertThat(result.lastReadMessageId).isEqualTo(LAST_READ_MESSAGE_ID)
         assertThat(result.avatarUrl).isEqualTo(AVATAR_URL)
-    }
-
-    private fun createRoom(): Room {
-        val room = Room(
-            title = ROOM_TITLE,
-            type = ROOM_TYPE,
-            memberCount = MEMBER_COUNT
-        )
-        ReflectionTestUtils.setField(room, "id", ROOM_ID)
-
-        return room
     }
 }

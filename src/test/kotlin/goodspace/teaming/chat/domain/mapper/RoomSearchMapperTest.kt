@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 private const val TITLE = "Study Group"
+private const val DESCRIPTION = "Description"
 private const val AVATAR_KEY = "room-image-key"
 private const val AVATAR_VERSION = 3
 private const val AVATAR_URL = "avatarUrl"
@@ -80,6 +81,7 @@ class RoomSearchMapperTest {
 
     private fun createRoomWithMembers(
         title: String = TITLE,
+        description: String = DESCRIPTION,
         avatarKey: String? = AVATAR_KEY,
         avatarVersion: Int = AVATAR_VERSION,
         type: RoomType = ROOM_TYPE,
@@ -88,6 +90,7 @@ class RoomSearchMapperTest {
     ): Room {
         val room = Room(
             title = title,
+            description = description,
             avatarKey = avatarKey,
             avatarVersion = avatarVersion,
             type = type,

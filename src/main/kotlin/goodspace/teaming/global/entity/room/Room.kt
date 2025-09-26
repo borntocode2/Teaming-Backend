@@ -23,6 +23,8 @@ class Room(
 
     var avatarVersion: Int = 0,
 
+    var description: String?,
+
     @Enumerated(STRING)
     @Column(nullable = false)
     val type: RoomType,

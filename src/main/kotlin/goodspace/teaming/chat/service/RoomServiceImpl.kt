@@ -25,6 +25,7 @@ private const val ALREADY_JOINED = "이미 해방 티밍룸에 소속되어 있�
 private const val WRONG_INVITE_CODE = "부적절한 초대 코드입니다."
 private const val NOT_SUCCEEDED = "팀플에 성공하기 전까진 나갈 수 없습니다."
 private const val NOT_LEADER = "팀장이 아닙니다."
+private const val ILLEGAL_TITLE = "부적절한 티밍룸 제목입니다."
 
 @Service
 class RoomServiceImpl(
@@ -106,7 +107,7 @@ class RoomServiceImpl(
         val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
             ?: throw java.lang.IllegalArgumentException(ROOM_NOT_FOUND)
 
-        require(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+        assertLeader(userRoom)
 
         val room = userRoom.room
 
@@ -120,6 +121,24 @@ class RoomServiceImpl(
 
         return user.userRooms
             .map { roomInfoMapper.map(it) }
+    }
+
+    @Transactional
+    override fun updateRoom(
+        userId: Long,
+        roomId: Long,
+        requestDto: RoomUpdateRequestDto
+    ) {
+        requestDto.validate()
+
+        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
+            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+        val room = userRoom.room
+
+        assertLeader(userRoom)
+
+        room.title = requestDto.title
+        room.description = requestDto.description
     }
 
     @Transactional
@@ -171,5 +190,13 @@ class RoomServiceImpl(
         if (room.type == RoomType.DEMO) {
             userRoom.paymentStatus = PaymentStatus.PAID
         }
+    }
+
+    private fun assertLeader(userRoom: UserRoom) {
+        check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+    }
+
+    private fun RoomUpdateRequestDto.validate() {
+        require(title.trim().isEmpty()) { ILLEGAL_TITLE }
     }
 }
