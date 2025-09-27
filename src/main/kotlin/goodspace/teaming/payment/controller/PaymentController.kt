@@ -20,10 +20,10 @@ class PaymentController(
 ) {
 
     @GetMapping(value = ["/html"], produces = [MediaType.TEXT_HTML_VALUE])
-    fun showPaymentPage(@RequestParam amount: Long, principal: Principal, @RequestParam roomId: Long
+    fun showPaymentPage(@RequestParam amount: Long, principal: Principal, @RequestParam roomId: Long, @RequestParam platform: String
     ): String {
         val userId = principal.getUserId()
-        val userPayInfo = "$userId:$roomId"
+        val userPayInfo = "$userId:$roomId:$platform"
 
         return """<!DOCTYPE html>
                 <html lang="en">
@@ -57,7 +57,7 @@ class PaymentController(
     }
 
     @PostMapping("/request")
-    fun requestPayment(@RequestParam params: MultiValueMap<String, String>): ResponseEntity<HttpStatus> {
+    fun requestPayment(@RequestParam params: MultiValueMap<String, String>): ResponseEntity<Void> {
         val dto = PaymentVerifyRespondDto(
             authResultCode = params["authResultCode"]?.firstOrNull() ?: "",
             authResultMsg = params["authResultMsg"]?.firstOrNull() ?: "",
@@ -70,11 +70,6 @@ class PaymentController(
             signature = params["signature"]?.firstOrNull() ?: ""
         )
 
-        val paymentApproveRespondDto: PaymentApproveRespondDto = paymentService.requestApprove(dto)
-        paymentService.savePaymentResult(paymentApproveRespondDto.toEntity())
-
-
-
-        return paymentService.mapResultCodeToHttpStatus(paymentApproveRespondDto.resultCode)
+        return paymentService.requestApprove(dto)
     }
 }
