@@ -13,7 +13,7 @@ class MemberEnteredEventHandler(
     fun onReadBoundaryUpdated(event: MemberEnteredEvent) {
         messaging.convertAndSend(
             "/topic/rooms/${event.roomId}/enter",
-            event.memberDto
+            event.member
         )
     }
 }
