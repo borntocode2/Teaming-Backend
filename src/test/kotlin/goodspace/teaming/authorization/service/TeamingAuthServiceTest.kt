@@ -59,7 +59,7 @@ class TeamingAuthServiceTest {
             every { passwordValidator.isIllegalPassword(requestDto.password) } returns false
             every { userRepository.existsByEmail(requestDto.email) } returns false
             every { emailVerificationRepository.findByEmail(requestDto.email) } returns emailVerification
-            every { passwordEncoder.encode(any()) } answers { firstArg() }
+            every { passwordEncoder.encode(any()) } answers { ENCODED_PASSWORD }
 
             every { userRepository.save(any<User>()) } answers {
                 val user = firstArg<User>()
@@ -75,8 +75,6 @@ class TeamingAuthServiceTest {
                 userRepository.save(withArg<User> { createdUser ->
                     assertThat(createdUser.email).isEqualTo(requestDto.email)
                     assertThat(createdUser.name).isEqualTo(requestDto.name)
-                    assertThat(createdUser.avatarKey).isEqualTo(requestDto.avatarKey)
-                    assertThat(createdUser.avatarVersion).isEqualTo(requestDto.avatarVersion)
                 })
             }
         }
@@ -228,16 +226,12 @@ class TeamingAuthServiceTest {
     private fun createSignUpRequestDto(
         email: String = USER_EMAIL,
         password: String = USER_PASSWORD,
-        name: String = USER_NAME,
-        avatarKey: String? = USER_AVATAR_KEY,
-        avatarVersion: Int = USER_AVATAR_VERSION
+        name: String = USER_NAME
     ): TeamingSignUpRequestDto {
         return TeamingSignUpRequestDto(
             email = email,
             password = password,
-            name = name,
-            avatarKey = avatarKey,
-            avatarVersion = avatarVersion
+            name = name
         )
     }
 

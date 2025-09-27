@@ -85,14 +85,12 @@ class TeamingAuthService(
     }
 
     private fun saveNewUserFrom(requestDto: TeamingSignUpRequestDto): TeamingUser {
-        val (email, password, name, avatarKey, avatarVersion) = requestDto
+        val (email, password, name) = requestDto
 
         val user = TeamingUser(
             email = email,
             password = passwordEncoder.encode(password),
-            name = name,
-            avatarKey = avatarKey,
-            avatarVersion = avatarVersion
+            name = name
         )
         user.addRole(Role.USER)
 

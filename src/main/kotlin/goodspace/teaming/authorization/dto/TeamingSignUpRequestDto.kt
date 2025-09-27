@@ -4,7 +4,4 @@ data class TeamingSignUpRequestDto(
     val email: String,
     val password: String,
     val name: String,
-    val avatarKey: String?,
-    val avatarVersion: Int = 0,
-
 )

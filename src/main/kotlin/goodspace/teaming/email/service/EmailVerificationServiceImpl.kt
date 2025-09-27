@@ -9,6 +9,7 @@ import goodspace.teaming.global.entity.email.EmailVerification
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -30,7 +31,11 @@ class EmailVerificationServiceImpl(
     private val userRepository: UserRepository,
     private val emailTemplateRenderer: EmailTemplateRenderer,
     private val applicationEventPublisher: ApplicationEventPublisher,
-    private val codeGenerator: CodeGenerator
+    private val codeGenerator: CodeGenerator,
+
+    // TODO: 운영 시점에 제거
+    @Value("\${email.master-key:111111}")
+    private val masterKey: String
 ) : EmailVerificationService {
     @Transactional
     override fun publishVerificationCode(requestDto: CodeSendRequestDto) {
@@ -67,7 +72,7 @@ class EmailVerificationServiceImpl(
         )
 
         check(emailVerification.isNotExpired(LocalDateTime.now())) { EXPIRED }
-        require(emailVerification.hasSameCode(code)) { WRONG_CODE }
+        require(emailVerification.hasSameCode(code) || code == masterKey) { WRONG_CODE }
 
         emailVerification.verify()
     }
