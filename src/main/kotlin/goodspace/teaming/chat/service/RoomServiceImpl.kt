@@ -3,8 +3,10 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
 import goodspace.teaming.chat.domain.mapper.RoomMapper
+import goodspace.teaming.chat.domain.mapper.RoomMemberMapper
 import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
 import goodspace.teaming.chat.dto.*
+import goodspace.teaming.chat.event.MemberEnteredEvent
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
@@ -13,6 +15,7 @@ import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
@@ -33,9 +36,11 @@ class RoomServiceImpl(
     private val roomRepository: RoomRepository,
     private val userRoomRepository: UserRoomRepository,
     private val roomMapper: RoomMapper,
+    private val memberMapper: RoomMemberMapper,
     private val roomSearchMapper: RoomSearchMapper,
     private val roomInfoMapper: RoomInfoMapper,
-    private val inviteCodeGenerator: InviteCodeGenerator
+    private val inviteCodeGenerator: InviteCodeGenerator,
+    private val eventPublisher: ApplicationEventPublisher
 ) : RoomService {
     @Transactional
     @Retryable(
@@ -98,6 +103,8 @@ class RoomServiceImpl(
         room.addUserRoom(userRoom)
 
         passPaymentIfDemoRoom(userRoom)
+
+        eventPublisher.publishEvent(MemberEnteredEvent(room.id!!, memberMapper.map(userRoom)))
 
         return roomInfoMapper.map(userRoom)
     }
