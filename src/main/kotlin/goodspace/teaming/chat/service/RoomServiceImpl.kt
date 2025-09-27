@@ -7,6 +7,7 @@ import goodspace.teaming.chat.domain.mapper.RoomMemberMapper
 import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
 import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.event.MemberEnteredEvent
+import goodspace.teaming.chat.event.RoomSuccessEvent
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
@@ -171,7 +172,7 @@ class RoomServiceImpl(
 
         check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
 
-        // TODO 환불 이벤트 발생
+        eventPublisher.publishEvent(RoomSuccessEvent(roomId = room.id!!))
 
         room.success = true
     }
