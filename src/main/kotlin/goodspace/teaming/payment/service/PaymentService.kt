@@ -30,8 +30,15 @@ class PaymentService(
 ){
     @Transactional
     fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): ResponseEntity<Void> {
-        if (paymentVerifyRespondDto.authResultCode != "0000"){
-            throw RuntimeException("카드사인증 인증 실패: ${paymentVerifyRespondDto.authResultCode} in requestApprove Service Layer")
+        if (paymentVerifyRespondDto.authResultCode != "0000") {
+            val platform = paymentVerifyRespondDto.mallReserved.split(":")[2]
+
+            val redirectUrl = if (platform == "APP") "teaming://payment/fail"
+            else "https://teaming-three.vercel.app/payment/fail"
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .header("Location", redirectUrl)
+                .build()
         }
 
         val amount = paymentVerifyRespondDto.amount
