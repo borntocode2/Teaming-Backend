@@ -44,7 +44,7 @@ class PaymentController(
                     amount: ${amount},
                     mallReserved: '${userPayInfo}',
                     goodsName: 'Room Create',
-                    returnUrl: 'http://13.125.193.243:8080/payment/request',
+                    returnUrl: 'https://teamingkr.duckdns.org/api/payment/request',
                         fnError: function (result) {
                         alert('개발자확인용 : ' + result.errorMsg);
                         }
