@@ -18,7 +18,8 @@ class PunishmentService(
         val roomType = assignment.room.type
         val users = room.userRooms.map { it.user }
 
-        users.forEach { user ->
+        users.filter{ user -> user.id !in assignment.assignedMemberIds }
+            .forEach { user ->
             gifticonService.sendGifticon(user, roomType)
         }
 
