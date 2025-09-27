@@ -36,7 +36,6 @@ class S3FileUploadService(
     private val eventPublisher: ApplicationEventPublisher,
     @Value("\${cloud.aws.uploads.prefix:chat}") private val prefix: String,
 ) : FileUploadService {
-
     @Transactional(readOnly = true)
     override fun intent(
         userId: Long,
@@ -67,7 +66,7 @@ class S3FileUploadService(
         requireKeyBelongsToRoomAndUser(requestDto.key, roomId, userId)
 
         val head = try {
-            s3.head(requestDto.key) // ← 일반 HEAD
+            s3.head(requestDto.key)
         } catch (e: S3Exception) {
             throw IllegalArgumentException(MSG_ORIGINAL_MISSING, e)
         }
@@ -77,8 +76,6 @@ class S3FileUploadService(
 
         val mime = head.contentType() ?: guessContentTypeFromKey(requestDto.key)
         validation.validateAllowedContentType(mime)
-
-        // require(!head.checksumSHA256().isNullOrBlank()) { MSG_CHECKSUM_MISSING } // ← 제거
 
         val storedName = requestDto.key.substringAfterLast('/')
         val file = fileRepository.save(
