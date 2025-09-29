@@ -15,7 +15,8 @@ object FileConstants {
 
         // 문서
         "application/pdf",
-        "application/pdf",
+        "application/haansoftpdf",
+        "application/haansofthwp",
         "application/msword",
         "application/vnd.ms-excel",
         "application/vnd.ms-powerpoint",
