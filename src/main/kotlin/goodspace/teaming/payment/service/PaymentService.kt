@@ -10,6 +10,7 @@ import goodspace.teaming.payment.domain.PaymentApproveRespond
 import goodspace.teaming.payment.dto.PaymentApproveRequestDto
 import goodspace.teaming.payment.dto.PaymentApproveRespondDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
+import goodspace.teaming.payment.dto.toEntity
 import goodspace.teaming.payment.repository.PaymentRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
@@ -27,17 +28,42 @@ class PaymentService(
     private val paymentRepository: PaymentRepository,
     private val userRoomRepository: UserRoomRepository
 ){
-    fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): PaymentApproveRespondDto {
-        if (paymentVerifyRespondDto.authResultCode != "0000"){
-            throw RuntimeException("카드사인증 인증 실패: ${paymentVerifyRespondDto.authResultCode} in requestApprove Service Layer")
+    @Transactional
+    fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): ResponseEntity<Void> {
+        if (paymentVerifyRespondDto.authResultCode != "0000") {
+            val platform = paymentVerifyRespondDto.mallReserved.split(":")[2]
+
+            val redirectUrl = if (platform == "APP") "teaming://payment/fail"
+            else "https://teaming-three.vercel.app/payment/fail"
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .header("Location", redirectUrl)
+                .build()
         }
 
         val amount = paymentVerifyRespondDto.amount
-        val (userId, roomId) = paymentVerifyRespondDto.mallReserved.split(":")
-        return approvePayment(paymentVerifyRespondDto.tid, amount, userId, roomId)
+        val (userId, roomId, platform) = paymentVerifyRespondDto.mallReserved.split(":")
+
+        val paymentApproveRespondDto = approvePayment(paymentVerifyRespondDto.tid, amount, userId, roomId, platform)
+
+        val redirectUrl = when {
+            paymentApproveRespondDto.resultCode == "0000" && platform == "APP" -> "teaming://payment/success"
+            paymentApproveRespondDto.resultCode != "0000" && platform == "APP" -> "teaming://payment/fail"
+            paymentApproveRespondDto.resultCode == "0000" && platform == "WEB" -> "https://teaming-three.vercel.app/payment/success"
+            else -> "https://teaming-three.vercel.app/payment/fail"
+        }
+
+        if (paymentApproveRespondDto.resultCode == "0000") {
+            savePaymentResult(paymentApproveRespondDto.toEntity())
+        }
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+            .header("Location", redirectUrl)
+            .build()
     }
 
-    fun approvePayment(tid: String, amount: String, userId: String, roomId: String): PaymentApproveRespondDto {
+    @Transactional
+    fun approvePayment(tid: String, amount: String, userId: String, roomId: String, platform: String): PaymentApproveRespondDto {
         val url = "${nicepayProperties.approveUrl}/$tid"
         val request = PaymentApproveRequestDto(
             amount = amount
@@ -57,6 +83,7 @@ class PaymentService(
         if (paymentApproveRespondDto.resultCode == "0000" || paymentApproveRespondDto.resultCode == "3001") {
             saveUserRoomInfo(userId, roomId)
         }
+
         return paymentApproveRespondDto
     }
 

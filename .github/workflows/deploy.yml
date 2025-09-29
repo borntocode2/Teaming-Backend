@@ -65,7 +65,7 @@ jobs:
           script: |
             export AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID}"
             export AWS_REGION="${AWS_REGION}"
-            export SPRING_ECR_REPO="${SPRING_ECR_REPO}"
+            export ECR_REPO_NAME="${SPRING_ECR_REPO}"
             bash /home/ubuntu/teaming/deploy.sh
         env:
           SPRING_ECR_REPO: ${{ env.ECR_REPOSITORY }}
