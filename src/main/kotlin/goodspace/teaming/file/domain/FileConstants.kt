@@ -17,6 +17,7 @@ object FileConstants {
         "application/pdf",
         "application/haansoftpdf",
         "application/haansofthwp",
+        "application/haansoftpptx",
         "application/msword",
         "application/vnd.ms-excel",
         "application/vnd.ms-powerpoint",
