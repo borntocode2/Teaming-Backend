@@ -9,7 +9,7 @@ import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
 
 @Entity
-@SQLDelete(sql = "UPDATE attached_file SET deleted = true, deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE attachment SET deleted = true, deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted = false")
 class Attachment(
     @ManyToOne(fetch = LAZY)
