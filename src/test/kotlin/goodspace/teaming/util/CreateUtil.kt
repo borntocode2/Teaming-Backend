@@ -1,6 +1,7 @@
 package goodspace.teaming.util
 
 import goodspace.teaming.fixture.*
+import goodspace.teaming.global.entity.aissgnment.AssignedMember
 import goodspace.teaming.global.entity.aissgnment.Assignment
 import goodspace.teaming.global.entity.aissgnment.AssignmentStatus
 import goodspace.teaming.global.entity.email.EmailVerification
@@ -17,7 +18,7 @@ fun createUser(
     name: String = USER_NAME,
     password: String = USER_PASSWORD,
     type: UserType = UserType.TEAMING,
-    id: Long = USER_ID
+    id: Long? = USER_ID
 ): TeamingUser {
     val user = TeamingUser(
         email = email,
@@ -35,7 +36,7 @@ fun createEmailVerification(
     verified: Boolean = true,
     code: String = EMAIL_VERIFICATION_CODE,
     expiresAt: LocalDateTime = EMAIL_VERIFICATION_EXPIRES_AT,
-    id: Long = EMAIL_VERIFICATION_ID
+    id: Long? = EMAIL_VERIFICATION_ID
 ): EmailVerification {
     val emailVerification = EmailVerification(
         email = email,
@@ -56,7 +57,7 @@ fun createRoom(
     type: RoomType = ROOM_TYPE,
     inviteCode: String? = ROOM_INVITE_CODE,
     memberCount: Int = ROOM_MEMBER_COUNT,
-    id: Long = ROOM_ID,
+    id: Long? = ROOM_ID,
     success: Boolean = false
 ): Room {
     val room = Room(
@@ -80,7 +81,7 @@ fun createUserRoom(
     roomRole: RoomRole = USER_ROOM_ROLE,
     lastReadMessageId: Long? = USER_ROOM_LAST_READ_MESSAGE_ID,
     paymentStatus: PaymentStatus = USER_ROOM_PAYMENT_STATUS,
-    id: Long = USER_ROOM_ID
+    id: Long? = USER_ROOM_ID
 ): UserRoom {
     val userRoom = UserRoom(
         user = user,
@@ -101,7 +102,7 @@ fun createAssignment(
     due: Instant = ASSIGNMENT_DUE,
     status: AssignmentStatus = ASSIGNMENT_STATUS,
     punished: Boolean = ASSIGNMENT_PUNISHED,
-    id: Long = ASSIGNMENT_ID
+    id: Long? = ASSIGNMENT_ID
 ): Assignment {
     val assignment = Assignment(
         room = room,
@@ -114,4 +115,18 @@ fun createAssignment(
     ReflectionTestUtils.setField(assignment, "id", id)
 
     return assignment
+}
+
+fun createAssignedMember(
+    user: User,
+    assignment: Assignment,
+    id: Long? = ASSIGNED_MEMBER_ID
+): AssignedMember {
+    val assignedMember = AssignedMember(
+        user = user,
+        assignment = assignment
+    )
+    ReflectionTestUtils.setField(assignedMember, "id", id)
+
+    return assignedMember
 }

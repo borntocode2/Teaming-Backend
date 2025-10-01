@@ -205,6 +205,6 @@ class RoomServiceImpl(
     }
 
     private fun RoomUpdateRequestDto.validate() {
-        require(title.trim().isEmpty()) { ILLEGAL_TITLE }
+        require(title.trim().isNotEmpty()) { ILLEGAL_TITLE }
     }
 }

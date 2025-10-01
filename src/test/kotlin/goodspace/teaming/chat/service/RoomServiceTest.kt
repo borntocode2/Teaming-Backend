@@ -3,13 +3,18 @@ package goodspace.teaming.chat.service
 import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
 import goodspace.teaming.chat.domain.mapper.RoomMapper
+import goodspace.teaming.chat.domain.mapper.RoomMemberMapper
 import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
 import goodspace.teaming.chat.dto.InviteAcceptRequestDto
 import goodspace.teaming.chat.dto.RoomCreateRequestDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
 import goodspace.teaming.chat.dto.RoomSearchResponseDto
+import goodspace.teaming.chat.event.MemberEnteredEvent
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
-import goodspace.teaming.global.entity.room.*
+import goodspace.teaming.global.entity.room.PaymentStatus
+import goodspace.teaming.global.entity.room.RoomRole
+import goodspace.teaming.global.entity.room.RoomType
+import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -27,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.context.ApplicationEventPublisher
 import java.util.*
 
 private const val TITLE = "티밍룸 제목"
@@ -45,8 +51,10 @@ class RoomServiceTest {
     private val userRoomRepository: UserRoomRepository = mockk()
     private val roomMapper: RoomMapper = mockk()
     private val roomInfoMapper: RoomInfoMapper = mockk(relaxed = true)
+    private val memberMapper: RoomMemberMapper = mockk(relaxed = true)
     private val roomSearchMapper: RoomSearchMapper = mockk(relaxed = true)
     private val inviteCodeGenerator: InviteCodeGenerator = mockk()
+    private val eventPublisher: ApplicationEventPublisher = mockk(relaxed = true)
 
     private val roomService = RoomServiceImpl(
         userRepository = userRepository,
@@ -54,8 +62,10 @@ class RoomServiceTest {
         userRoomRepository = userRoomRepository,
         roomMapper = roomMapper,
         roomInfoMapper = roomInfoMapper,
+        memberMapper = memberMapper,
         roomSearchMapper = roomSearchMapper,
-        inviteCodeGenerator = inviteCodeGenerator
+        inviteCodeGenerator = inviteCodeGenerator,
+        eventPublisher = eventPublisher
     )
 
     @BeforeEach
@@ -231,6 +241,24 @@ class RoomServiceTest {
             assertThat(membership.roomRole).isEqualTo(RoomRole.MEMBER)
             assertThat(membership.user).isSameAs(user)
             assertThat(membership.room).isSameAs(room)
+        }
+
+        @Test
+        fun `멤버 입장 이벤트를 발행한다`() {
+            // given
+            val user = createUser()
+            val room = createRoom()
+            val requestDto = InviteAcceptRequestDto(room.inviteCode!!)
+
+            every { userRepository.findById(user.id!!) } returns Optional.of(user)
+            every { roomRepository.findByInviteCode(room.inviteCode!!) } returns room
+            every { userRoomRepository.existsByRoomAndUser(room, user) } returns false
+
+            // when
+            roomService.acceptInvite(user.id!!, requestDto)
+
+            // then
+            verify(exactly = 1) { eventPublisher.publishEvent(ofType<MemberEnteredEvent>()) }
         }
 
         @Test
