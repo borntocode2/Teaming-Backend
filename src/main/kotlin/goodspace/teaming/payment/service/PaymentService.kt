@@ -54,7 +54,9 @@ class PaymentService(
         }
 
         if (paymentApproveRespondDto.resultCode == "0000") {
-            savePaymentResult(paymentApproveRespondDto.toEntity())
+            savePaymentResult(paymentApproveRespondDto.toEntity()
+            //TODO: user와 DB연동
+            )
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)

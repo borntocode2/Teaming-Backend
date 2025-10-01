@@ -1,12 +1,16 @@
 package goodspace.teaming.payment.domain
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
 @Entity
 @Table(name = "payment_approve_respond")
 class PaymentApproveRespond(
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    val user: User,
 
     val resultCode: String,
     val resultMsg: String,
