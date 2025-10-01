@@ -78,7 +78,8 @@ data class PaymentApproveRespondDto(
             buyerEmail = buyerEmail?.takeIf { it != "null" },
             receiptUrl = receiptUrl,
             mallUserId = mallUserId,
-            issuedCashReceipt = issuedCashReceipt
+            issuedCashReceipt = issuedCashReceipt,
+            user = null
         ).apply {
             this.card = cardInfo
         }

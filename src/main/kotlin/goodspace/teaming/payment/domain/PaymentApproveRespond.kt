@@ -1,6 +1,8 @@
 package goodspace.teaming.payment.domain
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.room.Room
+import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -10,7 +12,12 @@ import java.time.LocalDateTime
 class PaymentApproveRespond(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    val user: User,
+    var user: User?,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_room_id")
+    var userRoom: UserRoom?,
+
 
     val resultCode: String,
     val resultMsg: String,

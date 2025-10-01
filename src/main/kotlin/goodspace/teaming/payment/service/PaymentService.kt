@@ -1,7 +1,6 @@
 package goodspace.teaming.payment.service
 
 import goodspace.teaming.global.entity.room.PaymentStatus
-import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.web.reactive.function.client.WebClient
@@ -10,8 +9,9 @@ import goodspace.teaming.payment.domain.PaymentApproveRespond
 import goodspace.teaming.payment.dto.PaymentApproveRequestDto
 import goodspace.teaming.payment.dto.PaymentApproveRespondDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
-import goodspace.teaming.payment.dto.toEntity
+
 import goodspace.teaming.payment.repository.PaymentRepository
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -26,7 +26,8 @@ class PaymentService(
     private val nicepayProperties: NicepayProperties,
     private val webClient: WebClient.Builder,
     private val paymentRepository: PaymentRepository,
-    private val userRoomRepository: UserRoomRepository
+    private val userRoomRepository: UserRoomRepository,
+    private val userRepository: UserRepository
 ){
     @Transactional
     fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): ResponseEntity<Void> {
@@ -54,9 +55,8 @@ class PaymentService(
         }
 
         if (paymentApproveRespondDto.resultCode == "0000") {
-            savePaymentResult(paymentApproveRespondDto.toEntity()
-            //TODO: user와 DB연동
-            )
+            savePaymentResult(paymentApproveRespondDto.toEntity(), userId.toLong(), roomId.toLong())
+
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)
@@ -90,10 +90,17 @@ class PaymentService(
     }
 
     @Transactional
-    fun savePaymentResult(paymentApproveRespond: PaymentApproveRespond): String {
+    fun savePaymentResult(paymentApproveRespond: PaymentApproveRespond, userId: Long, roomId: Long): String {
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found with id $userId") }
+        val userRoom = userRoomRepository.findById(roomId).orElseThrow { IllegalArgumentException("Room not found with id $roomId") }
+
+        paymentApproveRespond.userRoom = userRoom
+        paymentApproveRespond.user = user
         paymentRepository.save(paymentApproveRespond)
+
         return paymentApproveRespond.tid
     }
+
     @Transactional
     fun saveUserRoomInfo(userId: String, roomId: String){
        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId.toLong(), userId.toLong())
@@ -108,15 +115,6 @@ class PaymentService(
         val encoded = Base64.getEncoder().encodeToString(credentials.toByteArray())
 
         return "Basic $encoded"
-    }
-
-    fun  mapResultCodeToHttpStatus(resultCode: String): ResponseEntity<HttpStatus> {
-        if (resultCode == "0000" || resultCode == "3001") {
-            return ResponseEntity(HttpStatus.OK)
-        }
-        else{
-            return ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
-        }
     }
 
     fun generateUUIDString(): String {

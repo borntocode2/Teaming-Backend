@@ -1,12 +1,8 @@
 package goodspace.teaming.payment.controller
 
-import goodspace.teaming.email.dto.EmailVerifyRequestDto
 import goodspace.teaming.global.security.getUserId
-import goodspace.teaming.payment.dto.PaymentApproveRespondDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
-import goodspace.teaming.payment.dto.toEntity
 import goodspace.teaming.payment.service.PaymentService
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.util.MultiValueMap
@@ -72,4 +68,7 @@ class PaymentController(
 
         return paymentService.requestApprove(dto)
     }
+
+    @RequestMapping("/cancelAuth")
+    fun cancelAuth(@RequestParam userId: Long, ): ResponseEntity<Void> {}
 }
