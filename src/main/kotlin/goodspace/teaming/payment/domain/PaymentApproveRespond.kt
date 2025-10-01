@@ -15,8 +15,8 @@ class PaymentApproveRespond(
     var user: User?,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_room_id")
-    var userRoom: UserRoom?,
+    @JoinColumn(name = "room_id")
+    var room: Room?,
 
 
     val resultCode: String,

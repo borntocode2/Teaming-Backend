@@ -33,4 +33,6 @@ class UserRoom(
     @Id
     @GeneratedValue(strategy = IDENTITY)
     val id: Long? = null
+
+    var isPunished: Boolean = false
 }

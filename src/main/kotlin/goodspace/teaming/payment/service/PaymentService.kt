@@ -1,6 +1,7 @@
 package goodspace.teaming.payment.service
 
 import goodspace.teaming.global.entity.room.PaymentStatus
+import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.web.reactive.function.client.WebClient
@@ -11,8 +12,6 @@ import goodspace.teaming.payment.dto.PaymentApproveRespondDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 
 import goodspace.teaming.payment.repository.PaymentRepository
-import jakarta.persistence.EntityNotFoundException
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -26,8 +25,9 @@ class PaymentService(
     private val nicepayProperties: NicepayProperties,
     private val webClient: WebClient.Builder,
     private val paymentRepository: PaymentRepository,
-    private val userRoomRepository: UserRoomRepository,
-    private val userRepository: UserRepository
+    private val roomRepository: RoomRepository,
+    private val userRepository: UserRepository,
+    private val userRoomRepository: UserRoomRepository
 ){
     @Transactional
     fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): ResponseEntity<Void> {
@@ -92,9 +92,9 @@ class PaymentService(
     @Transactional
     fun savePaymentResult(paymentApproveRespond: PaymentApproveRespond, userId: Long, roomId: Long): String {
         val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found with id $userId") }
-        val userRoom = userRoomRepository.findById(roomId).orElseThrow { IllegalArgumentException("Room not found with id $roomId") }
+        val room = roomRepository.findById(roomId).orElseThrow { IllegalArgumentException("Room not found with id $roomId") }
 
-        paymentApproveRespond.userRoom = userRoom
+        paymentApproveRespond.room = room
         paymentApproveRespond.user = user
         paymentRepository.save(paymentApproveRespond)
 
