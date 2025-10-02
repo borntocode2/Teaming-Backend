@@ -73,4 +73,8 @@ class Room(
     fun addAssignments(vararg assignments: Assignment) {
         this.assignments.addAll(assignments)
     }
+
+    fun getUserIds(): List<Long> {
+        return userRooms.mapNotNull { it.user.id }
+    }
 }

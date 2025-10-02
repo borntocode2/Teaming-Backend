@@ -23,6 +23,12 @@ class PunishmentService(
             gifticonService.sendGifticon(user, roomType)
         }
 
+        room.userRooms
+            .filter { userRoom -> userRoom.user.id in assignment.assignedMemberIds }
+            .forEach { userRoom ->
+                userRoom.isPunished = true
+            }
+
         assignment.punished = true
         assignment.status = AssignmentStatus.COMPLETE
 
