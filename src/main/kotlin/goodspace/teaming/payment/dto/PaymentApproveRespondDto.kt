@@ -79,7 +79,8 @@ data class PaymentApproveRespondDto(
             receiptUrl = receiptUrl,
             mallUserId = mallUserId,
             issuedCashReceipt = issuedCashReceipt,
-            user = null
+            user = null,
+            room = null
         ).apply {
             this.card = cardInfo
         }

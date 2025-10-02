@@ -32,7 +32,7 @@ class PaymentApproveRespond(
 
     val ediDate: LocalDateTime? = null,
     val signature: String,
-    val status: String,
+    var status: String,
     val paidAt: LocalDateTime? = null,
     val failedAt: LocalDateTime? = null,
     val cancelledAt: LocalDateTime? = null,

@@ -7,11 +7,10 @@ import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.web.reactive.function.client.WebClient
 import goodspace.teaming.payment.config.NicepayProperties
 import goodspace.teaming.payment.domain.PaymentApproveRespond
-import goodspace.teaming.payment.dto.PaymentApproveRequestDto
-import goodspace.teaming.payment.dto.PaymentApproveRespondDto
-import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
+import goodspace.teaming.payment.dto.*
 
 import goodspace.teaming.payment.repository.PaymentRepository
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -62,6 +61,53 @@ class PaymentService(
         return ResponseEntity.status(HttpStatus.FOUND)
             .header("Location", redirectUrl)
             .build()
+    }
+
+    @Transactional
+    fun requestCancel(roomId: Long): ResponseEntity<Void> {
+        val room = roomRepository.findById(roomId).orElseThrow { EntityNotFoundException("Room not found") }
+
+        val userRoomsToCancel = room.userRooms.filter{( !it.isPunished) }
+
+        userRoomsToCancel.forEach { userRoom ->
+            val user = userRoom.user
+
+            val payment = paymentRepository.findByUserAndRoom(user, room)
+                ?: throw EntityNotFoundException("유저(id:${user.id})의 결제 정보를 찾을 수 없습니다.")
+
+            if (payment.status != "CANCELLED") {
+                approveCancel(payment.tid, payment.amount.toString())
+            }
+        }
+        // 위에서 오류가 나는 경우는 이미다 예외처리를 해놨으니 return에서 어떤 상태를 반환할 필요가 없다.?
+        // TODO: 준이 체크
+        return ResponseEntity.ok().build()
+    }
+
+    @Transactional
+    fun approveCancel(tid: String, amount: String): PaymentCancelResponseDto {
+        val url = "${nicepayProperties.approveUrl}/$tid/cancel"
+        val requestBody = PaymentCancelRequestDto(
+            amount = amount,
+            reason = "미션 성공으로 인한 미벌칙자 환급"
+        )
+
+        val cancelResponseDto = webClient.build()
+            .post()
+            .uri(url)
+            .header(HttpHeaders.AUTHORIZATION, getAuthHeader())
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .bodyValue(requestBody)
+            .retrieve()
+            .bodyToMono(PaymentCancelResponseDto::class.java)
+            .block() ?: throw IllegalStateException("결제 취소 응답이 올바르지 않습니다.")
+
+        if(cancelResponseDto.resultCode == "0000") {
+            var paymentApproveRespond = paymentRepository.findByTid(tid) ?: throw EntityNotFoundException("결제 취소 로직 중에 해당 TID에 해당하는 결제 정보를 찾을 수 없습니다.")
+            paymentApproveRespond.status = "CANCELLED"
+        }
+
+        return cancelResponseDto
     }
 
     @Transactional

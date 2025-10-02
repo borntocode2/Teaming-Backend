@@ -70,7 +70,7 @@ class PaymentController(
     }
 
     @RequestMapping("/cancelAuth")
-    fun cancelAuth(@RequestParam userRoomId: Long): ResponseEntity<Void> {
-        //TODO :userRoom찾고, 거기서 !벌칙안당한!사람들이 환급 -> 근데 userRoom에 벌칙안당한 사람들을 체크하는 상태가 없다.. ㅜ
+    fun requestCancel(@RequestParam roomId: Long): ResponseEntity<Void> {
+        return paymentService.requestCancel(roomId)
     }
 }
