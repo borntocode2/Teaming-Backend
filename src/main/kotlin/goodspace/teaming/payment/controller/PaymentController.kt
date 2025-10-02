@@ -70,7 +70,7 @@ class PaymentController(
     }
 
     @PostMapping("/cancelAuth")
-    fun requestCancel(@RequestBody roomId: Long): ResponseEntity<Void> {
-        return paymentService.requestCancel(roomId)
+    fun requestCancel(@RequestBody roomId: String): ResponseEntity<Void> {
+        return paymentService.requestCancel(roomId.toLong())
     }
 }
