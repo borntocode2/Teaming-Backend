@@ -2,15 +2,13 @@ package goodspace.teaming.global.entity.user
 
 import goodspace.teaming.gifticon.Entity.Gifticon
 import goodspace.teaming.global.entity.BaseEntity
-import goodspace.teaming.global.entity.aissgnment.AssignedMember
-import goodspace.teaming.global.entity.aissgnment.Assignment
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.security.RefreshToken
 import jakarta.persistence.*
-import jakarta.persistence.CascadeType.*
-import jakarta.persistence.EnumType.*
-import jakarta.persistence.FetchType.*
-import jakarta.persistence.GenerationType.*
+import jakarta.persistence.CascadeType.ALL
+import jakarta.persistence.EnumType.STRING
+import jakarta.persistence.FetchType.LAZY
+import jakarta.persistence.GenerationType.IDENTITY
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
 
@@ -47,12 +45,6 @@ abstract class User(
 
     @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
     val userRooms = mutableListOf<UserRoom>()
-
-    @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
-    val assignedMembers = mutableListOf<AssignedMember>()
-
-    val assignments: List<Assignment>
-        get() = assignedMembers.map { it.assignment }
 
     var token: String? = refreshToken.tokenValue
         set(value) {

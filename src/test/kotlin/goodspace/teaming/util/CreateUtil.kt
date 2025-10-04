@@ -118,12 +118,12 @@ fun createAssignment(
 }
 
 fun createAssignedMember(
-    user: User,
+    userRoom: UserRoom,
     assignment: Assignment,
     id: Long? = ASSIGNED_MEMBER_ID
 ): AssignedMember {
     val assignedMember = AssignedMember(
-        user = user,
+        userRoom = userRoom,
         assignment = assignment
     )
     ReflectionTestUtils.setField(assignedMember, "id", id)

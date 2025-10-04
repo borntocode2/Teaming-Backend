@@ -1,6 +1,7 @@
 package goodspace.teaming.global.entity.room
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.aissgnment.AssignedMember
 import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import jakarta.persistence.EnumType.*
@@ -33,4 +34,7 @@ class UserRoom(
     @Id
     @GeneratedValue(strategy = IDENTITY)
     val id: Long? = null
+
+    @OneToMany(mappedBy = "userRoom", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val assignedMembers: MutableList<AssignedMember> = mutableListOf()
 }

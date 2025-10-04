@@ -14,6 +14,7 @@ import goodspace.teaming.global.entity.aissgnment.Submission
 import goodspace.teaming.global.entity.file.SubmittedFile
 import goodspace.teaming.global.entity.file.File
 import goodspace.teaming.global.entity.room.PaymentStatus.NOT_PAID
+import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.room.RoomRole
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
@@ -58,8 +59,8 @@ class AssignmentServiceImpl(
 
         val assignment = assignmentMapper.map(room, requestDto)
         val assignedMembers = requestDto.assignedMemberIds
-            .toUserSet()
-            .map { assignedMemberMapper.map(it, room, assignment) }
+            .toUserRoomSet(room)
+            .map { assignedMemberMapper.map(it, assignment) }
 
         assignment.addAssignedMembers(assignedMembers)
 
@@ -71,7 +72,9 @@ class AssignmentServiceImpl(
         val user = findUser(userId)
         val referenceTime = Instant.now()
 
-        return user.assignments
+        return user.userRooms
+            .flatMap { it.assignedMembers }
+            .map { it.assignment }
             .filter { it.due.isAfter(referenceTime) }
             .map { assignmentPreviewMapper.map(it) }
     }
@@ -167,11 +170,13 @@ class AssignmentServiceImpl(
         check(assignment.status != COMPLETE) { COMPLETE_ASSIGNMENT }
     }
 
-    private fun List<Long>.toUserSet(): Set<User> {
-        return this.map {
-            userRepository.findById(it)
+    private fun List<Long>.toUserRoomSet(room: Room): Set<UserRoom> {
+        return this.map { userRepository.findById(it)
                 .orElseThrow { IllegalArgumentException(MEMBER_FOR_ASSIGNED_NOT_FOUND) }
-        }.toSet()
+            }
+            .flatMap { it.userRooms }
+            .filter { it.room == room }
+            .toSet()
     }
 
     private fun List<Assignment>.findById(id: Long): Assignment {
