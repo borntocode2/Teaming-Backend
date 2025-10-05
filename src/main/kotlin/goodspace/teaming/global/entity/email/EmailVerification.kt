@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 @SQLRestriction("deleted = false")
 class EmailVerification(
     /** 인증 대상 이메일 */
-    @Column(unique = true, nullable = false, length = 254)
+    @Column(nullable = false, length = 254)
     val email: String,
 
     /** 발급된 인증 코드 */

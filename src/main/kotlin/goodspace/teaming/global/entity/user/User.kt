@@ -18,7 +18,7 @@ import org.hibernate.annotations.SQLRestriction
 @SQLDelete(sql = "UPDATE `user` SET deleted = true, deleted_at = NOW() WHERE id = ?")
 @SQLRestriction("deleted = false")
 abstract class User(
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     var email: String,
 
     @Column(nullable = false)
