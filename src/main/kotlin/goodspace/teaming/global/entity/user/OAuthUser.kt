@@ -6,8 +6,8 @@ import org.hibernate.annotations.SQLDelete
 
 @Entity
 @SQLDelete(
-    sql = "UPDATE teaming_user " +
-            "SET password = CONCAT('DELETED_', password) " +
+    sql = "UPDATE oauth_user " +
+            "SET identifier = CONCAT('DELETED_', identifier) " +
             "WHERE id = ?"
 )
 class OAuthUser(

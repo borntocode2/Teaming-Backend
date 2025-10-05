@@ -17,6 +17,7 @@ import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
+import goodspace.teaming.util.createAssignedMember
 import goodspace.teaming.util.createRoom
 import io.mockk.every
 import io.mockk.mockk
@@ -56,7 +57,7 @@ class AssignmentServiceTest {
         fun `새로운 과제를 생성하여 티밍룸에 추가한다`() {
             // given
             val leader = createUser()
-            val assignedMember = createUser()
+            val assignedMember = createUser(id = ASSIGNED_MEMBER_ID)
             val room = createRoom()
 
             val leaderUserRoom = createUserRoom(
@@ -68,7 +69,7 @@ class AssignmentServiceTest {
             val requestDto = AssignmentCreateRequestDto(
                 title = ASSIGNMENT_TITLE,
                 description = ASSIGNMENT_DESCRIPTION,
-                assignedMemberIds = listOf(ASSIGNED_MEMBER_ID),
+                assignedMemberIds = listOf(assignedMember.id!!),
                 due = ASSIGNMENT_DUE
             )
             val expectedAssignment = Assignment(
@@ -80,7 +81,7 @@ class AssignmentServiceTest {
 
             every { userRoomRepository.findByRoomIdAndUserId(room.id!!, leader.id!!) } returns leaderUserRoom
             every { assignmentMapper.map(room, requestDto) } returns expectedAssignment
-            every { userRepository.findById(ASSIGNED_MEMBER_ID) } returns Optional.of(assignedMember)
+            every { userRepository.findById(assignedMember.id!!) } returns Optional.of(assignedMember)
 
             // when
             assignmentService.create(leader.id!!, room.id!!, requestDto)
@@ -141,12 +142,18 @@ class AssignmentServiceTest {
         fun `해당 회원에게 할당되었으면서 제출 기한이 지나지 않은 과제들을 반환한다`() {
             // given
             val user = mockk<User>()
+            val userRoom = mockk<UserRoom>()
+            val notClosedAssignedMember = mockk<AssignedMember>()
+            val closedAssignedMember = mockk<AssignedMember>()
             every { userRepository.findById(USER_ID) } returns Optional.of(user)
 
             val notClosedAssignment = mockk<Assignment>()
             val closedAssignment = mockk<Assignment>()
 
-            every { user.assignments } returns listOf(notClosedAssignment, closedAssignment)
+            every { user.userRooms } returns mutableListOf(userRoom)
+            every { userRoom.assignedMembers } returns mutableListOf(notClosedAssignedMember)
+            every { notClosedAssignedMember.assignment } returns notClosedAssignment
+            every { closedAssignedMember.assignment } returns closedAssignment
             every { notClosedAssignment.due.isAfter(any()) } returns true
             every { closedAssignment.due.isAfter(any()) } returns false
 
@@ -239,7 +246,7 @@ class AssignmentServiceTest {
                 room = room,
             )
             val assigned = createAssignedMember(
-                user = submitter,
+                userRoom = userRoom,
                 assignment = assignment,
             )
             room.addAssignment(assignment)
@@ -280,7 +287,7 @@ class AssignmentServiceTest {
                 status = AssignmentStatus.IN_PROGRESS
             )
             val assigned = createAssignedMember(
-                user = submitter,
+                userRoom = userRoom,
                 assignment = assignment,
             )
             room.addAssignment(assignment)
@@ -317,7 +324,7 @@ class AssignmentServiceTest {
                 status = AssignmentStatus.CANCELED
             )
             val assigned = createAssignedMember(
-                user = member,
+                userRoom = userRoom,
                 assignment = assignment,
                 id = ASSIGNED_MEMBER_ID
             )
@@ -383,7 +390,7 @@ class AssignmentServiceTest {
                 status = AssignmentStatus.IN_PROGRESS
             )
             val assigned = createAssignedMember(
-                user = member,
+                userRoom = notPaidUserRoom,
                 assignment = assignment,
             )
             assignment.addAssignedMember(assigned)
@@ -577,20 +584,6 @@ class AssignmentServiceTest {
             assignedMemberIds = assignedMemberIds,
             due = due
         )
-    }
-
-    private fun createAssignedMember(
-        user: User,
-        assignment: Assignment,
-        id: Long = ASSIGNED_MEMBER_ID
-    ): AssignedMember {
-        val assignedMember = AssignedMember(
-            user = user,
-            assignment = assignment
-        )
-        ReflectionTestUtils.setField(assignedMember, "id", id)
-
-        return assignedMember
     }
 
     private fun Assignment.toDto(): AssignmentResponseDto {

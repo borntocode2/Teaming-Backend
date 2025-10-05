@@ -1,6 +1,7 @@
 package goodspace.teaming.global.entity.aissgnment
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import jakarta.persistence.FetchType.*
@@ -15,12 +16,15 @@ import org.hibernate.annotations.SQLRestriction
 class AssignedMember(
     @ManyToOne(fetch = LAZY)
     @JoinColumn(nullable = false)
-    val user: User,
+    val userRoom: UserRoom,
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(nullable = false)
     val assignment: Assignment,
 ) : BaseEntity() {
+    val user: User
+        get() = userRoom.user
+
     @Id
     @GeneratedValue(strategy = IDENTITY)
     val id: Long? = null
