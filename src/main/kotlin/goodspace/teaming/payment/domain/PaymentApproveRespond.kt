@@ -1,12 +1,23 @@
 package goodspace.teaming.payment.domain
 
 import goodspace.teaming.global.entity.BaseEntity
+import goodspace.teaming.global.entity.room.Room
+import goodspace.teaming.global.entity.room.UserRoom
+import goodspace.teaming.global.entity.user.User
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
 @Entity
 @Table(name = "payment_approve_respond")
 class PaymentApproveRespond(
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    var user: User?,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    var room: Room?,
+
 
     val resultCode: String,
     val resultMsg: String,
@@ -21,7 +32,7 @@ class PaymentApproveRespond(
 
     val ediDate: LocalDateTime? = null,
     val signature: String,
-    val status: String,
+    var status: String,
     val paidAt: LocalDateTime? = null,
     val failedAt: LocalDateTime? = null,
     val cancelledAt: LocalDateTime? = null,

@@ -35,9 +35,23 @@ data class PaymentApproveRespondDto(
     val mallUserId: String?,
     val issuedCashReceipt: Boolean,
     val card: CardInfoDto?
-)
+) {
 
-fun PaymentApproveRespondDto.toEntity(): PaymentApproveRespond {
+    fun toEntity(): PaymentApproveRespond {
+        val cardInfo = this.card?.let { cardDto ->
+            CardInfo(
+                cardCode = cardDto.cardCode,
+                cardName = cardDto.cardName,
+                cardNum = cardDto.cardNum,
+                cardQuota = cardDto.cardQuota,
+                isInterestFree = cardDto.isInterestFree,
+                cardType = cardDto.cardType,
+                canPartCancel = cardDto.canPartCancel,
+                acquCardCode = cardDto.acquCardCode,
+                acquCardName = cardDto.acquCardName
+            )
+        }
+
         return PaymentApproveRespond(
             resultCode = resultCode,
             resultMsg = resultMsg,
@@ -64,46 +78,36 @@ fun PaymentApproveRespondDto.toEntity(): PaymentApproveRespond {
             buyerEmail = buyerEmail?.takeIf { it != "null" },
             receiptUrl = receiptUrl,
             mallUserId = mallUserId,
-            issuedCashReceipt = issuedCashReceipt
+            issuedCashReceipt = issuedCashReceipt,
+            user = null,
+            room = null
         ).apply {
-            card = this@toEntity.card?.let {
-                CardInfo(
-                    cardCode = it.cardCode,
-                    cardName = it.cardName,
-                    cardNum = it.cardNum,
-                    cardQuota = it.cardQuota,
-                    isInterestFree = it.isInterestFree,
-                    cardType = it.cardType,
-                    canPartCancel = it.canPartCancel,
-                    acquCardCode = it.acquCardCode,
-                    acquCardName = it.acquCardName
-                )
-            }
+            this.card = cardInfo
         }
     }
 
-// 날짜 문자열을 LocalDateTime으로 변환
-private fun parseToLocalDateTime(value: String?): LocalDateTime? {
-    if (value == null) return null
-    val v = value.trim()
-    if (v == "0" || v.equals("null", true) || v.isEmpty()) return null
+    private fun parseToLocalDateTime(value: String?): LocalDateTime? {
+        if (value == null) return null
+        val v = value.trim()
+        if (v == "0" || v.equals("null", true) || v.isEmpty()) return null
 
-    val patterns = listOf(
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"),
-        DateTimeFormatter.ISO_OFFSET_DATE_TIME
-    )
+        val patterns = listOf(
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"),
+            DateTimeFormatter.ISO_OFFSET_DATE_TIME
+        )
 
-    for (fmt in patterns) {
-        try {
-            val odt = OffsetDateTime.parse(v, fmt)
-            return odt.toLocalDateTime()
-        } catch (_: DateTimeParseException) { /* 다음 패턴 시도 */ }
+        for (fmt in patterns) {
+            try {
+                val odt = OffsetDateTime.parse(v, fmt)
+                return odt.toLocalDateTime()
+            } catch (_: DateTimeParseException) {
+            }
+        }
+        return null
     }
-    return null
-}
 
-// "0"이나 "null" 문자열 처리용
-private fun parseToLocalDateTimeOrNull(value: String?): LocalDateTime? {
-    return parseToLocalDateTime(value)
+    private fun parseToLocalDateTimeOrNull(value: String?): LocalDateTime? {
+        return parseToLocalDateTime(value)
+    }
 }

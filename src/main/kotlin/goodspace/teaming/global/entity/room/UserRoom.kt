@@ -37,4 +37,6 @@ class UserRoom(
 
     @OneToMany(mappedBy = "userRoom", cascade = [CascadeType.ALL], orphanRemoval = true)
     val assignedMembers: MutableList<AssignedMember> = mutableListOf()
+
+    var isPunished: Boolean = false
 }
