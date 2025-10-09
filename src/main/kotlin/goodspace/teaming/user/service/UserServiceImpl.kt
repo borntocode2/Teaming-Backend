@@ -48,6 +48,8 @@ class UserServiceImpl(
 
     @Transactional
     override fun updatePassword(userId: Long, requestDto: UpdatePasswordRequestDto) {
+        checkEmailVerification(requestDto.email)
+
         val user = findTeamingUser(userId)
         val actualCurrentPassword = user.password
         val expectedCurrentPassword = passwordEncoder.encode(requestDto.currentPassword)

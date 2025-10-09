@@ -181,12 +181,18 @@ class UserServiceTest {
             // given
             val user = createUser()
             val currentPassword = user.password
+            val emailVerification = createEmailVerification(
+                email = user.email,
+                verified = true
+            )
 
             val requestDto = UpdatePasswordRequestDto(
                 currentPassword = currentPassword,
-                newPassword = NEW_PASSWORD
+                newPassword = NEW_PASSWORD,
+                email = user.email
             )
 
+            every { emailVerificationRepository.findByEmail(user.email) } returns emailVerification
             every { userRepository.findTeamingUserById(user.id!!) } returns user
             every { passwordEncoder.encode(any()) } answers { firstArg() }
             every { passwordValidator.isIllegalPassword(NEW_PASSWORD) } returns false
@@ -200,16 +206,49 @@ class UserServiceTest {
         }
 
         @Test
+        fun `이메일 인증 정보는 제거한다`() {
+            // given
+            val user = createUser()
+            val emailVerification = createEmailVerification(
+                email = user.email,
+                verified = true
+            )
+
+            val requestDto = UpdatePasswordRequestDto(
+                currentPassword = user.password,
+                newPassword = NEW_PASSWORD,
+                email = user.email
+            )
+
+            every { emailVerificationRepository.findByEmail(user.email) } returns emailVerification
+            every { userRepository.findTeamingUserById(user.id!!) } returns user
+            every { passwordEncoder.encode(any()) } answers { firstArg() }
+            every { passwordValidator.isIllegalPassword(NEW_PASSWORD) } returns false
+
+            // when
+            userService.updatePassword(user.id!!, requestDto)
+
+            // then
+            verify(exactly = 1) { emailVerificationRepository.delete(emailVerification) }
+        }
+
+        @Test
         fun `비밀번호를 암호화해서 저장한다`() {
             // given
             val user = createUser()
             val currentPassword = user.password
+            val emailVerification = createEmailVerification(
+                email = user.email,
+                verified = true
+            )
 
             val requestDto = UpdatePasswordRequestDto(
                 currentPassword = currentPassword,
-                newPassword = NEW_PASSWORD
+                newPassword = NEW_PASSWORD,
+                email = user.email
             )
 
+            every { emailVerificationRepository.findByEmail(user.email) } returns emailVerification
             every { userRepository.findTeamingUserById(user.id!!) } returns user
             every { passwordEncoder.encode(currentPassword) } returns currentPassword
             every { passwordValidator.isIllegalPassword(NEW_PASSWORD) } returns false
@@ -227,12 +266,18 @@ class UserServiceTest {
         fun `기존 비밀번호가 일치하지 않는다면 예외를 던진다`() {
             // given
             val user = createUser()
+            val emailVerification = createEmailVerification(
+                email = user.email,
+                verified = true
+            )
 
             val requestDto = UpdatePasswordRequestDto(
                 currentPassword = WRONG_PASSWORD,
-                newPassword = NEW_PASSWORD
+                newPassword = NEW_PASSWORD,
+                email = user.email
             )
 
+            every { emailVerificationRepository.findByEmail(user.email) } returns emailVerification
             every { userRepository.findTeamingUserById(user.id!!) } returns user
             every { passwordEncoder.encode(any()) } answers { firstArg() }
 
@@ -246,13 +291,18 @@ class UserServiceTest {
         fun `비밀번호 형식이 부적절하다면 예외를 던진다`() {
             // given
             val user = createUser()
-            val currentPassword = user.password
-
-            val requestDto = UpdatePasswordRequestDto(
-                currentPassword = currentPassword,
-                newPassword = ILLEGAL_PASSWORD
+            val emailVerification = createEmailVerification(
+                email = user.email,
+                verified = true
             )
 
+            val requestDto = UpdatePasswordRequestDto(
+                currentPassword = user.password,
+                newPassword = ILLEGAL_PASSWORD,
+                email = user.email
+            )
+
+            every { emailVerificationRepository.findByEmail(user.email) } returns emailVerification
             every { userRepository.findTeamingUserById(user.id!!) } returns user
             every { passwordEncoder.encode(any()) } answers { firstArg() }
             every { passwordValidator.isIllegalPassword(ILLEGAL_PASSWORD) } returns true
@@ -261,6 +311,24 @@ class UserServiceTest {
             assertThatThrownBy { userService.updatePassword(user.id!!, requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
                 .hasMessage("부적절한 비밀번호입니다.")
+        }
+
+        @Test
+        fun `이메일이 인증되지 않았다면 예외를 던진다`() {
+            // given
+            val user = createUser()
+            val requestDto = UpdatePasswordRequestDto(
+                currentPassword = user.password,
+                newPassword = NEW_PASSWORD,
+                email = user.email
+            )
+
+            every { emailVerificationRepository.findByEmail(user.email) } returns null
+
+            // when & then
+            assertThatThrownBy { userService.updatePassword(user.id!!, requestDto) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage("인증되지 않은 이메일입니다.")
         }
     }
 
