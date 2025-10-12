@@ -25,6 +25,7 @@ private const val DEFAULT_EMAIL = "default@email.com"
 private const val DEFAULT_CODE = "defaultCode"
 private const val DEFAULT_NAME = "DEFAULT NAME"
 private const val DEFAULT_PASSWORD = "defaultPassword"
+private const val WRONG_CODE = "WRONG CODE"
 
 @SpringBootTest
 @RecordApplicationEvents
@@ -110,7 +111,7 @@ class EmailVerificationServiceTest(
     inner class VerifyEmail {
         @Test
         fun `생성된 이메일 인증 객체의 코드와 일치하면, 객체의 인증 상태를 true로 한다`() {
-            // arrange
+            // given
             val emailVerification = emailVerificationRepository.save(
                 EmailVerification(
                     email = DEFAULT_EMAIL,
@@ -120,16 +121,16 @@ class EmailVerificationServiceTest(
             )
             val requestDto = EmailVerifyRequestDto(DEFAULT_EMAIL, DEFAULT_CODE)
 
-            // act
+            // when
             emailVerificationService.verifyEmail(requestDto)
 
-            // assert
+            // then
             assertThat(emailVerification.verified).isTrue()
         }
 
         @Test
         fun `이메일 인증 객체가 만료되었다면 예외를 던진다`() {
-            // arrange
+            // given
             emailVerificationRepository.save(
                 EmailVerification(
                     email = DEFAULT_EMAIL,
@@ -139,7 +140,24 @@ class EmailVerificationServiceTest(
             )
             val requestDto = EmailVerifyRequestDto(DEFAULT_EMAIL, DEFAULT_CODE)
 
-            // assert
+            // when & then
+            assertThatThrownBy { emailVerificationService.verifyEmail(requestDto) }
+                .isInstanceOf(IllegalStateException::class.java)
+        }
+
+        @Test
+        fun `코드가 일치하지 않는다면 예외를 던진다`() {
+            // given
+            emailVerificationRepository.save(
+                EmailVerification(
+                    email = DEFAULT_EMAIL,
+                    code = DEFAULT_CODE,
+                    expiresAt = LocalDateTime.now().plusMinutes(1)
+                )
+            )
+            val requestDto = EmailVerifyRequestDto(DEFAULT_EMAIL, WRONG_CODE)
+
+            // when & then
             assertThatThrownBy { emailVerificationService.verifyEmail(requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
         }
