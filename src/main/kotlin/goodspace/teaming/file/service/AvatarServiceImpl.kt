@@ -2,6 +2,7 @@ package goodspace.teaming.file.service
 
 import goodspace.teaming.file.domain.*
 import goodspace.teaming.file.dto.*
+import goodspace.teaming.global.exception.*
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
 import org.springframework.beans.factory.annotation.Value
@@ -9,13 +10,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import software.amazon.awssdk.services.s3.model.S3Exception
 import java.net.URLConnection
-
-private const val MSG_USER_NOT_FOUND = "회원을 조회할 수 없습니다."
-private const val MSG_ROOM_NOT_FOUND = "방을 조회할 수 없습니다."
-private const val MSG_IMAGE_TOO_LARGE = "이미지 크기가 너무 큽니다."
-private const val MSG_UNSUPPORTED_IMAGE_TYPE = "지원하지 않는 이미지 형식입니다."
-private const val MSG_INVALID_UPLOAD_KEY = "업로드 키가 올바르지 않습니다."
-private const val MSG_OBJECT_NOT_FOUND = "원본 객체를 찾을 수 없습니다."
 
 @Service
 class AvatarServiceImpl(
@@ -42,15 +36,15 @@ class AvatarServiceImpl(
         requestDto: AvatarUploadIntentRequestDto
     ): AvatarUploadIntentResponseDto {
         val ownerType = requestDto.ownerType
-        require(requestDto.byteSize in 1..maxBytes) { MSG_IMAGE_TOO_LARGE }
+        require(requestDto.byteSize in 1..maxBytes) { IMAGE_TOO_LARGE }
 
         val clientCtRaw = requestDto.contentType.trim()
         val ctForAllowCheck = clientCtRaw.lowercase()
-        require(ctForAllowCheck in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $clientCtRaw" }
+        require(ctForAllowCheck in allowedImageTypes) { "$UNSUPPORTED_IMAGE_TYPE: $clientCtRaw" }
 
         when (ownerType) {
-            AvatarOwnerType.USER -> userRepository.findById(userId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
-            AvatarOwnerType.ROOM -> roomRepository.findById(requestDto.roomId!!).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+            AvatarOwnerType.USER -> userRepository.findById(userId).orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }
+            AvatarOwnerType.ROOM -> roomRepository.findById(requestDto.roomId!!).orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }
         }
 
         val objectKey = keyOf(ownerType, userId, requestDto.roomId)
@@ -75,22 +69,22 @@ class AvatarServiceImpl(
         val ownerType = requestDto.ownerType
 
         val objectKey = keyOf(ownerType, userId, requestDto.roomId)
-        require(requestDto.key == objectKey) { MSG_INVALID_UPLOAD_KEY }
+        require(requestDto.key == objectKey) { INVALID_UPLOAD_KEY }
 
         val head = try {
             s3PresignedUrlProvider.head(objectKey)
         } catch (e: S3Exception) {
-            throw IllegalArgumentException(MSG_OBJECT_NOT_FOUND, e)
+            throw IllegalArgumentException(S3_OBJECT_NOT_FOUND, e)
         }
 
         val objectSize = head.contentLength()
-        require(objectSize in 1L..maxBytes) { MSG_IMAGE_TOO_LARGE }
+        require(objectSize in 1L..maxBytes) { IMAGE_TOO_LARGE }
 
         // 매직바이트로 서버가 타입 판정
         val headBytes = s3PresignedUrlProvider.getRangeBytes(objectKey, 0, 1023)
         val sniffed = detectImageTypeByMagicBytes(headBytes)
         val serverCt = sniffed ?: guessContentTypeFromKey(objectKey)
-        require(serverCt in allowedImageTypes) { "$MSG_UNSUPPORTED_IMAGE_TYPE: $serverCt" }
+        require(serverCt in allowedImageTypes) { "$UNSUPPORTED_IMAGE_TYPE: $serverCt" }
 
         // 최종 메타데이터 교체
         s3PresignedUrlProvider.rewriteObjectMetadata(
@@ -102,14 +96,14 @@ class AvatarServiceImpl(
 
         val (version, publicUrl) = when (ownerType) {
             AvatarOwnerType.USER -> {
-                val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
+                val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }
                 user.avatarKey = objectKey
                 user.avatarVersion++
                 val url = storageUrlProvider.publicUrl(objectKey, version = user.avatarVersion)
                 user.avatarVersion to (url ?: "/static/default-avatar.png")
             }
             AvatarOwnerType.ROOM -> {
-                val room = roomRepository.findById(requestDto.roomId!!).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+                val room = roomRepository.findById(requestDto.roomId!!).orElseThrow { IllegalArgumentException(ROOM_NOT_FOUND) }
                 room.avatarKey = objectKey
                 room.avatarVersion++
                 val url = storageUrlProvider.publicUrl(objectKey, version = room.avatarVersion)
@@ -130,11 +124,11 @@ class AvatarServiceImpl(
 
         val (key, version) = when (ownerType) {
             AvatarOwnerType.USER -> {
-                val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
+                val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }
                 user.avatarKey to user.avatarVersion
             }
             AvatarOwnerType.ROOM -> {
-                val room = roomRepository.findById(ownerTypeDto.roomId!!).orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+                val room = roomRepository.findById(ownerTypeDto.roomId!!).orElseThrow { IllegalArgumentException(ROOM_NOT_FOUND) }
                 room.avatarKey to (room.avatarVersion)
             }
         }
@@ -150,13 +144,13 @@ class AvatarServiceImpl(
         when (ownerType) {
             AvatarOwnerType.USER -> {
                 val user = userRepository.findById(userId)
-                    .orElseThrow { IllegalArgumentException(MSG_USER_NOT_FOUND) }
+                    .orElseThrow { IllegalArgumentException(USER_NOT_FOUND) }
                 user.avatarKey = null
                 user.avatarVersion = 0
             }
             AvatarOwnerType.ROOM -> {
                 val room = roomRepository.findById(ownerTypeDto.roomId!!)
-                    .orElseThrow { IllegalArgumentException(MSG_ROOM_NOT_FOUND) }
+                    .orElseThrow { IllegalArgumentException(ROOM_NOT_FOUND) }
                 room.avatarKey = null
                 room.avatarVersion = 0
             }

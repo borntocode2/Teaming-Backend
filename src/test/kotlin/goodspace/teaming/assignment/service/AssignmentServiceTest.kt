@@ -14,6 +14,7 @@ import goodspace.teaming.global.entity.aissgnment.AssignmentStatus
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.exception.CANCELED_ASSIGNMENT
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
@@ -342,7 +343,7 @@ class AssignmentServiceTest {
             // when & then
             assertThatThrownBy { assignmentService.submit(member.id!!, room.id!!, requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("취소된 과제입니다.")
+                .hasMessage(CANCELED_ASSIGNMENT)
         }
 
         @Test

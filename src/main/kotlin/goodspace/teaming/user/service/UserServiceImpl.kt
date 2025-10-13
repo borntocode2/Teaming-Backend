@@ -3,6 +3,7 @@ package goodspace.teaming.user.service
 import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.entity.user.UserType
+import goodspace.teaming.global.exception.*
 import goodspace.teaming.global.password.PasswordValidator
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -11,13 +12,6 @@ import goodspace.teaming.user.dto.*
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private const val USER_NOT_FOUND = "회원을 조회할 수 없습니다."
-private const val ILLEGAL_USER_TYPE = "소셜 회원은 이메일을 변경할 수 없습니다."
-private const val EMAIL_ALREADY_EXISTS = "이미 사용 중인 이메일입니다."
-private const val EMAIL_NOT_VERIFIED = "인증되지 않은 이메일입니다."
-private const val WRONG_PASSWORD = "비밀번호가 올바르지 않습니다."
-private const val ILLEGAL_PASSWORD = "부적절한 비밀번호입니다."
 
 @Service
 class UserServiceImpl(
@@ -39,7 +33,7 @@ class UserServiceImpl(
         val user = findUser(userId)
         val email = requestDto.email
 
-        checkUserType(user)
+        checkUserTypeToChangePassword(user)
         checkEmailAlreadyExists(email)
         checkEmailVerification(email)
 
@@ -84,19 +78,19 @@ class UserServiceImpl(
             ?: throw IllegalArgumentException(USER_NOT_FOUND)
     }
 
-    private fun checkUserType(user: User) {
-        check(user.type == UserType.TEAMING) { ILLEGAL_USER_TYPE }
+    private fun checkUserTypeToChangePassword(user: User) {
+        check(user.type == UserType.TEAMING) { OAUTH_USER_CANNOT_CHANGE_PASSWORD }
     }
 
     private fun checkEmailAlreadyExists(email: String) {
-        require(!userRepository.existsByEmail(email)) { EMAIL_ALREADY_EXISTS }
+        require(!userRepository.existsByEmail(email)) { ALREADY_EXISTS_EMAIL }
     }
 
     private fun checkEmailVerification(email: String) {
         val emailVerification = emailVerificationRepository.findByEmail(email)
-            ?: throw IllegalStateException(EMAIL_NOT_VERIFIED)
+            ?: throw IllegalStateException(NOT_VERIFIED_EMAIL)
 
-        check(emailVerification.verified) { EMAIL_NOT_VERIFIED }
+        check(emailVerification.verified) { NOT_VERIFIED_EMAIL }
 
         emailVerificationRepository.delete(emailVerification)
     }

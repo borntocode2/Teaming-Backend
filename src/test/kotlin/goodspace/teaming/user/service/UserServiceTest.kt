@@ -4,6 +4,8 @@ import goodspace.teaming.fixture.*
 import goodspace.teaming.global.entity.email.EmailVerification
 import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.UserType
+import goodspace.teaming.global.exception.NOT_VERIFIED_EMAIL
+import goodspace.teaming.global.exception.OAUTH_USER_CANNOT_CHANGE_PASSWORD
 import goodspace.teaming.global.password.PasswordValidatorImpl
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -169,7 +171,7 @@ class UserServiceTest {
             // when & then
             assertThatThrownBy { userService.updateEmail(user.id!!, requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("소셜 회원은 이메일을 변경할 수 없습니다.")
+                .hasMessage(OAUTH_USER_CANNOT_CHANGE_PASSWORD)
         }
     }
 
@@ -284,7 +286,7 @@ class UserServiceTest {
             // when & then
             assertThatThrownBy { userService.updatePassword(user.id!!, requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessage("비밀번호가 올바르지 않습니다.")
+                .hasMessage(goodspace.teaming.global.exception.WRONG_PASSWORD)
         }
 
         @Test
@@ -310,7 +312,7 @@ class UserServiceTest {
             // when & then
             assertThatThrownBy { userService.updatePassword(user.id!!, requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessage("부적절한 비밀번호입니다.")
+                .hasMessage(goodspace.teaming.global.exception.ILLEGAL_PASSWORD)
         }
 
         @Test
@@ -328,7 +330,7 @@ class UserServiceTest {
             // when & then
             assertThatThrownBy { userService.updatePassword(user.id!!, requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("인증되지 않은 이메일입니다.")
+                .hasMessage(NOT_VERIFIED_EMAIL)
         }
     }
 

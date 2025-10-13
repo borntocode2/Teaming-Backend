@@ -3,15 +3,14 @@ package goodspace.teaming.user.service
 import goodspace.teaming.authorization.dto.AccessTokenReissueRequestDto
 import goodspace.teaming.authorization.dto.AccessTokenResponseDto
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.exception.EXPIRED_REFRESH_TOKEN
+import goodspace.teaming.global.exception.ILLEGAL_TOKEN
+import goodspace.teaming.global.exception.USER_NOT_FOUND
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.security.TokenProvider
 import goodspace.teaming.global.security.TokenType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private const val USER_NOT_FOUND = "회원을 조회할 수 없습니다."
-private const val ILLEGAL_TOKEN = "부적절한 토큰입니다."
-private const val EXPIRED_REFRESH_TOKEN = "만료된 리프레쉬 토큰입니다."
 
 @Service
 class TokenManagementServiceImpl(

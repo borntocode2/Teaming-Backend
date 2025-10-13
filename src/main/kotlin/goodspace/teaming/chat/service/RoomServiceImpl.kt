@@ -13,6 +13,7 @@ import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.RoomRole
 import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.room.UserRoom
+import goodspace.teaming.global.exception.*
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
@@ -22,14 +23,6 @@ import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private const val USER_NOT_FOUND = "회원을 조회할 수 없습니다."
-private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
-private const val ALREADY_JOINED = "이미 해방 티밍룸에 소속되어 있습니다."
-private const val WRONG_INVITE_CODE = "부적절한 초대 코드입니다."
-private const val NOT_SUCCEEDED = "팀플에 성공하기 전까진 나갈 수 없습니다."
-private const val NOT_LEADER = "팀장이 아닙니다."
-private const val ILLEGAL_TITLE = "부적절한 티밍룸 제목입니다."
 
 @Service
 class RoomServiceImpl(
@@ -93,7 +86,7 @@ class RoomServiceImpl(
         val room = roomRepository.findByInviteCode(requestDto.inviteCode)
             ?: throw IllegalArgumentException(WRONG_INVITE_CODE)
 
-        require(!userRoomRepository.existsByRoomAndUser(room, user)) { ALREADY_JOINED }
+        require(!userRoomRepository.existsByRoomAndUser(room, user)) { ALREADY_MEMBER_OF_ROOM }
 
         val userRoom = UserRoom(
             user = user,
@@ -155,7 +148,7 @@ class RoomServiceImpl(
             ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
         val room = userRoom.room
 
-        check(room.success) { NOT_SUCCEEDED }
+        check(room.success) { CANNOT_LEAVE_BEFORE_SUCCESS }
 
         room.removeUserRoom(userRoom)
 
@@ -205,6 +198,6 @@ class RoomServiceImpl(
     }
 
     private fun RoomUpdateRequestDto.validate() {
-        require(title.trim().isNotEmpty()) { ILLEGAL_TITLE }
+        require(title.trim().isNotEmpty()) { ILLEGAL_ROOM_TITLE }
     }
 }

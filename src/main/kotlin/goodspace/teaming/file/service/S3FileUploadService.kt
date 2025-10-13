@@ -11,6 +11,10 @@ import goodspace.teaming.file.event.FileUploadedEvent
 import goodspace.teaming.global.entity.file.AntiVirusScanStatus
 import goodspace.teaming.global.entity.file.File
 import goodspace.teaming.global.entity.file.FileType
+import goodspace.teaming.global.exception.INVALID_KEY_SCOPE
+import goodspace.teaming.global.exception.INVALID_SIZE
+import goodspace.teaming.global.exception.NOT_MEMBER_OF_ROOM
+import goodspace.teaming.global.exception.ORIGINAL_FILE_MISSING
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.beans.factory.annotation.Value
@@ -21,11 +25,6 @@ import software.amazon.awssdk.services.s3.model.S3Exception
 import java.net.URLConnection
 import java.time.LocalDate
 import java.util.UUID
-
-private const val MSG_NOT_ROOM_MEMBER = "해당 방 소속이 아닙니다."
-private const val MSG_ORIGINAL_MISSING = "원본 파일이 존재하지 않습니다."
-private const val MSG_SIZE_INVALID = "파일 크기가 적절하지 않습니다."
-private const val MSG_KEY_SCOPE_INVALID = "Key에 방 정보와 회원 정보가 누락되었습니다."
 
 @Service
 class S3FileUploadService(
@@ -61,18 +60,18 @@ class S3FileUploadService(
         requestDto: FileUploadCompleteRequestDto
     ): FileUploadCompleteResponseDto {
         val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(MSG_NOT_ROOM_MEMBER)
+            ?: throw IllegalArgumentException(NOT_MEMBER_OF_ROOM)
 
         requireKeyBelongsToRoomAndUser(requestDto.key, roomId, userId)
 
         val head = try {
             s3.head(requestDto.key)
         } catch (e: S3Exception) {
-            throw IllegalArgumentException(MSG_ORIGINAL_MISSING, e)
+            throw IllegalArgumentException(ORIGINAL_FILE_MISSING, e)
         }
 
         val sizeRange = FileConstants.MIN_OBJECT_BYTES..(FileConstants.MAX_UPLOAD_SIZE_MB * FileConstants.BYTES_PER_MB)
-        if (head.contentLength() !in sizeRange) throw IllegalArgumentException(MSG_SIZE_INVALID)
+        if (head.contentLength() !in sizeRange) throw IllegalArgumentException(INVALID_SIZE)
 
         val mime = head.contentType() ?: guessContentTypeFromKey(requestDto.key)
         validation.validateAllowedContentType(mime)
@@ -119,7 +118,7 @@ class S3FileUploadService(
         URLConnection.guessContentTypeFromName(key.substringAfterLast('/')) ?: "application/octet-stream"
 
     private fun requireKeyBelongsToRoomAndUser(key: String, roomId: Long, userId: Long) {
-        require(key.startsWith("$prefix/$roomId/$userId/")) { MSG_KEY_SCOPE_INVALID }
+        require(key.startsWith("$prefix/$roomId/$userId/")) { INVALID_KEY_SCOPE }
     }
 
     private fun String.toFileType(): FileType = when {

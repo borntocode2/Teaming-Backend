@@ -13,6 +13,8 @@ import goodspace.teaming.global.entity.file.File
 import goodspace.teaming.global.entity.file.FileType
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.exception.INCLUDE_NOT_EXIST_FILE
+import goodspace.teaming.global.exception.NOT_PAID
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.MessageRepository
 import goodspace.teaming.global.repository.UserRoomRepository
@@ -24,10 +26,6 @@ import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
-private const val NOT_PAID = "결제되지 않아 티밍룸에 엑세스할 수 없습니다."
-private const val NOT_EXIST_FILE = "존재하지 않는 파일이 포함되어 있습니다."
 
 @Service
 class MessageServiceImpl(
@@ -103,7 +101,7 @@ class MessageServiceImpl(
 
     private fun findUserRoom(userId: Long, roomId: Long): UserRoom {
         return userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+            ?: throw IllegalArgumentException(goodspace.teaming.global.exception.ROOM_NOT_FOUND)
     }
 
     private fun getExistsOrCreate(user: User, room: Room, requestDto: ChatSendRequestDto): Message {
@@ -139,7 +137,7 @@ class MessageServiceImpl(
     }
 
     private fun validateFiles(files: List<File>, fileIds: List<Long>, room: Room, user: User) {
-        require(files.size == fileIds.size) { NOT_EXIST_FILE }
+        require(files.size == fileIds.size) { INCLUDE_NOT_EXIST_FILE }
 
         files.forEach { file ->
             require(file.room.id == room.id && file.uploaderId == user.id) { "이 방/사용자의 파일이 아닙니다." }

@@ -4,6 +4,8 @@ import goodspace.teaming.authorization.dto.TeamingSignInRequestDto
 import goodspace.teaming.authorization.dto.TeamingSignUpRequestDto
 import goodspace.teaming.fixture.*
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.exception.ALREADY_EXISTS_EMAIL
+import goodspace.teaming.global.exception.NOT_VERIFIED_EMAIL
 import goodspace.teaming.global.password.PasswordValidator
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -129,7 +131,7 @@ class TeamingAuthServiceTest {
             // when & then
             assertThatThrownBy { teamingAuthService.signUp(requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessage("부적절한 비밀번호입니다.")
+                .hasMessage(goodspace.teaming.global.exception.ILLEGAL_PASSWORD)
         }
 
         @Test
@@ -143,7 +145,7 @@ class TeamingAuthServiceTest {
             // when & then
             assertThatThrownBy { teamingAuthService.signUp(requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessage("이미 사용중인 이메일입니다.")
+                .hasMessage(ALREADY_EXISTS_EMAIL)
         }
 
         @Test
@@ -162,7 +164,7 @@ class TeamingAuthServiceTest {
             // when & then
             assertThatThrownBy { teamingAuthService.signUp(requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("인증되지 않은 이메일입니다.")
+                .hasMessage(NOT_VERIFIED_EMAIL)
         }
     }
 

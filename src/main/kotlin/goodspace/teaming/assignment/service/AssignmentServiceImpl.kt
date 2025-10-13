@@ -18,23 +18,13 @@ import goodspace.teaming.global.entity.room.Room
 import goodspace.teaming.global.entity.room.RoomRole
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.exception.*
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-
-private const val USER_ROOM_NOT_FOUND = "해당 티밍룸에 소속되어있지 않습니다."
-private const val USER_NOT_FOUND = "해당 회원을 조회할 수 없습니다."
-private const val INACCESSIBLE = "해당 티밍룸에 접근할 수 없습니다."
-private const val MEMBER_FOR_ASSIGNED_NOT_FOUND = "과제를 할당할 회원을 조회할 수 없습니다."
-private const val FILE_NOT_FOUND = "파일을 찾을 수 없습니다."
-private const val NOT_LEADER = "팀장이 아닙니다."
-private const val NOT_ASSIGNED = "해당 과제에 할당되지 않았습니다."
-private const val ASSIGNMENT_NOT_FOUND = "과제를 찾을 수 없습니다."
-private const val CANCELED_ASSIGNMENT = "취소된 과제입니다."
-private const val COMPLETE_ASSIGNMENT = "이미 완료된 과제입니다."
 
 @Service
 class AssignmentServiceImpl(
@@ -142,7 +132,7 @@ class AssignmentServiceImpl(
 
     private fun findUserRoom(userId: Long, roomId: Long): UserRoom {
         return userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(USER_ROOM_NOT_FOUND)
+            ?: throw IllegalArgumentException(NOT_MEMBER_OF_ROOM)
     }
 
     private fun findUser(userId: Long): User {
@@ -151,7 +141,7 @@ class AssignmentServiceImpl(
     }
 
     private fun assertPayment(userRoom: UserRoom) {
-        check(userRoom.paymentStatus != NOT_PAID) { INACCESSIBLE }
+        check(userRoom.paymentStatus != NOT_PAID) { ROOM_INACCESSIBLE }
     }
 
     private fun assertLeader(userRoom: UserRoom) {
@@ -172,7 +162,7 @@ class AssignmentServiceImpl(
 
     private fun List<Long>.toUserRoomSet(room: Room): Set<UserRoom> {
         return this.map { userRepository.findById(it)
-                .orElseThrow { IllegalArgumentException(MEMBER_FOR_ASSIGNED_NOT_FOUND) }
+                .orElseThrow { IllegalArgumentException(MEMBER_TO_ASSIGN_NOT_FOUND) }
             }
             .flatMap { it.userRooms }
             .filter { it.room == room }

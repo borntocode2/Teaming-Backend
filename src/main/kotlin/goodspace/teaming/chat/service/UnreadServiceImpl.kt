@@ -5,16 +5,14 @@ import goodspace.teaming.chat.dto.RoomUnreadCountResponseDto
 import goodspace.teaming.chat.event.ReadBoundaryUpdatedEvent
 import goodspace.teaming.global.entity.room.PaymentStatus
 import goodspace.teaming.global.entity.room.UserRoom
+import goodspace.teaming.global.exception.NOT_PAID
+import goodspace.teaming.global.exception.ROOM_NOT_FOUND
 import goodspace.teaming.global.repository.MessageRepository
 import goodspace.teaming.global.repository.UserRoomRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.lang.IllegalArgumentException
-
-private const val NOT_PAID = "결제되지 않아 티밍룸에 엑세스할 수 없습니다."
-
-private const val ROOM_NOT_FOUND = "티밍룸을 조회할 수 없습니다."
 
 @Service
 class UnreadServiceImpl(
