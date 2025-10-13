@@ -2,6 +2,8 @@ package goodspace.teaming.user.service
 
 import goodspace.teaming.authorization.dto.AccessTokenReissueRequestDto
 import goodspace.teaming.fixture.REFRESH_TOKEN_VALUE
+import goodspace.teaming.global.exception.EXPIRED_REFRESH_TOKEN
+import goodspace.teaming.global.exception.ILLEGAL_TOKEN
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.security.TokenProvider
 import goodspace.teaming.global.security.TokenType
@@ -65,7 +67,7 @@ class TokenManagementServiceImplTest {
             // when & then
             assertThatThrownBy { tokenManagementService.reissueAccessToken(requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessage("부적절한 토큰입니다.")
+                .hasMessage(ILLEGAL_TOKEN)
         }
 
         @Test
@@ -82,7 +84,7 @@ class TokenManagementServiceImplTest {
             // when & then
             assertThatThrownBy { tokenManagementService.reissueAccessToken(requestDto) }
                 .isInstanceOf(IllegalArgumentException::class.java)
-                .hasMessage("만료된 리프레쉬 토큰입니다.")
+                .hasMessage(EXPIRED_REFRESH_TOKEN)
         }
     }
 

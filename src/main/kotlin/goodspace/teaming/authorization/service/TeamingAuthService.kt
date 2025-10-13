@@ -4,6 +4,10 @@ import goodspace.teaming.authorization.dto.TeamingSignInRequestDto
 import goodspace.teaming.authorization.dto.TeamingSignUpRequestDto
 import goodspace.teaming.global.entity.user.Role
 import goodspace.teaming.global.entity.user.TeamingUser
+import goodspace.teaming.global.exception.ALREADY_EXISTS_EMAIL
+import goodspace.teaming.global.exception.ILLEGAL_PASSWORD
+import goodspace.teaming.global.exception.NOT_VERIFIED_EMAIL
+import goodspace.teaming.global.exception.USER_NOT_FOUND
 import goodspace.teaming.global.password.PasswordValidator
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -13,11 +17,6 @@ import goodspace.teaming.global.security.TokenType
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private const val USER_NOT_FOUND = "회원을 조회할 수 없습니다."
-private const val ILLEGAL_PASSWORD = "부적절한 비밀번호입니다."
-private const val EXISTS_EMAIL = "이미 사용중인 이메일입니다."
-private const val NOT_VERIFIED_EMAIL = "인증되지 않은 이메일입니다."
 
 @Service
 class TeamingAuthService(
@@ -74,7 +73,7 @@ class TeamingAuthService(
     }
 
     private fun assertEmail(email: String) {
-        require(!userRepository.existsByEmail(email)) { EXISTS_EMAIL }
+        require(!userRepository.existsByEmail(email)) { ALREADY_EXISTS_EMAIL }
 
         val emailVerification = emailVerificationRepository.findByEmail(email)
             ?: throw IllegalStateException(NOT_VERIFIED_EMAIL)

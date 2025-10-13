@@ -6,6 +6,7 @@ import goodspace.teaming.email.dto.CodeSendRequestDto
 import goodspace.teaming.email.dto.EmailVerifyRequestDto
 import goodspace.teaming.email.event.EmailSendRequestEvent
 import goodspace.teaming.global.entity.email.EmailVerification
+import goodspace.teaming.global.exception.*
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
 import jakarta.persistence.EntityNotFoundException
@@ -16,11 +17,6 @@ import java.time.LocalDateTime
 
 private const val MAIL_SUBJECT = "[Teaming] 이메일 인증 코드를 확인해주세요"
 
-private const val EMAIL_NOT_FOUND = "이메일을 찾을 수 없습니다."
-private const val EXPIRED = "이메일 인증이 만료되었습니다."
-private const val WRONG_CODE = "코드가 올바르지 않습니다."
-private const val NOT_EXISTS_EMAIL = "존재하지 않는 이메일입니다."
-private const val DUPLICATE_EMAIL = "이미 존재하는 이메일입니다."
 private const val CODE_LENGTH = 6
 private const val EXPIRE_MINUTES = 5
 
@@ -64,7 +60,7 @@ class EmailVerificationServiceImpl(
         val emailVerification = emailVerificationRepository.findByEmail(email)
             ?: throw EntityNotFoundException(EMAIL_NOT_FOUND)
 
-        check(emailVerification.isNotExpired(LocalDateTime.now())) { EXPIRED }
+        check(emailVerification.isNotExpired(LocalDateTime.now())) { EXPIRED_EMAIL_VERIFICATION }
         check(requestDto.code == emailVerification.code) { WRONG_CODE }
 
         emailVerification.verify()
