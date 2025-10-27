@@ -54,10 +54,11 @@ class Room(
         return userRooms.isEmpty()
     }
 
-    fun currentMemberCount() = userRooms.size
+    val currentMemberCount
+        get() = userRooms.size
 
     fun everyMemberEntered(): Boolean {
-        return memberCount == currentMemberCount()
+        return memberCount == currentMemberCount
     }
 
     fun addUserRoom(userRoom: UserRoom) {

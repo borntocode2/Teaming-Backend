@@ -14,10 +14,9 @@ class RoomReadyMapperTest {
     inner class `방에 모든 인원이 참여했는지를 확인한다` {
         @Test
         fun `모든 인원이 참여했다면 true를 반환한다`() {
-            // given: 5명까지 참여 가능한 방에 5명이 참여한 상태
+            // given
             val room = mockk<Room>()
-            every { room.currentMemberCount() } returns 5
-            every { room.memberCount } returns 5
+            every { room.everyMemberEntered() } returns true
 
             // when
             val result = roomReadyMapper.map(room)
@@ -28,10 +27,9 @@ class RoomReadyMapperTest {
 
         @Test
         fun `모든 인원이 참여하지 않았다면 false를 반환한다`() {
-            // given: 5명까지 참여 가능한 방에 4명이 참여한 상태
+            // given
             val room = mockk<Room>()
-            every { room.currentMemberCount() } returns 4
-            every { room.memberCount } returns 5
+            every { room.everyMemberEntered() } returns false
 
             // when
             val result = roomReadyMapper.map(room)

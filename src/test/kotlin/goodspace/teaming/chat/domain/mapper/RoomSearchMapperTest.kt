@@ -62,7 +62,7 @@ class RoomSearchMapperTest {
         assertThat(result.avatarUrl).isEqualTo(AVATAR_URL)
         assertThat(result.avatarVersion).isEqualTo(room.avatarVersion)
         assertThat(result.type).isEqualTo(ROOM_TYPE_DTO)
-        assertThat(result.currentMemberCount).isEqualTo(room.currentMemberCount())
+        assertThat(result.currentMemberCount).isEqualTo(room.currentMemberCount)
         assertThat(result.maxMemberCount).isEqualTo(room.memberCount)
     }
 
