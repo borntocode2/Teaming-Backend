@@ -45,6 +45,7 @@ class AssignmentServiceImpl(
         val room = userRoom.room
 
         assertPayment(userRoom)
+        assertEveryMemberEntered(userRoom.room)
         assertLeader(userRoom)
 
         val assignment = assignmentMapper.map(room, requestDto)
@@ -146,6 +147,10 @@ class AssignmentServiceImpl(
 
     private fun assertLeader(userRoom: UserRoom) {
         check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+    }
+
+    private fun assertEveryMemberEntered(room: Room) {
+        check(room.everyMemberEnteredOrSuccess()) { EVERY_MEMBER_NOT_ENTERED }
     }
 
     private fun assertSubmitter(assignment: Assignment, submitter: User) {
