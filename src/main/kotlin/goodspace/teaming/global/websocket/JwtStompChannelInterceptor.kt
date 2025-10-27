@@ -3,7 +3,7 @@ package goodspace.teaming.global.websocket
 import goodspace.teaming.chat.service.RoomAccessAuthorizer
 import goodspace.teaming.global.security.TokenProvider
 import goodspace.teaming.global.security.TokenType
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
@@ -50,7 +50,7 @@ class JwtStompChannelInterceptor(
         accessor.user = authentication
         accessor.sessionAttributes?.put(AUTH_SESSION_KEY, authentication)
 
-        log.info("웹소켓 CONNECT userId=${authentication.getUserId()}")
+        log.info("웹소켓 CONNECT userId=${authentication.userId}")
     }
 
     private fun handleSubscribe(accessor: StompHeaderAccessor) {
@@ -59,7 +59,7 @@ class JwtStompChannelInterceptor(
         val destination = accessor.destination.orEmpty()
         if (destination.startsWith(ROOM_SUBSCRIBE_PREFIX)) {
             val roomId = getRoomIdFromDestination(destination)
-            val userId = accessor.user?.getUserId()
+            val userId = accessor.user?.userId
                 ?: throw IllegalStateException("인증 정보 없음")
 
             roomAccessAuthorizer.assertMemberOf(roomId, userId)
@@ -75,7 +75,7 @@ class JwtStompChannelInterceptor(
             val roomId = destination.removePrefix(ROOM_SEND_PREFIX).substringBefore('/').toLongOrNull()
                 ?: throw IllegalArgumentException("잘못된 발행 경로: $destination")
 
-            val userId = accessor.user?.getUserId()
+            val userId = accessor.user?.userId
                 ?: throw IllegalStateException("인증 정보 없음")
 
             roomAccessAuthorizer.assertMemberOf(roomId, userId)

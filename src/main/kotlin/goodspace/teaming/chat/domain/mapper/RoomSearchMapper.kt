@@ -16,7 +16,7 @@ class RoomSearchMapper(
             avatarUrl = storageUrlProvider.publicUrl(room.avatarKey, room.avatarVersion),
             avatarVersion = room.avatarVersion,
             type = roomTypeMapper.map(room.type),
-            currentMemberCount = room.currentMemberCount(),
+            currentMemberCount = room.currentMemberCount,
             maxMemberCount = room.memberCount
         )
     }

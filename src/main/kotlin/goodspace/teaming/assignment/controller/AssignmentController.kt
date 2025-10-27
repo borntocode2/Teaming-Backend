@@ -5,7 +5,7 @@ import goodspace.teaming.assignment.dto.AssignmentCreateRequestDto
 import goodspace.teaming.assignment.dto.AssignmentPreviewResponseDto
 import goodspace.teaming.assignment.dto.AssignmentResponseDto
 import goodspace.teaming.assignment.service.AssignmentService
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -36,7 +36,7 @@ class AssignmentController(
     fun getEveryAssignedAssignment(
         principal: Principal
     ): ResponseEntity<List<AssignmentPreviewResponseDto>> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = assignmentService.getAssignedAssignments(userId)
 
@@ -52,7 +52,7 @@ class AssignmentController(
         principal: Principal,
         @PathVariable roomId: Long
     ): ResponseEntity<List<AssignmentResponseDto>> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = assignmentService.getAssignmentsInRoom(userId, roomId)
 
@@ -69,7 +69,7 @@ class AssignmentController(
         @PathVariable roomId: Long,
         @RequestBody requestDto: AssignmentCreateRequestDto
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         assignmentService.create(userId, roomId, requestDto)
 
@@ -86,7 +86,7 @@ class AssignmentController(
         @PathVariable roomId: Long,
         @RequestBody requestDto: SubmissionRequestDto
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         assignmentService.submit(userId, roomId, requestDto)
 
@@ -103,7 +103,7 @@ class AssignmentController(
         @PathVariable roomId: Long,
         @PathVariable assignmentId: Long
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         assignmentService.cancel(userId, roomId, assignmentId)
 

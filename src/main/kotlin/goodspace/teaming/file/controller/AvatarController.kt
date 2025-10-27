@@ -2,7 +2,7 @@ package goodspace.teaming.file.controller
 
 import goodspace.teaming.file.dto.*
 import goodspace.teaming.file.service.AvatarService
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -39,11 +39,11 @@ class AvatarController(
         principal: Principal,
         @RequestBody requestDto: AvatarUploadIntentRequestDto
     ): ResponseEntity<AvatarUploadIntentResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
-        val res = avatarService.intent(userId, requestDto)
+        val response = avatarService.intent(userId, requestDto)
 
-        return ResponseEntity.ok(res)
+        return ResponseEntity.ok(response)
     }
 
     @PostMapping("/complete")
@@ -62,11 +62,11 @@ class AvatarController(
         principal: Principal,
         @RequestBody requestDto: AvatarUploadCompleteRequestDto
     ): ResponseEntity<AvatarUploadCompleteResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
-        val res = avatarService.complete(userId, requestDto)
+        val response = avatarService.complete(userId, requestDto)
 
-        return ResponseEntity.ok(res)
+        return ResponseEntity.ok(response)
     }
 
     @PostMapping("/url")
@@ -81,11 +81,11 @@ class AvatarController(
         principal: Principal,
         @RequestBody ownerTypeDto: AvatarOwnerTypeDto
     ): ResponseEntity<AvatarUrlResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
-        val res = avatarService.issueViewUrl(userId, ownerTypeDto)
+        val response = avatarService.issueViewUrl(userId, ownerTypeDto)
 
-        return ResponseEntity.ok(res)
+        return ResponseEntity.ok(response)
     }
 
     @DeleteMapping
@@ -100,7 +100,7 @@ class AvatarController(
         principal: Principal,
         @RequestBody ownerTypeDto: AvatarOwnerTypeDto
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         avatarService.delete(userId, ownerTypeDto)
 

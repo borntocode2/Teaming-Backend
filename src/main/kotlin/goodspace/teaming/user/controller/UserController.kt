@@ -2,7 +2,7 @@ package goodspace.teaming.user.controller
 
 import goodspace.teaming.authorization.dto.AccessTokenReissueRequestDto
 import goodspace.teaming.authorization.dto.AccessTokenResponseDto
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import goodspace.teaming.user.dto.UpdateEmailRequestDto
 import goodspace.teaming.user.dto.UpdateNameRequestDto
 import goodspace.teaming.user.dto.UpdatePasswordRequestDto
@@ -34,7 +34,7 @@ class UserController(
     fun getInfo(
         principal: Principal
     ): ResponseEntity<UserInfoResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = userService.getUserInfo(userId)
 
@@ -50,7 +50,7 @@ class UserController(
         principal: Principal,
         @RequestBody requestDto: UpdateEmailRequestDto
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         userService.updateEmail(userId, requestDto)
 
@@ -66,7 +66,7 @@ class UserController(
         principal: Principal,
         @RequestBody requestDto: UpdatePasswordRequestDto
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         userService.updatePassword(userId, requestDto)
 
@@ -81,7 +81,7 @@ class UserController(
         principal: Principal,
         @RequestBody requestDto: UpdateNameRequestDto
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         userService.updateName(userId, requestDto)
 
@@ -109,7 +109,7 @@ class UserController(
     fun logout(
         principal: Principal
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         tokenManagementService.expireRefreshToken(userId)
 
@@ -124,7 +124,7 @@ class UserController(
     fun withdraw(
         principal: Principal
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         userService.removeUser(userId)
 

@@ -2,7 +2,7 @@ package goodspace.teaming.chat.domain.controller
 
 import goodspace.teaming.chat.dto.ChatSendRequestDto
 import goodspace.teaming.chat.service.MessageService
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.messaging.handler.annotation.DestinationVariable
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler
@@ -31,7 +31,7 @@ class ChatWsController(
         @Payload requestDto: ChatSendRequestDto,
         principal: Principal
     ) {
-        val senderId = principal.getUserId()
+        val senderId = principal.userId
 
         messageService.saveMessage(senderId, roomId, requestDto)
     }
