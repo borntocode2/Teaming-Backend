@@ -28,6 +28,14 @@ class UserServiceImpl(
         return userInfoMapper.map(user)
     }
 
+    @Transactional(readOnly = true)
+    override fun getUserInfo(requestDto: UserInfoRequestDto): List<UserInfoResponseDto> {
+        return requestDto.ids.stream()
+            .map { findUser(it) }
+            .map { userInfoMapper.map(it) }
+            .toList()
+    }
+
     @Transactional
     override fun updateEmail(userId: Long, requestDto: UpdateEmailRequestDto) {
         val user = findUser(userId)

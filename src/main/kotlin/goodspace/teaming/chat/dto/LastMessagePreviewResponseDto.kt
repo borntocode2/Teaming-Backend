@@ -7,6 +7,6 @@ data class LastMessagePreviewResponseDto(
     val id: Long,
     val type: MessageType,
     val content: String?,
-    val sender: SenderSummaryResponseDto,
+    val sender: SenderSummaryResponseDto?,
     val createdAt: Instant
 )

@@ -48,7 +48,7 @@ class SenderSummaryMapperTest {
             )
 
             // when
-            val result = mapper.map(user, DEFAULT_SIZE)
+            val result = mapper.map(user, DEFAULT_SIZE)!!
 
             // then
             assertThat(result.id).isEqualTo(DEFAULT_USER_ID)
@@ -70,7 +70,7 @@ class SenderSummaryMapperTest {
             )
 
             // when
-            val result = mapper.map(user, size = CUSTOM_SIZE)
+            val result = mapper.map(user, size = CUSTOM_SIZE)!!
 
             // then
             assertThat(result.avatarUrl).isEqualTo(DEFAULT_PUBLIC_URL)
@@ -93,7 +93,7 @@ class SenderSummaryMapperTest {
             )
 
             // when
-            val result = mapper.map(user)
+            val result = mapper.map(user)!!
 
             // then
             assertThat(result.avatarUrl).isNull()

@@ -10,7 +10,11 @@ import org.springframework.stereotype.Component
 class SenderSummaryMapper(
     private val urlProvider: CdnStorageUrlProvider
 ) {
-    fun map(user: User, size: Int = 64): SenderSummaryResponseDto {
+    fun map(user: User?, size: Int = 64): SenderSummaryResponseDto? {
+        if (user == null) {
+            return null
+        }
+
         return SenderSummaryResponseDto(
             id = user.id,
             name = user.name,

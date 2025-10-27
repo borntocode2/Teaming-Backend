@@ -7,6 +7,10 @@ interface UserService {
         userId: Long
     ): UserInfoResponseDto
 
+    fun getUserInfo(
+        requestDto: UserInfoRequestDto
+    ): List<UserInfoResponseDto>
+
     fun updateEmail(
         userId: Long,
         requestDto: UpdateEmailRequestDto
