@@ -37,6 +37,7 @@ class RoomInfoMapperTest {
     private lateinit var lastMessagePreviewMapper: LastMessagePreviewMapper
     private lateinit var roomMemberMapper: RoomMemberMapper
     private lateinit var roomTypeMapper: RoomTypeMapper
+    private lateinit var roomReadyMapper: RoomReadyMapper
     private lateinit var storageUrlProvider: CdnStorageUrlProvider
 
     private lateinit var roomInfoMapper: RoomInfoMapper
@@ -47,12 +48,14 @@ class RoomInfoMapperTest {
         lastMessagePreviewMapper = mockk(relaxed = true)
         roomMemberMapper = mockk(relaxed = true)
         roomTypeMapper = mockk(relaxed = true)
+        roomReadyMapper = mockk(relaxed = true)
         storageUrlProvider = mockk(relaxed = true)
         roomInfoMapper = RoomInfoMapper(
             messageRepository,
             lastMessagePreviewMapper,
             roomMemberMapper,
             roomTypeMapper,
+            roomReadyMapper,
             storageUrlProvider
         )
     }

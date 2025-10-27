@@ -1,10 +1,7 @@
 package goodspace.teaming.chat.service
 
 import goodspace.teaming.chat.domain.InviteCodeGenerator
-import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
-import goodspace.teaming.chat.domain.mapper.RoomMapper
-import goodspace.teaming.chat.domain.mapper.RoomMemberMapper
-import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
+import goodspace.teaming.chat.domain.mapper.*
 import goodspace.teaming.chat.dto.InviteAcceptRequestDto
 import goodspace.teaming.chat.dto.RoomCreateRequestDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
@@ -53,6 +50,7 @@ class RoomServiceTest {
     private val roomInfoMapper: RoomInfoMapper = mockk(relaxed = true)
     private val memberMapper: RoomMemberMapper = mockk(relaxed = true)
     private val roomSearchMapper: RoomSearchMapper = mockk(relaxed = true)
+    private val roomReadyMapper: RoomReadyMapper = mockk(relaxed = true)
     private val inviteCodeGenerator: InviteCodeGenerator = mockk()
     private val eventPublisher: ApplicationEventPublisher = mockk(relaxed = true)
 
@@ -64,6 +62,7 @@ class RoomServiceTest {
         roomInfoMapper = roomInfoMapper,
         memberMapper = memberMapper,
         roomSearchMapper = roomSearchMapper,
+        roomReadyMapper = roomReadyMapper,
         inviteCodeGenerator = inviteCodeGenerator,
         eventPublisher = eventPublisher
     )

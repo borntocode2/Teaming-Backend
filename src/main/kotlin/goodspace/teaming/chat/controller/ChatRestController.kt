@@ -212,4 +212,20 @@ class ChatRestController(
 
         return ResponseEntity.ok(response)
     }
+
+    @GetMapping("/{roomId}/ready")
+    @Operation(
+        summary = "방 준비 상태 조회",
+        description = "해당 방에 모든 멤버가 참여해 있는지를 조회합니다. 팀플 성공한 방이라면 항상 true를 반환합니다."
+    )
+    fun getIsReady(
+        principal: Principal,
+        @PathVariable roomId: Long
+    ): ResponseEntity<RoomReadyResponseDto> {
+        val userId = principal.getUserId()
+
+        val response = roomService.isReady(userId, roomId)
+
+        return ResponseEntity.ok(response)
+    }
 }
