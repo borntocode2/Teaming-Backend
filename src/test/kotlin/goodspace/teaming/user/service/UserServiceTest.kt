@@ -3,6 +3,7 @@ package goodspace.teaming.user.service
 import goodspace.teaming.fixture.*
 import goodspace.teaming.global.entity.email.EmailVerification
 import goodspace.teaming.global.entity.user.TeamingUser
+import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.entity.user.UserType
 import goodspace.teaming.global.exception.NOT_VERIFIED_EMAIL
 import goodspace.teaming.global.exception.OAUTH_USER_CANNOT_CHANGE_PASSWORD
@@ -11,10 +12,7 @@ import goodspace.teaming.global.password.PasswordValidatorImpl
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.user.domain.mapper.UserInfoMapper
-import goodspace.teaming.user.dto.UpdateEmailRequestDto
-import goodspace.teaming.user.dto.UpdateNameRequestDto
-import goodspace.teaming.user.dto.UpdatePasswordRequestDto
-import goodspace.teaming.user.dto.UserInfoResponseDto
+import goodspace.teaming.user.dto.*
 import goodspace.teaming.util.createEmailVerification
 import goodspace.teaming.util.createRoom
 import goodspace.teaming.util.createUser
@@ -46,7 +44,7 @@ class UserServiceTest {
     private val emailVerificationRepository = mockk<EmailVerificationRepository>(relaxed = true)
     private val passwordEncoder = mockk<PasswordEncoder>()
     private val passwordValidator = mockk<PasswordValidatorImpl>()
-    private val userInfoMapper = mockk<UserInfoMapper>()
+    private val userInfoMapper = mockk<UserInfoMapper>(relaxed = true)
 
     private val userService = UserServiceImpl(
         userRepository = userRepository,
@@ -60,7 +58,7 @@ class UserServiceTest {
     @DisplayName("getUserInfo")
     inner class GetUserInfo {
         @Test
-        fun `회원 정보를 DTO로 매핑해 반환한다`() {
+        fun `ID에 대한 회원 정보를 반환한다`() {
             // given
             val user = createUser(id = USER_ID)
             val userId = user.id!!
@@ -74,6 +72,29 @@ class UserServiceTest {
 
             // then
             assertThat(actualResponse).isEqualTo(expectedResponse)
+        }
+
+        @Test
+        fun `ID 목록에 대한 회원 정보 목록을 반환한다`() {
+            // given
+            val user1 = createUser(id = 1)
+            val user2 = createUser(id = 2)
+            val user3 = createUser(id = 3)
+            val userIds = listOf(user1.id!!, user2.id!!, user3.id!!)
+
+            every { userRepository.findById(user1.id!!) } returns Optional.of(user1)
+            every { userRepository.findById(user2.id!!) } returns Optional.of(user2)
+            every { userRepository.findById(user3.id!!) } returns Optional.of(user3)
+
+            val requestDto = UserInfoRequestDto(
+                ids = userIds
+            )
+
+            // when
+            val response = userService.getUserInfo(requestDto)
+
+            // then
+            assertThat(response).hasSameSizeAs(userIds)
         }
     }
 
