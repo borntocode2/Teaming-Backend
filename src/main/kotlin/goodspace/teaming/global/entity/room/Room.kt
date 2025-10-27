@@ -57,8 +57,7 @@ class Room(
     val currentMemberCount
         get() = userRooms.size
 
-    fun everyMemberEntered(): Boolean {
-        // 팀플 성공인 방은 항상 true 반환
+    fun everyMemberEnteredOrSuccess(): Boolean {
         return memberCount == currentMemberCount || success
     }
 
