@@ -7,6 +7,7 @@ import goodspace.teaming.chat.dto.RoomCreateRequestDto
 import goodspace.teaming.chat.dto.RoomInfoResponseDto
 import goodspace.teaming.chat.dto.RoomSearchResponseDto
 import goodspace.teaming.chat.event.MemberEnteredEvent
+import goodspace.teaming.chat.event.RoomLeaveEvent
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
@@ -434,9 +435,7 @@ class RoomServiceTest {
             // given: 방에 멤버 1명뿐인 상태
             val room = createRoom(success = true)
             val user = mockk<User>(relaxed = true)
-            val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.MEMBER).apply {
-                paymentStatus = PaymentStatus.PAID
-            }
+            val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.MEMBER)
             room.addUserRoom(userRoom)
 
             every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
@@ -448,6 +447,24 @@ class RoomServiceTest {
             // then
             assertThat(room.userRooms).isEmpty()
             verify(exactly = 1) { roomRepository.delete(room) }
+        }
+
+        @Test
+        fun `방 탈퇴 이벤트를 발생시킨다`() {
+            // given
+            val room = createRoom(success = true)
+            val user = mockk<User>(relaxed = true)
+            val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.MEMBER)
+            room.addUserRoom(userRoom)
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+            every { roomRepository.delete(room) } returns Unit
+
+            // when
+            roomService.leaveRoom(USER_ID, ROOM_ID)
+
+            // then
+            verify(exactly = 1) { eventPublisher.publishEvent(ofType<RoomLeaveEvent>()) }
         }
 
         @Test

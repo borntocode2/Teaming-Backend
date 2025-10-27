@@ -4,6 +4,7 @@ import goodspace.teaming.chat.domain.InviteCodeGenerator
 import goodspace.teaming.chat.domain.mapper.*
 import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.event.MemberEnteredEvent
+import goodspace.teaming.chat.event.RoomLeaveEvent
 import goodspace.teaming.chat.event.RoomSuccessEvent
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
 import goodspace.teaming.global.entity.room.*
@@ -138,6 +139,7 @@ class RoomServiceImpl(
     @Transactional
     override fun leaveRoom(userId: Long, roomId: Long) {
         val userRoom = findUserRoom(userId, roomId)
+        val user = userRoom.user
         val room = userRoom.room
 
         check(room.success) { CANNOT_LEAVE_BEFORE_SUCCESS }
@@ -147,6 +149,11 @@ class RoomServiceImpl(
         if (room.isEmpty()) {
             roomRepository.delete(room)
         }
+
+        eventPublisher.publishEvent(RoomLeaveEvent(
+            roomId = room.id!!,
+            memberId = user.id!!
+        ))
     }
 
     @Transactional
