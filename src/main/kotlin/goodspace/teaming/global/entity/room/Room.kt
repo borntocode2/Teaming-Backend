@@ -57,6 +57,10 @@ class Room(
     val currentMemberCount
         get() = userRooms.size
 
+    fun everyMemberEntered(): Boolean {
+        return memberCount == currentMemberCount
+    }
+
     fun everyMemberEnteredOrSuccess(): Boolean {
         return memberCount == currentMemberCount || success
     }

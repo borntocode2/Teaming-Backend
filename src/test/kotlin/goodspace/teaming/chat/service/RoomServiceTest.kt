@@ -8,11 +8,10 @@ import goodspace.teaming.chat.dto.RoomInfoResponseDto
 import goodspace.teaming.chat.dto.RoomSearchResponseDto
 import goodspace.teaming.chat.event.MemberEnteredEvent
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
-import goodspace.teaming.global.entity.room.PaymentStatus
-import goodspace.teaming.global.entity.room.RoomRole
-import goodspace.teaming.global.entity.room.RoomType
-import goodspace.teaming.global.entity.room.UserRoom
+import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.exception.EVERY_MEMBER_NOT_ENTERED
+import goodspace.teaming.global.exception.NOT_LEADER
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
@@ -482,9 +481,10 @@ class RoomServiceTest {
         @Test
         fun `티밍룸의 상태를 '팀플 성공'으로 만든다`() {
             // given
-            val room = createRoom(success = false)
+            val room = createRoom(success = false, memberCount = 1)
             val user = mockk<User>(relaxed = true)
             val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.LEADER)
+            room.addUserRoom(userRoom)
 
             every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
 
@@ -506,7 +506,7 @@ class RoomServiceTest {
         @Test
         fun `팀장이 아니면 예외를 던진다`() {
             // given
-            val room = createRoom(success = false)
+            val room = createRoom(success = false, memberCount = 1)
             val user = mockk<User>(relaxed = true)
             val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.MEMBER)
 
@@ -515,11 +515,23 @@ class RoomServiceTest {
             // when & then
             assertThatThrownBy { roomService.setSuccess(USER_ID, ROOM_ID) }
                 .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage(NOT_LEADER)
         }
 
         @Test
-        fun `환불 이벤트를 발생시킨다`() {
-            //TODO: 결제 로직 우선 구현 필요
+        fun `모든 인원이 방에 참여해 있지 않다면 예외를 던진다`() {
+            // given
+            val room = mockk<Room>()
+            val user = mockk<User>()
+            val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.LEADER)
+
+            every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
+            every { room.everyMemberEntered() } returns false
+
+            // when & then
+            assertThatThrownBy { roomService.setSuccess(USER_ID, ROOM_ID) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage(EVERY_MEMBER_NOT_ENTERED)
         }
     }
 
