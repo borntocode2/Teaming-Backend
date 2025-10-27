@@ -58,7 +58,8 @@ class Room(
         get() = userRooms.size
 
     fun everyMemberEntered(): Boolean {
-        return memberCount == currentMemberCount
+        // 팀플 성공인 방은 항상 true 반환
+        return memberCount == currentMemberCount || success
     }
 
     fun addUserRoom(userRoom: UserRoom) {
@@ -77,9 +78,5 @@ class Room(
 
     fun addAssignments(vararg assignments: Assignment) {
         this.assignments.addAll(assignments)
-    }
-
-    fun getUserIds(): List<Long> {
-        return userRooms.mapNotNull { it.user.id }
     }
 }
