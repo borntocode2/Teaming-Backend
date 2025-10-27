@@ -11,8 +11,4 @@ class RoomReadyMapper {
             everyMemberEntered = room.everyMemberEntered()
         )
     }
-
-    private fun Room.everyMemberEntered(): Boolean {
-        return memberCount == currentMemberCount()
-    }
 }
