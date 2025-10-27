@@ -14,7 +14,7 @@ import goodspace.teaming.global.entity.aissgnment.AssignmentStatus
 import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.User
-import goodspace.teaming.global.exception.CANCELED_ASSIGNMENT
+import goodspace.teaming.global.exception.*
 import goodspace.teaming.global.repository.FileRepository
 import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.repository.UserRoomRepository
@@ -59,7 +59,7 @@ class AssignmentServiceTest {
             // given
             val leader = createUser()
             val assignedMember = createUser(id = ASSIGNED_MEMBER_ID)
-            val room = createRoom()
+            val room = createRoom(memberCount = 1)
 
             val leaderUserRoom = createUserRoom(
                 user = leader,
@@ -67,6 +67,8 @@ class AssignmentServiceTest {
                 roomRole = RoomRole.LEADER,
                 paymentStatus = PaymentStatus.PAID
             )
+            room.addUserRoom(leaderUserRoom)
+
             val requestDto = AssignmentCreateRequestDto(
                 title = ASSIGNMENT_TITLE,
                 description = ASSIGNMENT_DESCRIPTION,
@@ -95,7 +97,7 @@ class AssignmentServiceTest {
         fun `결제 되지 않았다면 예외를 던진다`() {
             // given
             val leader = createUser()
-            val room = createRoom()
+            val room = createRoom(memberCount = 1)
 
             val notPaidUserRoom = createUserRoom(
                 user = leader,
@@ -103,6 +105,7 @@ class AssignmentServiceTest {
                 roomRole = RoomRole.LEADER,
                 paymentStatus = PaymentStatus.NOT_PAID
             )
+            room.addUserRoom(notPaidUserRoom)
             val requestDto = createAssignmentCreateRequestDto()
 
             every { userRoomRepository.findByRoomIdAndUserId(room.id!!, leader.id!!) } returns notPaidUserRoom
@@ -110,29 +113,52 @@ class AssignmentServiceTest {
             // when & then
             assertThatThrownBy { assignmentService.create(leader.id!!, room.id!!, requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("해당 티밍룸에 접근할 수 없습니다.")
+                .hasMessage(ROOM_INACCESSIBLE)
         }
 
         @Test
         fun `팀장이 아니라면 예외를 던진다`() {
             // given
-            val member = createUser()
-            val room = createRoom()
+            val notLeaderUser = createUser()
+            val room = createRoom(memberCount = 1)
 
             val notLeaderUserRoom = createUserRoom(
-                user = member,
+                user = notLeaderUser,
                 room = room,
                 roomRole = RoomRole.MEMBER,
                 paymentStatus = PaymentStatus.PAID
             )
+            room.addUserRoom(notLeaderUserRoom)
+
             val requestDto = createAssignmentCreateRequestDto()
 
-            every { userRoomRepository.findByRoomIdAndUserId(room.id!!, member.id!!) } returns notLeaderUserRoom
+            every { userRoomRepository.findByRoomIdAndUserId(room.id!!, notLeaderUser.id!!) } returns notLeaderUserRoom
 
             // when & then
-            assertThatThrownBy { assignmentService.create(member.id!!, room.id!!, requestDto) }
+            assertThatThrownBy { assignmentService.create(notLeaderUser.id!!, room.id!!, requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("팀장이 아닙니다.")
+                .hasMessage(NOT_LEADER)
+        }
+
+        @Test
+        fun `모든 인원이 방에 입장하지 않았다면 예외를 던진다`() {
+            // given
+            val user = createUser()
+            val room = createRoom(memberCount = 1)
+            val userRoom = createUserRoom(
+                user = user,
+                room = room,
+                roomRole = RoomRole.LEADER,
+                paymentStatus = PaymentStatus.PAID
+            )
+            room.addUserRoom(userRoom)
+
+            val requestDto = createAssignmentCreateRequestDto()
+
+            // when & then
+            assertThatThrownBy { assignmentService.create(user.id!!, room.id!!, requestDto) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage(EVERY_MEMBER_NOT_ENTERED)
         }
     }
 
@@ -373,7 +399,7 @@ class AssignmentServiceTest {
             // when & then
             assertThatThrownBy { assignmentService.submit(notAssignedMember.id!!, room.id!!, requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("해당 과제에 할당되지 않았습니다.")
+                .hasMessage(NOT_ASSIGNED)
         }
 
         @Test
@@ -408,7 +434,7 @@ class AssignmentServiceTest {
             // when & then
             assertThatThrownBy { assignmentService.submit(member.id!!, room.id!!, requestDto) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("해당 티밍룸에 접근할 수 없습니다.")
+                .hasMessage(ROOM_INACCESSIBLE)
         }
     }
 
@@ -430,6 +456,7 @@ class AssignmentServiceTest {
                 room = room,
                 status = AssignmentStatus.IN_PROGRESS
             )
+            room.addUserRoom(userRoom)
             room.addAssignment(assignment)
 
             every { userRoomRepository.findByRoomIdAndUserId(room.id!!, leader.id!!) } returns userRoom
@@ -456,6 +483,7 @@ class AssignmentServiceTest {
                 room = room,
                 status = AssignmentStatus.COMPLETE
             )
+            room.addUserRoom(userRoom)
             room.addAssignment(completedAssignment)
 
             every { userRoomRepository.findByRoomIdAndUserId(room.id!!, leader.id!!) } returns userRoom
@@ -463,7 +491,7 @@ class AssignmentServiceTest {
             // when & then
             assertThatThrownBy { assignmentService.cancel(leader.id!!, room.id!!, completedAssignment.id!!) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("이미 완료된 과제입니다.")
+                .hasMessage(COMPLETE_ASSIGNMENT)
         }
 
         @Test
@@ -481,6 +509,7 @@ class AssignmentServiceTest {
                 room = room,
                 status = AssignmentStatus.IN_PROGRESS
             )
+            room.addUserRoom(memberUserRoom)
             room.addAssignment(assignment)
 
             every { userRoomRepository.findByRoomIdAndUserId(room.id!!, member.id!!) } returns memberUserRoom
@@ -488,7 +517,7 @@ class AssignmentServiceTest {
             // when & then
             assertThatThrownBy { assignmentService.cancel(member.id!!, room.id!!, assignment.id!!) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("팀장이 아닙니다.")
+                .hasMessage(NOT_LEADER)
         }
 
         @Test
@@ -513,7 +542,7 @@ class AssignmentServiceTest {
             // when & then
             assertThatThrownBy { assignmentService.cancel(leader.id!!, room.id!!, assignment.id!!) }
                 .isInstanceOf(IllegalStateException::class.java)
-                .hasMessage("해당 티밍룸에 접근할 수 없습니다.")
+                .hasMessage(ROOM_INACCESSIBLE)
         }
     }
 
