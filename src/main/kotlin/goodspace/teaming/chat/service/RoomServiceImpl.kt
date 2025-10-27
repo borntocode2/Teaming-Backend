@@ -6,10 +6,7 @@ import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.event.MemberEnteredEvent
 import goodspace.teaming.chat.event.RoomSuccessEvent
 import goodspace.teaming.chat.exception.InviteCodeAllocationFailedException
-import goodspace.teaming.global.entity.room.PaymentStatus
-import goodspace.teaming.global.entity.room.RoomRole
-import goodspace.teaming.global.entity.room.RoomType
-import goodspace.teaming.global.entity.room.UserRoom
+import goodspace.teaming.global.entity.room.*
 import goodspace.teaming.global.exception.*
 import goodspace.teaming.global.repository.RoomRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -157,7 +154,8 @@ class RoomServiceImpl(
         val userRoom = findUserRoom(userId, roomId)
         val room = userRoom.room
 
-        check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+        assertLeader(userRoom)
+        assertEveryMemberEntered(room)
 
         eventPublisher.publishEvent(RoomSuccessEvent(roomId = room.id!!))
 
@@ -204,6 +202,10 @@ class RoomServiceImpl(
 
     private fun assertLeader(userRoom: UserRoom) {
         check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
+    }
+
+    private fun assertEveryMemberEntered(room: Room) {
+        check(room.everyMemberEntered()) { EVERY_MEMBER_NOT_ENTERED }
     }
 
     private fun RoomUpdateRequestDto.validate() {

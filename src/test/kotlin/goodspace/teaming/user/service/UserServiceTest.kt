@@ -6,6 +6,7 @@ import goodspace.teaming.global.entity.user.TeamingUser
 import goodspace.teaming.global.entity.user.UserType
 import goodspace.teaming.global.exception.NOT_VERIFIED_EMAIL
 import goodspace.teaming.global.exception.OAUTH_USER_CANNOT_CHANGE_PASSWORD
+import goodspace.teaming.global.exception.TEAMING_IN_PROGRESS
 import goodspace.teaming.global.password.PasswordValidatorImpl
 import goodspace.teaming.global.repository.EmailVerificationRepository
 import goodspace.teaming.global.repository.UserRepository
@@ -15,7 +16,9 @@ import goodspace.teaming.user.dto.UpdateNameRequestDto
 import goodspace.teaming.user.dto.UpdatePasswordRequestDto
 import goodspace.teaming.user.dto.UserInfoResponseDto
 import goodspace.teaming.util.createEmailVerification
+import goodspace.teaming.util.createRoom
 import goodspace.teaming.util.createUser
+import goodspace.teaming.util.createUserRoom
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -363,11 +366,30 @@ class UserServiceTest {
             // given
             val user = createUser()
 
+            every { userRepository.findById(user.id!!) } returns Optional.of(user)
+
             // when
             userService.removeUser(user.id!!)
 
             // then
-            verify(exactly = 1) { userRepository.deleteById(user.id!!) }
+            verify(exactly = 1) { userRepository.delete(user) }
+        }
+
+        @Test
+        fun `팀플이 완료되지 않은 티밍룸에 소속되어 있다면 예외가 발생한다`() {
+            // given
+            val user = createUser()
+            val room = createRoom(success = false)
+            val userRoom = createUserRoom(user, room)
+            user.addUserRoom(userRoom)
+            room.addUserRoom(userRoom)
+
+            every { userRepository.findById(user.id!!) } returns Optional.of(user)
+
+            // when & then
+            assertThatThrownBy { userService.removeUser(user.id!!) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessage(TEAMING_IN_PROGRESS)
         }
     }
 }

@@ -65,7 +65,11 @@ class UserServiceImpl(
 
     @Transactional
     override fun removeUser(userId: Long) {
-        userRepository.deleteById(userId)
+        val user = findUser(userId)
+
+        assertEveryRoomSucceeded(user)
+
+        userRepository.delete(user)
     }
 
     private fun findUser(userId: Long): User {
@@ -101,5 +105,13 @@ class UserServiceImpl(
 
     private fun assertProperPassword(password: String) {
         require(!passwordValidator.isIllegalPassword(password)) { ILLEGAL_PASSWORD }
+    }
+
+    private fun assertEveryRoomSucceeded(user: User) {
+        val everyRoomSucceeded = user.userRooms.stream()
+            .map { it.room }
+            .allMatch { it.success }
+
+        check(everyRoomSucceeded) { TEAMING_IN_PROGRESS }
     }
 }
