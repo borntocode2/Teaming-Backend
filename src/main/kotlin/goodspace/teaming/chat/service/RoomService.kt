@@ -41,4 +41,9 @@ interface RoomService {
         userId: Long,
         roomId: Long
     )
+
+    fun isReady(
+        userId: Long,
+        roomId: Long
+    ): RoomReadyResponseDto
 }

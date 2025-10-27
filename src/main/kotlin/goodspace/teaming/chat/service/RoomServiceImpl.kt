@@ -1,10 +1,7 @@
 package goodspace.teaming.chat.service
 
 import goodspace.teaming.chat.domain.InviteCodeGenerator
-import goodspace.teaming.chat.domain.mapper.RoomInfoMapper
-import goodspace.teaming.chat.domain.mapper.RoomMapper
-import goodspace.teaming.chat.domain.mapper.RoomMemberMapper
-import goodspace.teaming.chat.domain.mapper.RoomSearchMapper
+import goodspace.teaming.chat.domain.mapper.*
 import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.event.MemberEnteredEvent
 import goodspace.teaming.chat.event.RoomSuccessEvent
@@ -33,6 +30,7 @@ class RoomServiceImpl(
     private val memberMapper: RoomMemberMapper,
     private val roomSearchMapper: RoomSearchMapper,
     private val roomInfoMapper: RoomInfoMapper,
+    private val roomReadyMapper: RoomReadyMapper,
     private val inviteCodeGenerator: InviteCodeGenerator,
     private val eventPublisher: ApplicationEventPublisher
 ) : RoomService {
@@ -105,8 +103,7 @@ class RoomServiceImpl(
 
     @Transactional(readOnly = true)
     override fun getInviteCode(userId: Long, roomId: Long): RoomInviteCodeResponseDto {
-        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw java.lang.IllegalArgumentException(ROOM_NOT_FOUND)
+        val userRoom = findUserRoom(userId, roomId)
 
         assertLeader(userRoom)
 
@@ -132,8 +129,7 @@ class RoomServiceImpl(
     ) {
         requestDto.validate()
 
-        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+        val userRoom = findUserRoom(userId, roomId)
         val room = userRoom.room
 
         assertLeader(userRoom)
@@ -144,8 +140,7 @@ class RoomServiceImpl(
 
     @Transactional
     override fun leaveRoom(userId: Long, roomId: Long) {
-        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+        val userRoom = findUserRoom(userId, roomId)
         val room = userRoom.room
 
         check(room.success) { CANNOT_LEAVE_BEFORE_SUCCESS }
@@ -159,8 +154,7 @@ class RoomServiceImpl(
 
     @Transactional
     override fun setSuccess(userId: Long, roomId: Long) {
-        val userRoom = userRoomRepository.findByRoomIdAndUserId(roomId, userId)
-            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
+        val userRoom = findUserRoom(userId, roomId)
         val room = userRoom.room
 
         check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
@@ -168,6 +162,21 @@ class RoomServiceImpl(
         eventPublisher.publishEvent(RoomSuccessEvent(roomId = room.id!!))
 
         room.success = true
+    }
+
+    @Transactional(readOnly = true)
+    override fun isReady(
+        userId: Long,
+        roomId: Long
+    ): RoomReadyResponseDto {
+        val userRoom = findUserRoom(userId, roomId)
+
+        return roomReadyMapper.map(userRoom.room)
+    }
+
+    private fun findUserRoom(userId: Long, roomId: Long): UserRoom {
+        return userRoomRepository.findByRoomIdAndUserId(roomId, userId)
+            ?: throw IllegalArgumentException(ROOM_NOT_FOUND)
     }
 
     private fun getUniqueInviteCode(): String {

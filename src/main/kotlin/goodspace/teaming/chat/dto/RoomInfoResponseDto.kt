@@ -15,5 +15,6 @@ data class RoomInfoResponseDto(
     val memberCount: Int,
     val paymentStatus: PaymentStatus,
     val success: Boolean,
-    val members: List<RoomMemberResponseDto>
+    val members: List<RoomMemberResponseDto>,
+    val ready: RoomReadyResponseDto
 )
