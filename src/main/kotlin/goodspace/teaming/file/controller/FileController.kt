@@ -3,7 +3,7 @@ package goodspace.teaming.file.controller
 import goodspace.teaming.file.dto.*
 import goodspace.teaming.file.service.FileDownloadService
 import goodspace.teaming.file.service.FileUploadService
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -39,7 +39,7 @@ class FileController(
         @PathVariable roomId: Long,
         @RequestBody requestDto: FileUploadIntentRequestDto
     ): ResponseEntity<FileUploadIntentResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = fileUploadService.intent(userId, roomId, requestDto)
 
@@ -56,7 +56,7 @@ class FileController(
         @PathVariable roomId: Long,
         @RequestBody requestDto: FileUploadCompleteRequestDto
     ): ResponseEntity<FileUploadCompleteResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = fileUploadService.complete(userId, roomId, requestDto)
 
@@ -72,7 +72,7 @@ class FileController(
         principal: Principal,
         @PathVariable fileId: Long
     ): ResponseEntity<DownloadUrlResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = fileDownloadService.issueDownloadUrl(userId, fileId)
 

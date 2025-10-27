@@ -4,7 +4,7 @@ import goodspace.teaming.chat.dto.*
 import goodspace.teaming.chat.service.MessageService
 import goodspace.teaming.chat.service.RoomService
 import goodspace.teaming.chat.service.UnreadService
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -33,7 +33,7 @@ class ChatRestController(
         principal: Principal,
         @RequestBody requestDto: RoomCreateRequestDto
     ): ResponseEntity<RoomCreateResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = roomService.createRoom(userId, requestDto)
 
@@ -48,7 +48,7 @@ class ChatRestController(
     fun getRooms(
         principal: Principal
     ): ResponseEntity<List<RoomInfoResponseDto>> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = roomService.getRooms(userId)
 
@@ -65,7 +65,7 @@ class ChatRestController(
         @PathVariable roomId: Long,
         @RequestBody requestDto: RoomUpdateRequestDto
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         roomService.updateRoom(userId, roomId, requestDto)
 
@@ -94,7 +94,7 @@ class ChatRestController(
         principal: Principal,
         @PathVariable roomId: Long
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         roomService.leaveRoom(userId, roomId)
 
@@ -110,7 +110,7 @@ class ChatRestController(
         principal: Principal,
         @PathVariable roomId: Long
     ): ResponseEntity<Void> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         roomService.setSuccess(userId, roomId)
 
@@ -126,7 +126,7 @@ class ChatRestController(
         principal: Principal,
         @RequestBody requestDto: InviteAcceptRequestDto
     ): ResponseEntity<RoomInfoResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = roomService.acceptInvite(userId, requestDto)
 
@@ -142,7 +142,7 @@ class ChatRestController(
         principal: Principal,
         @PathVariable roomId: Long
     ): ResponseEntity<RoomInviteCodeResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = roomService.getInviteCode(userId, roomId)
 
@@ -155,7 +155,7 @@ class ChatRestController(
         description = "모든 방의 읽지 않은 메시지 개수를 조회합니다."
     )
     fun getUnreadCounts(principal: Principal): ResponseEntity<List<RoomUnreadCountResponseDto>> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = unreadService.getUnreadCounts(userId)
 
@@ -173,7 +173,7 @@ class ChatRestController(
         @RequestParam(defaultValue = "50") limit: Int,
         @RequestParam(required = false) cursor: Long?
     ): ResponseEntity<ChatMessagePageResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = messageService.findMessages(userId, roomId, limit, cursor)
 
@@ -190,7 +190,7 @@ class ChatRestController(
         @PathVariable roomId: Long,
         @RequestBody request: MarkReadRequestDto
     ): ResponseEntity<RoomUnreadCountResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = unreadService.markRead(userId, roomId, request.lastReadMessageId)
 
@@ -206,7 +206,7 @@ class ChatRestController(
         principal: Principal,
         @PathVariable roomId: Long
     ): ResponseEntity<List<MessageAttachmentResponseDto>> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = messageService.getMessageAttachment(userId, roomId)
 
@@ -222,7 +222,7 @@ class ChatRestController(
         principal: Principal,
         @PathVariable roomId: Long
     ): ResponseEntity<RoomReadyResponseDto> {
-        val userId = principal.getUserId()
+        val userId = principal.userId
 
         val response = roomService.isReady(userId, roomId)
 

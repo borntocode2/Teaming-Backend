@@ -1,6 +1,6 @@
 package goodspace.teaming.payment.controller
 
-import goodspace.teaming.global.security.getUserId
+import goodspace.teaming.global.security.userId
 import goodspace.teaming.payment.dto.PaymentRoomIdDto
 import goodspace.teaming.payment.dto.PaymentVerifyRespondDto
 import goodspace.teaming.payment.service.PaymentService
@@ -19,7 +19,7 @@ class PaymentController(
     @GetMapping(value = ["/html"], produces = [MediaType.TEXT_HTML_VALUE])
     fun showPaymentPage(@RequestParam amount: Long, principal: Principal, @RequestParam roomId: Long, @RequestParam platform: String
     ): String {
-        val userId = principal.getUserId()
+        val userId = principal.userId
         val userPayInfo = "$userId:$roomId:$platform"
 
         return """<!DOCTYPE html>
