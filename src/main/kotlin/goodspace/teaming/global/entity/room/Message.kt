@@ -23,8 +23,8 @@ import org.hibernate.annotations.SQLRestriction
 @SQLRestriction("deleted = false")
 class Message(
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "sender_id", nullable = false)
-    val sender: User,
+    @JoinColumn(name = "sender_id")
+    val sender: User?,
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(nullable = false)
