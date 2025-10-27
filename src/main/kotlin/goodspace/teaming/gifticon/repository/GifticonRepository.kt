@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 
 interface GifticonRepository : JpaRepository<Gifticon, Long> {
-    fun findFirstByGradeAndUsedFalse(grade: Grade?): Gifticon?
+    fun findFirstByGradeAndUsedFalseAndIsSentFalse(grade: Grade?): Gifticon?
 }

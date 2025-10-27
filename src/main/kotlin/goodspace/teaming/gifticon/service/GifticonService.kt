@@ -20,7 +20,7 @@ class GifticonService (
     @Transactional
     fun sendGifticon(user: User, roomType: RoomType){
         val grade = mapRoomTypeToGrade(roomType)
-        val gifticon: Gifticon = gifticonRepository.findFirstByGradeAndUsedFalse(grade)
+        val gifticon: Gifticon = gifticonRepository.findFirstByGradeAndUsedFalseAndIsSentFalse(grade)
             ?: throw IllegalArgumentException("$grade 등급의 사용 가능한 기프티콘이 없습니다.")
 
         gifticon.isSent = true
