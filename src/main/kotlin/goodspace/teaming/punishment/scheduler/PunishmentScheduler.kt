@@ -16,7 +16,7 @@ class PunishmentScheduler (
 ) {
     private val log = LoggerFactory.getLogger(PunishmentScheduler::class.java)
 
-    @Scheduled(fixedRate = 3600000)
+    @Scheduled(fixedRate = 10000)
     @Transactional
     fun checkAssignments() {
         log.info("PunishmentScheduler 실행됨 at ${Instant.now()}")
