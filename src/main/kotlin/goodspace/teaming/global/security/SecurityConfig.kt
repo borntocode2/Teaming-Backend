@@ -36,7 +36,7 @@ class SecurityConfig(
                     .requestMatchers(("/users/me/access-token")).permitAll() // 엑세스 토큰 재발급
                     .requestMatchers("/static/**", "/nicepay-test.html").permitAll()
                     .requestMatchers("/payment/**").permitAll()
-                    .requestMatchers("/admin/**").permitAll()
+                    .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자
                     .anyRequest().authenticated()
             }
             .cors { it.configurationSource(configurationSource()) }
