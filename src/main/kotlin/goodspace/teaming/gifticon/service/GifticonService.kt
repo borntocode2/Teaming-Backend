@@ -1,6 +1,8 @@
 package goodspace.teaming.gifticon.service
 
 import goodspace.teaming.gifticon.Entity.*
+import goodspace.teaming.gifticon.domain.GifticonDetailMapper
+import goodspace.teaming.gifticon.dto.GifticonDetailResponseDto
 import goodspace.teaming.gifticon.dto.GifticonResponseDto
 import goodspace.teaming.gifticon.repository.GifticonRepository
 import goodspace.teaming.global.entity.room.RoomType
@@ -14,6 +16,7 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class GifticonService (
+    private val gifticonDetailMapper: GifticonDetailMapper,
     private val gifticonRepository: GifticonRepository,
     private val userRepository: UserRepository
 ){
@@ -67,6 +70,13 @@ class GifticonService (
                 expirationDateStr = mapLocalDateTimeToExpiration(gifticon.expirationDate)
             )
         }
+    }
+
+    @Transactional(readOnly = true)
+    fun getGifticonDetails(): List<GifticonDetailResponseDto> {
+        return gifticonRepository.findAll().stream()
+            .map { gifticonDetailMapper.map(it) }
+            .toList()
     }
 
     fun checkExpiration(expiration: String) {

@@ -1,7 +1,7 @@
 package goodspace.teaming.admin.controller
 
+import goodspace.teaming.gifticon.dto.GifticonDetailResponseDto
 import goodspace.teaming.gifticon.dto.GifticonRequestDto
-import goodspace.teaming.gifticon.dto.GifticonResponseDto
 import goodspace.teaming.gifticon.service.GifticonService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.*
     name = "관리자 API"
 )
 class GifticonAdminController(
-    private val gifticonService: GifticonService) {
-
+    private val gifticonService: GifticonService
+) {
     @PostMapping
     @Operation(
         summary = "기프티콘 저장",
@@ -34,14 +34,12 @@ class GifticonAdminController(
 
     @GetMapping
     @Operation(
-        summary = "기프티콘 조회",
-        description = "유저 이메일로 해당 유저의 기프티콘을 조회합니다."
+        summary = "전체 기프티콘 조회",
+        description = "서비스에 존재하는 전체 기프티콘을 조회합니다."
     )
-    fun getGifticon(@RequestParam email: String): ResponseEntity<List<GifticonResponseDto>>{
-        val dtos: List<GifticonResponseDto> = gifticonService.getGifticonsByUserEmail(email)
+    fun getGifticons(): ResponseEntity<List<GifticonDetailResponseDto>> {
+        val response = gifticonService.getGifticonDetails()
 
-
-        return ResponseEntity.ok(dtos)
+        return ResponseEntity.ok(response)
     }
-
 }
