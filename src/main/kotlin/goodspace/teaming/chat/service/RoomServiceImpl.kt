@@ -56,8 +56,6 @@ class RoomServiceImpl(
         user.addUserRoom(userRoom)
         room.addUserRoom(userRoom)
 
-        passPaymentIfDemoRoom(userRoom)
-
         // 초대 코드가 중복될 시 재시도하기 위한 플러쉬
         roomRepository.saveAndFlush(room)
 
@@ -91,8 +89,6 @@ class RoomServiceImpl(
         )
         user.addUserRoom(userRoom)
         room.addUserRoom(userRoom)
-
-        passPaymentIfDemoRoom(userRoom)
 
         eventPublisher.publishEvent(MemberEnteredEvent(room.id!!, memberMapper.map(userRoom)))
 
@@ -150,10 +146,12 @@ class RoomServiceImpl(
             roomRepository.delete(room)
         }
 
-        eventPublisher.publishEvent(RoomLeaveEvent(
-            roomId = room.id!!,
-            memberId = user.id!!
-        ))
+        eventPublisher.publishEvent(
+            RoomLeaveEvent(
+                roomId = room.id!!,
+                memberId = user.id!!
+            )
+        )
     }
 
     @Transactional
@@ -163,6 +161,7 @@ class RoomServiceImpl(
 
         assertLeader(userRoom)
         assertEveryMemberEntered(room)
+        assertEveryMemberPaid(room)
 
         eventPublisher.publishEvent(RoomSuccessEvent(roomId = room.id!!))
 
@@ -199,20 +198,19 @@ class RoomServiceImpl(
         throw InviteCodeAllocationFailedException()
     }
 
-    private fun passPaymentIfDemoRoom(userRoom: UserRoom) {
-        val room = userRoom.room
-
-        if (room.type == RoomType.DEMO) {
-            userRoom.paymentStatus = PaymentStatus.PAID
-        }
-    }
-
     private fun assertLeader(userRoom: UserRoom) {
         check(userRoom.roomRole == RoomRole.LEADER) { NOT_LEADER }
     }
 
     private fun assertEveryMemberEntered(room: Room) {
         check(room.everyMemberEntered()) { EVERY_MEMBER_NOT_ENTERED }
+    }
+
+    private fun assertEveryMemberPaid(room: Room) {
+        check(
+            room.userRooms.stream()
+                .noneMatch { it.paymentStatus == PaymentStatus.NOT_PAID }
+        ) { EVERY_MEMBER_NOT_PAID }
     }
 
     private fun RoomUpdateRequestDto.validate() {
