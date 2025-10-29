@@ -48,3 +48,7 @@ const val S3_OBJECT_NOT_FOUND = "S3에 저장된 객체를 찾을 수 없습니�
 const val ORIGINAL_FILE_MISSING = "원본 파일이 존재하지 않습니다."
 const val INVALID_SIZE = "파일 크기가 적절하지 않습니다."
 const val INVALID_KEY_SCOPE = "Key에 방 정보와 회원 정보가 누락되었습니다."
+
+// Gifticon
+const val GIFTICON_NOT_FOUND = "기프티콘을 찾을 수 없습니다."
+const val GIFTICON_ALREADY_SENT = "이미 사용자에게 전송된 기프티콘입니다."
