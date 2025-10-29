@@ -2,11 +2,14 @@ package goodspace.teaming.gifticon.service
 
 import goodspace.teaming.gifticon.Entity.*
 import goodspace.teaming.gifticon.domain.GifticonDetailMapper
+import goodspace.teaming.gifticon.dto.GifticonDeleteRequestDto
 import goodspace.teaming.gifticon.dto.GifticonDetailResponseDto
 import goodspace.teaming.gifticon.dto.GifticonResponseDto
 import goodspace.teaming.gifticon.repository.GifticonRepository
 import goodspace.teaming.global.entity.room.RoomType
 import goodspace.teaming.global.entity.user.User
+import goodspace.teaming.global.exception.GIFTICON_ALREADY_SENT
+import goodspace.teaming.global.exception.GIFTICON_NOT_FOUND
 import goodspace.teaming.global.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -79,6 +82,16 @@ class GifticonService (
             .toList()
     }
 
+    @Transactional
+    fun removeNotSentGifticons(requestDto: GifticonDeleteRequestDto) {
+        for (id in requestDto.ids) {
+            val gifticon = findGifticon(id)
+            assertNotSent(gifticon)
+
+            gifticonRepository.delete(gifticon)
+        }
+    }
+
     fun checkExpiration(expiration: String) {
         if(expiration.isBlank() || expiration.length != 8 ||!(expiration.startsWith("202"))) {
             throw IllegalStateException("${expiration}은 기프티콘 만료기한 format이 아닙니다.")
@@ -104,5 +117,14 @@ class GifticonService (
             RoomType.STANDARD -> Grade.STANDARD
             RoomType.ELITE -> Grade.ELITE
         }
+    }
+
+    private fun findGifticon(id: Long): Gifticon {
+        return gifticonRepository.findById(id)
+            .orElseThrow { IllegalArgumentException(GIFTICON_NOT_FOUND) }
+    }
+
+    private fun assertNotSent(gifticon: Gifticon) {
+        check(!gifticon.isSent) { GIFTICON_ALREADY_SENT }
     }
 }
