@@ -98,12 +98,11 @@ class GifticonService (
         return dateTime.toLocalDate().format(formatter)
     }
 
-    private fun mapRoomTypeToGrade(roomType: RoomType): Grade? {
+    private fun mapRoomTypeToGrade(roomType: RoomType): Grade {
         return when(roomType){
             RoomType.BASIC -> Grade.BASIC
             RoomType.STANDARD -> Grade.STANDARD
             RoomType.ELITE -> Grade.ELITE
-            RoomType.DEMO -> null
         }
     }
 }

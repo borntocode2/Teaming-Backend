@@ -5,24 +5,19 @@ enum class RoomType(
     val price: Int,
     val description: String
 ) {
-    DEMO(
-        "Demo Room",
-        0,
-        "데모 버전을 위한 티밍룸 타입입니다."
-    ),
     BASIC(
         "Basic Room",
-        2060,
+        2000,
         "메가커피 아이스 아메리카노 1개"
     ),
     STANDARD(
         "Standard Room",
-        4840,
+        4800,
         "스타벅스 아이스 아메리카노 1개"
     ),
     ELITE(
         "Elite Room",
-        8240,
+        8200,
         "스타벅스 아이스 아메리카노 1개, 프렌치 크루아상 1개"
     );
 }

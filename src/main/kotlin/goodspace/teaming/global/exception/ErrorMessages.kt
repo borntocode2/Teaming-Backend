@@ -19,6 +19,7 @@ const val WRONG_INVITE_CODE = "부적절한 초대 코드입니다."
 const val CANNOT_LEAVE_BEFORE_SUCCESS = "팀플에 성공하기 전까진 나갈 수 없습니다."
 const val ILLEGAL_ROOM_TITLE = "부적절한 티밍룸 제목입니다."
 const val EVERY_MEMBER_NOT_ENTERED = "아직 모든 인원이 참여하지 않았습니다."
+const val EVERY_MEMBER_NOT_PAID = "아직 결제가 완료되지 않은 팀원이 있습니다."
 const val TEAMING_IN_PROGRESS = "아직 진행중인 팀 프로젝트가 있습니다."
 
 // Assignment
