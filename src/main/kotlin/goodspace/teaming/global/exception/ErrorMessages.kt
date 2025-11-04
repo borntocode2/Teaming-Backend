@@ -19,6 +19,7 @@ const val WRONG_INVITE_CODE = "부적절한 초대 코드입니다."
 const val CANNOT_LEAVE_BEFORE_SUCCESS = "팀플에 성공하기 전까진 나갈 수 없습니다."
 const val ILLEGAL_ROOM_TITLE = "부적절한 티밍룸 제목입니다."
 const val EVERY_MEMBER_NOT_ENTERED = "아직 모든 인원이 참여하지 않았습니다."
+const val EVERY_MEMBER_NOT_PAID = "아직 결제가 완료되지 않은 팀원이 있습니다."
 const val TEAMING_IN_PROGRESS = "아직 진행중인 팀 프로젝트가 있습니다."
 
 // Assignment
@@ -47,3 +48,7 @@ const val S3_OBJECT_NOT_FOUND = "S3에 저장된 객체를 찾을 수 없습니�
 const val ORIGINAL_FILE_MISSING = "원본 파일이 존재하지 않습니다."
 const val INVALID_SIZE = "파일 크기가 적절하지 않습니다."
 const val INVALID_KEY_SCOPE = "Key에 방 정보와 회원 정보가 누락되었습니다."
+
+// Gifticon
+const val GIFTICON_NOT_FOUND = "기프티콘을 찾을 수 없습니다."
+const val GIFTICON_ALREADY_SENT = "이미 사용자에게 전송된 기프티콘입니다."

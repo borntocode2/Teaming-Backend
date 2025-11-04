@@ -130,5 +130,5 @@ class TokenProvider(
     }
 
     private fun convertRolesToString(roles: List<Role>): String =
-        roles.joinToString(",") { it.toString() }
+        roles.joinToString(",") { it.string }
 }

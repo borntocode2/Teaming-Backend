@@ -105,9 +105,13 @@ class S3FileUploadService(
 
     private fun buildObjectKey(roomId: Long, userId: Long, originalName: String): String {
         val today = LocalDate.now().format(FileConstants.DATE_FMT)
-        val safe = originalName.replace(Regex("""[^A-Za-z0-9._-]"""), "_")
+
+        val safe = originalName
+            .replace(Regex("""[\\/|\u0000-\u001F]"""), "_")
             .take(FileConstants.SAFE_NAME_MAX_LENGTH)
+
         val uuid = UUID.randomUUID()
+
         return "$prefix/$roomId/$userId/$today/${uuid}_$safe"
     }
 
@@ -130,7 +134,9 @@ class S3FileUploadService(
 
     private fun extractOriginalName(storedName: String): String {
         val idx = storedName.indexOf('_')
-        return if (idx > 0 && storedName.take(idx).count { it == '-' } == 4 && storedName.take(idx).length == 36)
-            storedName.substring(idx + 1) else storedName
+
+        return if (idx > 0 && storedName.take(idx).count { it == '-' } == 4 && storedName.take(idx).length == 36) {
+            storedName.substring(idx + 1)
+        } else storedName
     }
 }
