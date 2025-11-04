@@ -34,7 +34,7 @@ class PaymentController(
                 <script>
                     function serverAuth() {
                     AUTHNICE.requestPay({
-                    clientId: 'S2_fb903ce81792411ab6c459ec3a2a82c6',
+                    clientId: 'R2_865d7d99ce554fc1bdb4d8bf43978eac',
                     method: 'card',
                     appScheme: `teaming://`,
                     orderId: '${paymentService.generateUUIDString()}',
