@@ -17,6 +17,7 @@ class RoomReadyMapperTest {
             // given
             val room = mockk<Room>()
             every { room.everyMemberEnteredOrSuccess() } returns true
+            every { room.everyMemberPaid() } returns true
 
             // when
             val result = roomReadyMapper.map(room)
@@ -30,6 +31,7 @@ class RoomReadyMapperTest {
             // given
             val room = mockk<Room>()
             every { room.everyMemberEnteredOrSuccess() } returns false
+            every { room.everyMemberPaid() } returns true
 
             // when
             val result = roomReadyMapper.map(room)
@@ -39,4 +41,34 @@ class RoomReadyMapperTest {
         }
     }
 
+    @Nested
+    inner class `모든 멤버가 결제하였는지를 확인한다` {
+        @Test
+        fun `모든 인원이 결제했다면 true를 반환한다`() {
+            // given
+            val room = mockk<Room>()
+            every { room.everyMemberPaid() } returns true
+            every { room.everyMemberEnteredOrSuccess() } returns true
+
+            // when
+            val result = roomReadyMapper.map(room)
+
+            // then
+            assertThat(result.everyMemberPaid).isTrue()
+        }
+
+        @Test
+        fun `모든 인원이 결제하지 않았다면 false를 반환한다`() {
+            // given
+            val room = mockk<Room>()
+            every { room.everyMemberPaid() } returns false
+            every { room.everyMemberEnteredOrSuccess() } returns true
+
+            // when
+            val result = roomReadyMapper.map(room)
+
+            // then
+            assertThat(result.everyMemberPaid).isFalse()
+        }
+    }
 }

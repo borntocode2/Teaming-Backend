@@ -159,28 +159,6 @@ class RoomServiceTest {
             // then
             assertThat(responseDto.inviteCode).isEqualTo(UNIQUE_CODE)
         }
-
-        @Test
-        fun `티밍룸 타입이 Demo일 경우 결제 상태를 '결제됨'으로 설정한다`() {
-            // given
-            val user = createUser(id = USER_ID)
-            every { userRepository.findById(USER_ID) } returns Optional.of(user)
-
-            val room = createRoom(type = RoomType.DEMO)
-            every { roomMapper.map(any()) } returns room
-
-            every { inviteCodeGenerator.generate() } returns UNIQUE_CODE
-            every { roomRepository.existsByInviteCode(UNIQUE_CODE) } returns false
-            every { roomRepository.saveAndFlush(room) } returns room
-
-            // when
-            roomService.createRoom(USER_ID, getRoomCreateDto())
-
-            // then
-            assertThat(user.userRooms.size).isEqualTo(1)
-            val userRoom = user.userRooms[0]
-            assertThat(userRoom.paymentStatus).isEqualTo(PaymentStatus.PAID)
-        }
     }
 
     @Nested
@@ -305,26 +283,6 @@ class RoomServiceTest {
 
             // then
             assertThat(result).isSameAs(roomDto)
-        }
-
-        @Test
-        fun `티밍룸 타입이 Demo일 경우 결제 상태를 '결제됨'으로 설정한다`() {
-            // given
-            val user = createUser()
-            val room = createRoom(type = RoomType.DEMO)
-            val requestDto = InviteAcceptRequestDto(inviteCode = room.inviteCode!!)
-
-            every { userRepository.findById(user.id!!) } returns Optional.of(user)
-            every { roomRepository.findByInviteCode(room.inviteCode!!) } returns room
-            every { userRoomRepository.existsByRoomAndUser(room, user) } returns false
-
-            // when
-            roomService.acceptInvite(user.id!!, requestDto)
-
-            // then
-            assertThat(user.userRooms.size).isEqualTo(1)
-            val userRoom = user.userRooms[0]
-            assertThat(userRoom.paymentStatus).isEqualTo(PaymentStatus.PAID)
         }
     }
 
@@ -500,7 +458,7 @@ class RoomServiceTest {
             // given
             val room = createRoom(success = false, memberCount = 1)
             val user = mockk<User>(relaxed = true)
-            val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.LEADER)
+            val userRoom = UserRoom(user = user, room = room, roomRole = RoomRole.LEADER, paymentStatus = PaymentStatus.PAID)
             room.addUserRoom(userRoom)
 
             every { userRoomRepository.findByRoomIdAndUserId(ROOM_ID, USER_ID) } returns userRoom
@@ -549,6 +507,11 @@ class RoomServiceTest {
             assertThatThrownBy { roomService.setSuccess(USER_ID, ROOM_ID) }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessage(EVERY_MEMBER_NOT_ENTERED)
+        }
+
+        @Test
+        fun `결제되지 않은 팀원이 있다면 예외를 던진다`() {
+            //TODO
         }
     }
 

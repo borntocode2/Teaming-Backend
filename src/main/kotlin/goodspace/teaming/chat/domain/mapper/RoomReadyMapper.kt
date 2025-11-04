@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component
 class RoomReadyMapper {
     fun map(room: Room): RoomReadyResponseDto {
         return RoomReadyResponseDto(
-            everyMemberEntered = room.everyMemberEnteredOrSuccess()
+            everyMemberEntered = room.everyMemberEnteredOrSuccess(),
+            everyMemberPaid = room.everyMemberPaid()
         )
     }
 }

@@ -12,8 +12,7 @@ class PasswordValidatorImpl(
                 isNotContainAlphabetic(password) ||
                 isNotContainDigit(password) ||
                 isNotContainSpecialCharacter(password) ||
-                isEmailFormat(password) ||
-                hasSequentialCharacters(password)
+                isEmailFormat(password)
     }
 
     private fun isShortThanMiniMum(password: String): Boolean {
