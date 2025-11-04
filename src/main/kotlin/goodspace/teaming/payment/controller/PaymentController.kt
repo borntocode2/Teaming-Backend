@@ -67,6 +67,8 @@ class PaymentController(
             signature = params["signature"]?.firstOrNull() ?: ""
         )
 
+        println("✅ NICE CALLBACK TID: ${dto.tid}  → PREFIX: ${dto.tid?.take(2)}")
+
         return paymentService.requestApprove(dto)
     }
 

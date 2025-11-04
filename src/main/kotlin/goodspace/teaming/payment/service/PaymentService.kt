@@ -32,7 +32,6 @@ class PaymentService(
     fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): ResponseEntity<Void> {
         if (paymentVerifyRespondDto.authResultCode != "0000") {
             val platform = paymentVerifyRespondDto.mallReserved.split(":")[2]
-
             //TODO: 쿼리스트링으로 반환
             val redirectUrl = if (platform == "APP") "teaming://payment/fail"
             else "https://teaming-three.vercel.app/payment/fail"
@@ -68,6 +67,7 @@ class PaymentService(
     @Transactional
     fun approvePayment(tid: String, amount: String, userId: String, roomId: String, platform: String): PaymentApproveRespondDto {
         val url = "${nicepayProperties.approveUrl}/$tid"
+        println("✅ APPROVE URL: $url")
         val request = PaymentApproveRequestDto(
             amount = amount
         )
