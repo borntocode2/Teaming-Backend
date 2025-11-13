@@ -11,7 +11,7 @@ import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
 
 @Entity
-@Table( // TODO: 소프트 딜리트 마이그레이션 후 수정 필요
+@Table(
     uniqueConstraints = [
         UniqueConstraint(
             name = "uk_chat_msg_room_sender_client",
