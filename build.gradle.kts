@@ -84,6 +84,9 @@ dependencies {
     //Gson
     implementation("com.google.code.gson:gson:2.10.1")
 
+    // Coroutine
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.1")
 }
 
 kotlin {
