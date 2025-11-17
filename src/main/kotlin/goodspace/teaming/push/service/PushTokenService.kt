@@ -61,6 +61,6 @@ class PushTokenService(
 
     private fun updateExistingToken(existingToken: ExpoPushToken, user: User) {
         existingToken.user = user
-        existingToken.lastUsedAt = Instant.now()
+        existingToken.lastRegisteredAt = Instant.now()
     }
 }

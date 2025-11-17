@@ -15,5 +15,5 @@ class ExpoPushToken(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
 
-    var lastUsedAt: Instant = Instant.now()
+    var lastRegisteredAt: Instant = Instant.now()
 }
