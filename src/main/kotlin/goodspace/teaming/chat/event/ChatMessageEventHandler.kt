@@ -1,7 +1,6 @@
 package goodspace.teaming.chat.event
 
 import goodspace.teaming.chat.domain.mapper.RoomUnreadCountMapper
-import goodspace.teaming.chat.dto.ChatMessageResponseDto
 import goodspace.teaming.global.entity.room.MessageType
 import goodspace.teaming.global.entity.room.UserRoom
 import goodspace.teaming.global.repository.UserRoomRepository
@@ -23,7 +22,7 @@ class ChatMessageEventHandler(
     @TransactionalEventListener(
         phase = AFTER_COMMIT
     )
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     fun onCreated(event: ChatMessageCreatedEvent) {
         // 방 토픽 전송
         messaging.convertAndSend("/topic/rooms/${event.roomId}", event.payload)
