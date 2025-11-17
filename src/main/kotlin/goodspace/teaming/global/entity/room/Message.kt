@@ -7,11 +7,13 @@ import jakarta.persistence.*
 import jakarta.persistence.CascadeType.*
 import jakarta.persistence.FetchType.*
 import jakarta.persistence.GenerationType.IDENTITY
+import org.hibernate.annotations.NotFound
+import org.hibernate.annotations.NotFoundAction
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
 
 @Entity
-@Table( // TODO: 소프트 딜리트 마이그레이션 후 수정 필요
+@Table(
     uniqueConstraints = [
         UniqueConstraint(
             name = "uk_chat_msg_room_sender_client",
@@ -24,6 +26,7 @@ import org.hibernate.annotations.SQLRestriction
 class Message(
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "sender_id")
+    @NotFound(action = NotFoundAction.IGNORE) // 회원이 탈퇴해도 메시지는 남아야 하므로 null로 처리하도록 지정
     val sender: User?,
 
     @ManyToOne(fetch = LAZY)

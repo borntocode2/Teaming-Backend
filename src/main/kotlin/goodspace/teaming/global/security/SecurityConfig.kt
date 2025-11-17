@@ -2,6 +2,7 @@ package goodspace.teaming.global.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -30,12 +31,13 @@ class SecurityConfig(
                     .requestMatchers("/email/**").permitAll()
                     .requestMatchers("/ws/**").permitAll() // 웹소캣 핸드셰이크 1
                     .requestMatchers(("/ws-sockjs/**")).permitAll() // 웹소캣 핸드셰이크 2
-                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // 프리플라이트 허용
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 프리플라이트 허용
                     .requestMatchers("/landing/**").permitAll() // 랜딩 페이지
                     .requestMatchers("/api/auth/**").permitAll() // 회원가입
                     .requestMatchers(("/users/me/access-token")).permitAll() // 엑세스 토큰 재발급
                     .requestMatchers("/static/**", "/nicepay-test.html").permitAll()
                     .requestMatchers("/payment/**").permitAll()
+                    .requestMatchers(HttpMethod.DELETE, "/push/tokens").permitAll() // 푸쉬 토큰 제거
                     .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자
                     .anyRequest().authenticated()
             }
