@@ -8,6 +8,7 @@ import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.push.dto.PushTokenRegisterRequestDto
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
@@ -27,6 +28,13 @@ class PushTokenService(
         tokenRepository.findByValue(value)
             ?.apply { updateExistingToken(this, user) }
             ?: registerNewToken(user, value)
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun delete(
+        tokenId: Long,
+    ) {
+        tokenRepository.deleteById(tokenId)
     }
 
     private fun findUserBy(userId: Long): User {
