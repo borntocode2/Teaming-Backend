@@ -22,8 +22,8 @@ class PushController(
 ) {
     @PostMapping("/tokens")
     @Operation(
-        summary = "푸쉬 토큰 등록",
-        description = "사용자의 현재 기기에 대한 푸쉬 토큰을 등록합니다."
+        summary = "푸쉬 토큰 등록/갱신",
+        description = "사용자의 현재 기기에 대한 푸쉬 토큰을 등록합니다. 이미 등록되어 있을 경우 토큰 등록 일자를 최신화합니다."
     )
     fun registerToken(
         principal: Principal,
