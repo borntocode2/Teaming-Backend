@@ -9,4 +9,6 @@ class NicepayProperties {
     lateinit var clientId: String
     lateinit var secretKey: String
     lateinit var approveUrl: String
+    lateinit var clientIdOperation: String
+    lateinit var secretKeyOperation: String
 }

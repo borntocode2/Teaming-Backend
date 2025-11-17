@@ -32,7 +32,7 @@ class PaymentService(
     fun requestApprove(paymentVerifyRespondDto: PaymentVerifyRespondDto): ResponseEntity<Void> {
         if (paymentVerifyRespondDto.authResultCode != "0000") {
             val platform = paymentVerifyRespondDto.mallReserved.split(":")[2]
-
+            //TODO: 쿼리스트링으로 반환
             val redirectUrl = if (platform == "APP") "teaming://payment/fail"
             else "https://teaming-three.vercel.app/payment/fail"
 
@@ -46,6 +46,7 @@ class PaymentService(
 
         val paymentApproveRespondDto = approvePayment(paymentVerifyRespondDto.tid, amount, userId, roomId, platform)
 
+        //TODO: 쿼리스트링으로 반환
         val redirectUrl = when {
             paymentApproveRespondDto.resultCode == "0000" && platform == "APP" -> "teaming://payment/success"
             paymentApproveRespondDto.resultCode != "0000" && platform == "APP" -> "teaming://payment/fail"
@@ -61,6 +62,32 @@ class PaymentService(
         return ResponseEntity.status(HttpStatus.FOUND)
             .header("Location", redirectUrl)
             .build()
+    }
+
+    @Transactional
+    fun approvePayment(tid: String, amount: String, userId: String, roomId: String, platform: String): PaymentApproveRespondDto {
+        val url = "${nicepayProperties.approveUrl}/$tid"
+        println("✅ APPROVE URL: $url")
+        val request = PaymentApproveRequestDto(
+            amount = amount
+        )
+
+        val paymentApproveRespondDto = webClient.build()
+            .post()
+            .uri(url)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .header(HttpHeaders.AUTHORIZATION, getAuthHeader())
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(PaymentApproveRespondDto::class.java)
+            .block() ?: throw RuntimeException("결제 승인 응답이 올바르지 않습니다.")
+
+
+        if (paymentApproveRespondDto.resultCode == "0000" || paymentApproveRespondDto.resultCode == "3001") {
+            saveUserRoomInfo(userId, roomId)
+        }
+
+        return paymentApproveRespondDto
     }
 
     @Transactional
@@ -111,31 +138,6 @@ class PaymentService(
     }
 
     @Transactional
-    fun approvePayment(tid: String, amount: String, userId: String, roomId: String, platform: String): PaymentApproveRespondDto {
-        val url = "${nicepayProperties.approveUrl}/$tid"
-        val request = PaymentApproveRequestDto(
-            amount = amount
-        )
-
-        val paymentApproveRespondDto = webClient.build()
-            .post()
-            .uri(url)
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .header(HttpHeaders.AUTHORIZATION, getAuthHeader())
-            .bodyValue(request)
-            .retrieve()
-            .bodyToMono(PaymentApproveRespondDto::class.java)
-            .block() ?: throw RuntimeException("결제 승인 응답이 올바르지 않습니다.")
-
-
-        if (paymentApproveRespondDto.resultCode == "0000" || paymentApproveRespondDto.resultCode == "3001") {
-            saveUserRoomInfo(userId, roomId)
-        }
-
-        return paymentApproveRespondDto
-    }
-
-    @Transactional
     fun savePaymentResult(paymentApproveRespond: PaymentApproveRespond, userId: Long, roomId: Long): String {
         val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found with id $userId") }
         val room = roomRepository.findById(roomId).orElseThrow { IllegalArgumentException("Room not found with id $roomId") }
@@ -157,7 +159,7 @@ class PaymentService(
     }
 
     private fun getAuthHeader(): String{
-        val credentials = "${nicepayProperties.clientId}:${nicepayProperties.secretKey}"
+        val credentials = "${nicepayProperties.clientIdOperation}:${nicepayProperties.secretKeyOperation}"
         val encoded = Base64.getEncoder().encodeToString(credentials.toByteArray())
 
         return "Basic $encoded"
