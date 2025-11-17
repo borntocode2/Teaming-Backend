@@ -14,5 +14,5 @@ interface ExpoPushTokenRepository : JpaRepository<ExpoPushToken, Long> {
 
     fun deleteByValue(value: String)
 
-    fun deleteAllByLastUsedAtBefore(cutoffTime: Instant)
+    fun deleteAllByLastRegisteredAtBefore(cutoffTime: Instant)
 }

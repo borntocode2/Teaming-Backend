@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit
 
 @Component
 class TokenCleanScheduler(
-    @Value("\${push.token.threshold.days}:90")
+    @Value("\${push.token.threshold.days:90}")
     private val inactivityThresholdDays: Long,
 
     private val tokenRepository: ExpoPushTokenRepository
@@ -26,7 +26,7 @@ class TokenCleanScheduler(
         logger.info { "오래된 푸시 토큰 정리 작업 시작 (갱신일이 ${inactivityThresholdDays}일 보다 이전인 [$cutoff] 토큰 삭제)" }
 
         try {
-            tokenRepository.deleteAllByLastUsedAtBefore(cutoff)
+            tokenRepository.deleteAllByLastRegisteredAtBefore(cutoff)
             logger.info { "오래된 푸시 토큰 정리 작업 완료." }
         } catch (e: Exception) {
             logger.error(e) { "오래된 푸시 토큰 정리 작업 중 오류 발생" }
