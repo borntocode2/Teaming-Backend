@@ -5,6 +5,7 @@ import goodspace.teaming.global.entity.user.User
 import goodspace.teaming.global.exception.USER_NOT_FOUND
 import goodspace.teaming.global.repository.ExpoPushTokenRepository
 import goodspace.teaming.global.repository.UserRepository
+import goodspace.teaming.push.dto.PushTokenDeleteRequestDto
 import goodspace.teaming.push.dto.PushTokenRegisterRequestDto
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
@@ -35,6 +36,13 @@ class PushTokenService(
         tokenId: Long,
     ) {
         tokenRepository.deleteById(tokenId)
+    }
+
+    @Transactional
+    fun delete(
+        requestDto: PushTokenDeleteRequestDto
+    ) {
+        tokenRepository.deleteByValue(requestDto.token)
     }
 
     private fun findUserBy(userId: Long): User {

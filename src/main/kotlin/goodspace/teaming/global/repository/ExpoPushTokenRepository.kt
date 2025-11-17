@@ -10,4 +10,6 @@ interface ExpoPushTokenRepository : JpaRepository<ExpoPushToken, Long> {
 
     @Query("SELECT t FROM ExpoPushToken t WHERE t.user.id IN :userIds")
     fun findAllByUserIds(@Param("userIds") userIds: List<Long>): List<ExpoPushToken>
+
+    fun deleteByValue(value: String)
 }
