@@ -46,6 +46,7 @@ abstract class User(
     @OneToMany(mappedBy = "user", fetch = LAZY, cascade = [ALL], orphanRemoval = true)
     val userRooms = mutableListOf<UserRoom>()
 
+    @Transient
     var token: String? = refreshToken.tokenValue
         set(value) {
             field = value
