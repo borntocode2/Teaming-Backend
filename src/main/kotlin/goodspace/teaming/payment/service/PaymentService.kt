@@ -33,8 +33,8 @@ class PaymentService(
         if (paymentVerifyRespondDto.authResultCode != "0000") {
             val platform = paymentVerifyRespondDto.mallReserved.split(":")[2]
             //TODO: 쿼리스트링으로 반환
-            val redirectUrl = if (platform == "APP") "https://teamingkr.duckdns.org/api/payment/app-request"
-            else "https://teamingkr.duckdns.org/api/payment/web-request"
+            val redirectUrl = if (platform == "APP") "https://teamingkr.duckdns.org/api/payment/app-result"
+            else "https://teamingkr.duckdns.org/api/payment/web-result"
 
             return ResponseEntity.status(HttpStatus.FOUND)
                 .header("Location", redirectUrl)
@@ -49,9 +49,9 @@ class PaymentService(
         //TODO: 쿼리스트링으로 반환
         val redirectUrl = when {
             paymentApproveRespondDto.resultCode == "0000" && platform == "APP" -> "https://teamingkr.duckdns.org/api/payment/app-result"
-            paymentApproveRespondDto.resultCode != "0000" && platform == "APP" -> "https://teamingkr.duckdns.org/api/payment/app-request"
-            paymentApproveRespondDto.resultCode == "0000" && platform == "WEB" -> "https://teamingkr.duckdns.org/api/payment/web-request"
-            else -> "https://teamingkr.duckdns.org/api/payment/web-request"
+            paymentApproveRespondDto.resultCode != "0000" && platform == "APP" -> "https://teamingkr.duckdns.org/api/payment/app-result"
+            paymentApproveRespondDto.resultCode == "0000" && platform == "WEB" -> "https://teamingkr.duckdns.org/api/payment/web-result"
+            else -> "https://teamingkr.duckdns.org/api/payment/web-result"
         }
 
         if (paymentApproveRespondDto.resultCode == "0000") {
