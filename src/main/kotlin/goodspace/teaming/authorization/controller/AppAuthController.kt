@@ -31,7 +31,7 @@ class AppAuthController (
         val accessToken: String = googleAuthService.getAccessToken(requestDto)
 
         val tokenResponseDto: TokenResponseDto =
-            googleAuthService.googleSignInOrSignUp(GoogleAccessTokenDto(accessToken = accessToken))
+            googleAuthService.googleSignInOrSignUp(GoogleAccessTokenDto(accessToken = accessToken), true)
 
         return ResponseEntity.ok<TokenResponseDto>(tokenResponseDto)
     }
@@ -45,7 +45,7 @@ class AppAuthController (
         val accessToken: String = kakaoAuthService.getAccessToken(requestDto)
 
         val tokenResponseDto: TokenResponseDto =
-            kakaoAuthService.kakaoSignInOrSignUp(KakaoAccessTokenDto(accessToken = accessToken))
+            kakaoAuthService.kakaoSignInOrSignUp(KakaoAccessTokenDto(accessToken = accessToken), true)
 
         return ResponseEntity.ok<TokenResponseDto>(tokenResponseDto)
     }
@@ -59,7 +59,7 @@ class AppAuthController (
         val accessToken: String = naverAuthService.getAccessToken(requestDto)
 
         val tokenResponseDto: TokenResponseDto =
-            naverAuthService.NaverSignInOrSignUp(NaverAccessTokenDto(accessToken = accessToken))
+            naverAuthService.NaverSignInOrSignUp(NaverAccessTokenDto(accessToken = accessToken), true)
 
         return ResponseEntity.ok<TokenResponseDto>(tokenResponseDto)
     }
@@ -70,7 +70,7 @@ class AppAuthController (
         description = "애플이 발급한 AccessIdToken을 통해 사용자를 인증하고 JWT를 발급힙니다."
     )
     fun appleLogin(@RequestBody appleSignInRequestDto: AppleSignInRequestDto): ResponseEntity<TokenResponseDto> {
-        val tokenResponseDto = appleAuthService.signInOrSignUp(appleSignInRequestDto)
+        val tokenResponseDto = appleAuthService.signInOrSignUp(appleSignInRequestDto, true)
 
         return ResponseEntity.ok(tokenResponseDto)
     }

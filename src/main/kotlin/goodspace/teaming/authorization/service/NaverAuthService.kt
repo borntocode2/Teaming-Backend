@@ -1,9 +1,9 @@
 package goodspace.teaming.authorization.service
 
 import com.google.gson.Gson
+import goodspace.teaming.authorization.dto.AppOauthRequestDto
 import goodspace.teaming.authorization.dto.NaverAccessTokenDto
 import goodspace.teaming.authorization.dto.NaverUserInfoResponseDto
-import goodspace.teaming.authorization.dto.AppOauthRequestDto
 import goodspace.teaming.global.entity.user.OAuthUser
 import goodspace.teaming.global.entity.user.Role
 import goodspace.teaming.global.entity.user.UserType
@@ -11,7 +11,6 @@ import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.security.TokenProvider
 import goodspace.teaming.global.security.TokenResponseDto
 import goodspace.teaming.global.security.TokenType
-import org.apache.naming.ResourceRef.SCOPE
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.*
 import org.springframework.stereotype.Service
@@ -34,19 +33,18 @@ class NaverAuthService (
 ) {
 
     @Transactional
-    fun NaverSignInOrSignUp(naverAccessTokenDto: NaverAccessTokenDto): TokenResponseDto {
+    fun NaverSignInOrSignUp(naverAccessTokenDto: NaverAccessTokenDto, isMobile: Boolean = false): TokenResponseDto {
         val naverAccessToken = naverAccessTokenDto.accessToken
-            ?: throw IllegalArgumentException("No naver access token")
-        val NaverUserInfo: NaverUserInfoResponseDto = getNaverUserInfo(naverAccessToken)
+        val naverUserInfo: NaverUserInfoResponseDto = getNaverUserInfo(naverAccessToken)
 
         val user = userRepository.findByIdentifierAndUserType(
-            identifier = NaverUserInfo.response.id,
+            identifier = naverUserInfo.response.id,
             userType = UserType.NAVER
         ) ?: run {
             val newUser = OAuthUser(
-                identifier = NaverUserInfo.response.id,
-                email = NaverUserInfo.response.email?:"unknown",
-                name = NaverUserInfo.response.name?:"unknown",
+                identifier = naverUserInfo.response.id,
+                email = naverUserInfo.response.email?:"unknown",
+                name = naverUserInfo.response.name?:"unknown",
                 type = UserType.NAVER,
 //                thumbnailImageUrl = null,
 //                profileImageUrl = null,
@@ -54,8 +52,8 @@ class NaverAuthService (
             userRepository.save(newUser)
         }
 
-        val accessToken = toKenProvider.createToken(user.id!!, TokenType.ACCESS, listOf(Role.USER))
-        val refreshToken = toKenProvider.createToken(user.id!!, TokenType.REFRESH, listOf(Role.USER))
+        val accessToken = toKenProvider.createToken(user.id!!, TokenType.ACCESS, listOf(Role.USER), isMobile)
+        val refreshToken = toKenProvider.createToken(user.id!!, TokenType.REFRESH, listOf(Role.USER), isMobile)
 
         user.token = refreshToken
         userRepository.save(user)
@@ -90,14 +88,14 @@ class NaverAuthService (
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
         headers.accept = listOf(MediaType.APPLICATION_JSON)
-        val TOKEN_BASE_URL: String = "https://nid.naver.com/oauth2.0/token"
+        val tokenBaseUrl = "https://nid.naver.com/oauth2.0/token"
 
         val form = LinkedMultiValueMap<String, String>()
 
         form.setAll(params)
         val entity = HttpEntity<MultiValueMap<String, String>>(form, headers)
 
-        return RestTemplate().postForEntity<String>(TOKEN_BASE_URL, entity, String::class.java)
+        return RestTemplate().postForEntity<String>(tokenBaseUrl, entity, String::class.java)
     }
 
     private fun getAccessTokenFromResponse(responseEntity: ResponseEntity<String>): String {
@@ -122,7 +120,7 @@ class NaverAuthService (
             NaverUserInfoResponseDto::class.java
         )
 
-        return response.body!! ?: throw IllegalArgumentException("네이버 사용자 정보를 불러올 수 없습니다.")
+        return response.body!!
     }
 
     private fun isRequestFailed(responseEntity: ResponseEntity<String>): Boolean {

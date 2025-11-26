@@ -1,9 +1,9 @@
 package goodspace.teaming.authorization.service
 
 import com.google.gson.Gson
+import goodspace.teaming.authorization.dto.AppOauthRequestDto
 import goodspace.teaming.authorization.dto.KakaoAccessTokenDto
 import goodspace.teaming.authorization.dto.KakaoUserInfoResponseDto
-import goodspace.teaming.authorization.dto.AppOauthRequestDto
 import goodspace.teaming.global.entity.user.OAuthUser
 import goodspace.teaming.global.entity.user.Role
 import goodspace.teaming.global.entity.user.UserType
@@ -11,7 +11,6 @@ import goodspace.teaming.global.repository.UserRepository
 import goodspace.teaming.global.security.TokenProvider
 import goodspace.teaming.global.security.TokenResponseDto
 import goodspace.teaming.global.security.TokenType
-import org.apache.naming.ResourceRef.SCOPE
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.*
 import org.springframework.stereotype.Service
@@ -35,7 +34,7 @@ class KakaoAuthService (
 ) {
 
     @Transactional
-    fun kakaoSignInOrSignUp(kakaoAccessTokenDto: KakaoAccessTokenDto): TokenResponseDto {
+    fun kakaoSignInOrSignUp(kakaoAccessTokenDto: KakaoAccessTokenDto, isMobile: Boolean = false): TokenResponseDto {
         val kakaoAccessToken = kakaoAccessTokenDto.accessToken
 
         val kakaoUserInfo: KakaoUserInfoResponseDto = getKakaoUserInfo(kakaoAccessToken)
@@ -55,8 +54,8 @@ class KakaoAuthService (
             userRepository.save(newUser)
         }
 
-        val accessToken = toKenProvider.createToken(user.id!!, TokenType.ACCESS, listOf(Role.USER))
-        val refreshToken = toKenProvider.createToken(user.id!!, TokenType.REFRESH, listOf(Role.USER))
+        val accessToken = toKenProvider.createToken(user.id!!, TokenType.ACCESS, listOf(Role.USER), isMobile)
+        val refreshToken = toKenProvider.createToken(user.id!!, TokenType.REFRESH, listOf(Role.USER), isMobile)
 
         user.token = refreshToken
         userRepository.save(user)
@@ -100,14 +99,14 @@ class KakaoAuthService (
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
         headers.accept = listOf(MediaType.APPLICATION_JSON)
-        val TOKEN_BASE_URL: String = "https://kauth.kakao.com/oauth/token"
+        val tokenBaseUrl = "https://kauth.kakao.com/oauth/token"
 
         val form = LinkedMultiValueMap<String, String>()
 
         form.setAll(params)
         val entity = HttpEntity<MultiValueMap<String, String>>(form, headers)
 
-        return RestTemplate().postForEntity<String>(TOKEN_BASE_URL, entity, String::class.java)
+        return RestTemplate().postForEntity<String>(tokenBaseUrl, entity, String::class.java)
     }
 
     private fun getKakaoUserInfo(accessToken: String): KakaoUserInfoResponseDto {
@@ -123,7 +122,7 @@ class KakaoAuthService (
             KakaoUserInfoResponseDto::class.java
         )
 
-        return response.body!! ?: throw IllegalArgumentException("카카오 사용자 정보를 불러올 수 없습니다.")
+        return response.body!!
     }
 
     private fun isRequestFailed(responseEntity: ResponseEntity<String>): Boolean {
