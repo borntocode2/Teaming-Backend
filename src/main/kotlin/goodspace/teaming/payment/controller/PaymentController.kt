@@ -80,7 +80,12 @@ class PaymentController(
     }
 
     @GetMapping("/app-result")
-        fun getPaymentResults(): ResponseEntity<Void>{
+    fun getAppPaymentResults(): ResponseEntity<Void>{
             return NO_CONTENT
-        }
+    }
+
+    @GetMapping("/web-result")
+    fun getWebPaymentResults(): ResponseEntity<Void>{
+        return NO_CONTENT
+    }
 }
