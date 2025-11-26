@@ -10,6 +10,8 @@ import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
 import java.security.Principal
 
+private val NO_CONTENT: ResponseEntity<Void> = ResponseEntity.noContent().build()
+
 @RestController
 @RequestMapping("/payment")
 class PaymentController(
@@ -76,4 +78,9 @@ class PaymentController(
     fun requestCancel(@RequestBody paymentRoomIdDto: PaymentRoomIdDto): ResponseEntity<Void> {
         return paymentService.requestCancel(paymentRoomIdDto.roomId.toLong())
     }
+
+    @GetMapping("/app-result")
+        fun getPaymentResults(): ResponseEntity<Void>{
+            return NO_CONTENT
+        }
 }

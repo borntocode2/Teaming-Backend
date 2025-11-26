@@ -48,8 +48,8 @@ class PaymentService(
 
         //TODO: 쿼리스트링으로 반환
         val redirectUrl = when {
-            paymentApproveRespondDto.resultCode == "0000" && platform == "APP" -> "teaming://payment/success"
-            paymentApproveRespondDto.resultCode != "0000" && platform == "APP" -> "teaming://payment/fail"
+            paymentApproveRespondDto.resultCode == "0000" && platform == "APP" -> "https://teaming-three.vercel.app/payment/app-result"
+            paymentApproveRespondDto.resultCode != "0000" && platform == "APP" -> "https://teaming-three.vercel.app/payment/app-result"
             paymentApproveRespondDto.resultCode == "0000" && platform == "WEB" -> "https://teaming-three.vercel.app/payment/success"
             else -> "https://teaming-three.vercel.app/payment/fail"
         }
