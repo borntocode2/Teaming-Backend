@@ -88,7 +88,7 @@ class AppleAuthService(
     }
 
     @Transactional
-    fun signInOrSignUp(requestDto: AppleSignInRequestDto): TokenResponseDto {
+    fun signInOrSignUp(requestDto: AppleSignInRequestDto, isMobile: Boolean = false): TokenResponseDto {
         val payload = parseIdTokenPayload(requestDto.accessIdToken)
 
         payload.validate()
@@ -97,8 +97,8 @@ class AppleAuthService(
         val user = userRepository.findByIdentifierAndUserType(identifier, UserType.APPLE)
             ?: saveNewUser(payload, requestDto.name)
 
-        val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles)
-        val refreshToken = tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles)
+        val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles, isMobile)
+        val refreshToken = tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles, isMobile)
         user.token = refreshToken
 
         return TokenResponseDto(

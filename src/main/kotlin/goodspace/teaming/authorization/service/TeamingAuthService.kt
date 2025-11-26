@@ -28,15 +28,16 @@ class TeamingAuthService(
 ) {
     @Transactional
     fun signUp(
-        requestDto: TeamingSignUpRequestDto
+        requestDto: TeamingSignUpRequestDto,
+        isMobile: Boolean = false
     ): TokenResponseDto {
         assertPassword(requestDto.password)
         assertEmail(requestDto.email)
 
         val user = saveNewUserFrom(requestDto)
 
-        val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles)
-        val refreshToken = tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles)
+        val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles, isMobile)
+        val refreshToken = tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles, isMobile)
 
         user.token = refreshToken
 
@@ -48,7 +49,8 @@ class TeamingAuthService(
 
     @Transactional
     fun signIn(
-        requestDto: TeamingSignInRequestDto
+        requestDto: TeamingSignInRequestDto,
+        isMobile: Boolean = false
     ): TokenResponseDto {
         val email = requestDto.email
 
@@ -57,8 +59,8 @@ class TeamingAuthService(
 
         require(passwordEncoder.matches(requestDto.password, user.password)) { USER_NOT_FOUND }
 
-        val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles)
-        val refreshToken = tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles)
+        val accessToken = tokenProvider.createToken(user.id!!, TokenType.ACCESS, user.roles, isMobile)
+        val refreshToken = tokenProvider.createToken(user.id!!, TokenType.REFRESH, user.roles, isMobile)
 
         user.token = refreshToken
 

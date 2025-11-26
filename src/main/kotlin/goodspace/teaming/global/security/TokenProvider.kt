@@ -29,11 +29,11 @@ class TokenProvider(
 
     private val key: Key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret))
 
-    fun createToken(id: Long, tokenType: TokenType, roles: List<Role>): String {
+    fun createToken(id: Long, tokenType: TokenType, roles: List<Role>, isMobile: Boolean = false): String {
         val now = Date()
         val expiresAt = when (tokenType) {
             TokenType.ACCESS  -> Date(now.time + validityTime)
-            TokenType.REFRESH -> Date(now.time + validityTime * 24)
+            TokenType.REFRESH -> Date(now.time + validityTime * (if (isMobile) 720 else 24))
         }
 
         return Jwts.builder()
